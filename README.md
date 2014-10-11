@@ -1,5 +1,7 @@
 # broccoli-6to5-transpiler
 
+[![Build Status](https://travis-ci.org/very-geek/broccoli-6to5-transpiler.svg)](https://travis-ci.org/very-geek/broccoli-6to5-transpiler)
+
 A [Broccoli](https://github.com/broccolijs/broccoli) plugin which
 transpile ES6 to readable ES5 by using
 [6to5](https://github.com/sebmck/6to5).
