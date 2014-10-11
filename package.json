@@ -1,0 +1,35 @@
+{
+  "name": "broccoli-6to5-transpiler",
+  "version": "0.0.1",
+  "description": "A Broccoli plugin which transpile ES6 to readable ES5 by using 6to5.",
+  "main": "index.js",
+  "scripts": {
+    "test": "broccoli build temp && mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/very-geek/broccoli-6to5-transpiler.git"
+  },
+  "keywords": [
+    "broccoli-plugin",
+    "transpiler",
+    "es6",
+    "ecmascript",
+    "ecmascript6",
+    "harmony",
+    "javascript",
+    "js"
+  ],
+  "author": "nightire <nightire@very-geek.com> (http://very-geek.com/)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/very-geek/broccoli-6to5-transpiler/issues"
+  },
+  "homepage": "https://github.com/very-geek/broccoli-6to5-transpiler",
+  "devDependencies": {
+    "broccoli": "^0.13.1",
+    "broccoli-cli": "0.0.1",
+    "mocha": "^1.21.4",
+    "rimraf": "^2.2.8"
+  }
+}
