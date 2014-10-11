@@ -1,6 +1,6 @@
 {
   "name": "broccoli-6to5-transpiler",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A Broccoli plugin which transpile ES6 to readable ES5 by using 6to5.",
   "main": "index.js",
   "scripts": {
