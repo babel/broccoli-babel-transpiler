@@ -4,7 +4,7 @@
   "description": "A Broccoli plugin which transpile ES6 to readable ES5 by using 6to5.",
   "main": "index.js",
   "scripts": {
-    "test": "broccoli build temp && mocha"
+    "test": "rm -rf temp && broccoli build temp && mocha"
   },
   "repository": {
     "type": "git",
