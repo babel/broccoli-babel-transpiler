@@ -21,3 +21,8 @@ var scriptTree = esTranspiler(inputTree, options);
 
 You can find [options](https://github.com/sebmck/6to5#cli) at 6to5's
 github repo.
+
+## About source map
+
+Currently this plugin only support inline source map, if you need
+separate source map feature, welcome to submit a pull request.

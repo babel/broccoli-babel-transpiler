@@ -1,6 +1,6 @@
 {
   "name": "broccoli-6to5-transpiler",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "A Broccoli plugin which transpile ES6 to readable ES5 by using 6to5.",
   "main": "index.js",
   "scripts": {
@@ -26,6 +26,10 @@
     "url": "https://github.com/very-geek/broccoli-6to5-transpiler/issues"
   },
   "homepage": "https://github.com/very-geek/broccoli-6to5-transpiler",
+  "dependencies": {
+    "6to5": "^1.7.14",
+    "broccoli-filter": "^0.1.7"
+  },
   "devDependencies": {
     "broccoli": "^0.13.1",
     "broccoli-cli": "0.0.1",

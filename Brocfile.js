@@ -1,3 +1,4 @@
 'use strict';
+var transpiler = require('./index');
 
-module.exports = 'fixtures';
+module.exports = transpiler('fixtures');
