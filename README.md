@@ -21,7 +21,7 @@ var esTranspiler = require('broccoli-6to5-transpiler');
 var scriptTree = esTranspiler(inputTree, options);
 ```
 
-You can find [options](https://github.com/sebmck/6to5#cli) at 6to5's
+You can find [options](https://6to5.github.io/usage.html#options) at 6to5's
 github repo.
 
 ## About source map
