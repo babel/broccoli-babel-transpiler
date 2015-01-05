@@ -23,21 +23,17 @@ TranspilerFilter.prototype.processString = function (string, relativePath) {
   var opts = this.options;
   opts.filename = opts.sourceMapName = opts.sourceFileName = relativePath;
 
-  try {
-    result = transpiler.transform(string, opts);
+  result = transpiler.transform(string, opts);
 
-    /*
-     * At this time, an array of source maps can be accessed by using
-     * `result.map`, but I don't know how to write them out as files.
-     *
-     * Thus `sourceMap: true` has no effects yet, if you know how to solve this,
-     * send a pull request in advance.
-     */
+  /*
+   * At this time, an array of source maps can be accessed by using
+   * `result.map`, but I don't know how to write them out as files.
+   *
+   * Thus `sourceMap: true` has no effects yet, if you know how to solve this,
+   * send a pull request in advance.
+   */
 
-    return result.code;
-  } catch (err) {
-    throw err;
-  }
+  return result.code;
 };
 
 module.exports = TranspilerFilter;
