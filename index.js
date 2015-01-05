@@ -19,25 +19,15 @@ TranspilerFilter.prototype.extensions = ['js'];
 TranspilerFilter.prototype.targetExtension = 'js';
 
 TranspilerFilter.prototype.processString = function (string, relativePath) {
-  var result;
-  var opts = this.options;
+  var opts = this.copyOptions();
+
   opts.filename = opts.sourceMapName = opts.sourceFileName = relativePath;
 
-  try {
-    result = transpiler.transform(string, opts);
+  return transpiler.transform(string, opts).code;
+};
 
-    /*
-     * At this time, an array of source maps can be accessed by using
-     * `result.map`, but I don't know how to write them out as files.
-     *
-     * Thus `sourceMap: true` has no effects yet, if you know how to solve this,
-     * send a pull request in advance.
-     */
-
-    return result.code;
-  } catch (err) {
-    throw err;
-  }
+TranspilerFilter.prototype.copyOptions = function() {
+  return JSON.parse(JSON.stringify(this.options));
 };
 
 module.exports = TranspilerFilter;
