@@ -27,7 +27,8 @@ SixToFive.prototype.processString = function (string, relativePath) {
 };
 
 SixToFive.prototype.copyOptions = function() {
-  return JSON.parse(JSON.stringify(this.options));
+  return {};//
+  //return JSON.parse(JSON.stringify(this.options));
 };
 
 module.exports = SixToFive;
