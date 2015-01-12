@@ -1,6 +1,6 @@
 'use strict';
 
-var transpiler = require('6to5');
+var transpiler = require('6to5-core');
 var Filter     = require('broccoli-filter');
 
 function TranspilerFilter(inputTree, options) {
