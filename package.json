@@ -29,7 +29,8 @@
   "homepage": "https://github.com/6to5/broccoli-6to5-transpiler",
   "dependencies": {
     "6to5-core": "^2.11.0",
-    "broccoli-filter": "^0.1.7"
+    "broccoli-filter": "^0.1.7",
+    "clone": "^0.2.0"
   },
   "devDependencies": {
     "broccoli": "^0.13.3",

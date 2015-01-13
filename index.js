@@ -2,6 +2,7 @@
 
 var transpiler = require('6to5-core');
 var Filter     = require('broccoli-filter');
+var clone      = require('clone');
 
 function SixToFive(inputTree, options) {
   if (!(this instanceof SixToFive)) {
@@ -27,8 +28,7 @@ SixToFive.prototype.processString = function (string, relativePath) {
 };
 
 SixToFive.prototype.copyOptions = function() {
-  return {};//
-  //return JSON.parse(JSON.stringify(this.options));
+  return clone(this.options);
 };
 
 module.exports = SixToFive;
