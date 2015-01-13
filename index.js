@@ -19,12 +19,17 @@ SixToFive.prototype.constructor = SixToFive;
 SixToFive.prototype.extensions = ['js'];
 SixToFive.prototype.targetExtension = 'js';
 
+SixToFive.prototype.transform = function(string, options) {
+  return transpiler.transform(string, options);
+};
+
 SixToFive.prototype.processString = function (string, relativePath) {
-  var opts = this.copyOptions();
+  var options = this.copyOptions();
 
-  opts.filename = opts.sourceMapName = opts.sourceFileName = relativePath;
+  debugger;
+  options.filename = options.sourceMapName = options.sourceFileName = relativePath;
 
-  return transpiler.transform(string, opts).code;
+  return this.transform(string, options).code;
 };
 
 SixToFive.prototype.copyOptions = function() {
