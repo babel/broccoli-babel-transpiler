@@ -26,7 +26,6 @@ SixToFive.prototype.transform = function(string, options) {
 SixToFive.prototype.processString = function (string, relativePath) {
   var options = this.copyOptions();
 
-  debugger;
   options.filename = options.sourceMapName = options.sourceFileName = relativePath;
 
   return this.transform(string, options).code;
