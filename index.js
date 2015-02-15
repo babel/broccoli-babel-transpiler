@@ -1,6 +1,6 @@
 'use strict';
 
-var transpiler = require('6to5-core');
+var transpiler = require('babel-core');
 var Filter     = require('broccoli-filter');
 var clone      = require('clone');
 

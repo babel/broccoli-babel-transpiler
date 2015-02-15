@@ -1,15 +1,14 @@
-# broccoli-6to5-transpiler
+# broccoli-babel-transpiler
 
-[![Build Status](https://travis-ci.org/6to5/broccoli-6to5-transpiler.svg?branch=master)](https://travis-ci.org/6to5/broccoli-6to5-transpiler)
+[![Build Status](https://travis-ci.org/babel/broccoli-babel-transpiler.svg?branch=master)](https://travis-ci.org/babel/broccoli-babel-transpiler)
 
 A [Broccoli](https://github.com/broccolijs/broccoli) plugin which
-transpile ES6 to readable ES5 by using
-[6to5](https://github.com/sebmck/6to5).
+transpile ES6 to readable ES5 by using [babel](https://github.com/babel/babel).
 
 ## How to install?
 
 ```sh
-$ npm install broccoli-6to5-transpiler --save-dev
+$ npm install broccoli-babel-transpiler --save-dev
 ```
 
 ## How to use?
@@ -17,11 +16,11 @@ $ npm install broccoli-6to5-transpiler --save-dev
 In your `Brocfile.js`:
 
 ```js
-var esTranspiler = require('broccoli-6to5-transpiler');
+var esTranspiler = require('broccoli-babel-transpiler');
 var scriptTree = esTranspiler(inputTree, options);
 ```
 
-You can find [options](https://6to5.github.io/usage.html#options) at 6to5's
+You can find [options](https://babeljs.io/docs/usage/options) at babel's
 github repo.
 
 ## About source map

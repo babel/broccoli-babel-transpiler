@@ -1,7 +1,7 @@
 {
-  "name": "broccoli-6to5-transpiler",
+  "name": "broccoli-babel-transpiler",
   "version": "3.0.0",
-  "description": "A Broccoli plugin which transpile ES6 to readable ES5 by using 6to5.",
+  "description": "A Broccoli plugin which transpile ES6 to readable ES5 by using babel.",
   "main": "index.js",
   "scripts": {
     "test": "mocha test.js",
@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/6to5/broccoli-6to5-transpiler.git"
+    "url": "https://github.com/babel/broccoli-babel-transpiler.git"
   },
   "keywords": [
     "broccoli-plugin",
@@ -24,11 +24,11 @@
   "author": "nightire <nightire@very-geek.com> (http://very-geek.com/)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/6to5/broccoli-6to5-transpiler/issues"
+    "url": "https://github.com/babel/broccoli-babel-transpiler/issues"
   },
-  "homepage": "https://github.com/6to5/broccoli-6to5-transpiler",
+  "homepage": "https://github.com/babel/broccoli-babel-transpiler",
   "dependencies": {
-    "6to5-core": "^3.0.0",
+    "babel-core": "^4.0.0",
     "broccoli-filter": "^0.1.7",
     "clone": "^0.2.0"
   },
