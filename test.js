@@ -4,13 +4,13 @@ var fs     = require('fs');
 var expect = require('chai').expect;
 var broccoli = require('broccoli');
 var path = require('path');
-var to5 = require('./index');
+var Babel = require('./index');
 
 var builder;
 var inputPath = path.join(__dirname, 'fixtures');
 
 function build(path, options) {
-  builder = new broccoli.Builder(to5(path, options));
+  builder = new broccoli.Builder(new Babel(path, options));
 
   return builder.build();
 }
@@ -18,7 +18,7 @@ function build(path, options) {
 describe('options', function() {
 
 
-  var options, toFive;
+  var options, babel;
 
   before(function() {
     options = {
@@ -28,19 +28,19 @@ describe('options', function() {
       }
     };
 
-   toFive = new to5('', options);
+   babel = new Babel('', options);
   });
 
   it('are cloned', function() {
     var transpilerOptions;
 
-    toFive.transform = function(string, options) {
+    babel.transform = function(string, options) {
       transpilerOptions = options;
       return { code: {} };
     }
 
     expect(transpilerOptions).to.eql(undefined);
-    toFive.processString('path', 'relativePath');
+    babel.processString('path', 'relativePath');
 
     expect(transpilerOptions.foo).to.eql(1);
     expect(transpilerOptions.bar.baz).to.eql(1);
@@ -55,13 +55,13 @@ describe('options', function() {
   it('correct fileName, sourceMapName, sourceFileName', function() {
     var transpilerOptions;
 
-    toFive.transform = function(string, options) {
+    babel.transform = function(string, options) {
       transpilerOptions = options;
       return { code: {} };
     }
 
     expect(transpilerOptions).to.eql(undefined);
-    toFive.processString('path', 'relativePath');
+    babel.processString('path', 'relativePath');
 
     expect(transpilerOptions.filename).to.eql('relativePath');
     expect(transpilerOptions.sourceMapName).to.eql('relativePath');
