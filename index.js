@@ -4,26 +4,26 @@ var transpiler = require('babel-core');
 var Filter     = require('broccoli-filter');
 var clone      = require('clone');
 
-function SixToFive(inputTree, options) {
-  if (!(this instanceof SixToFive)) {
-    return new SixToFive(inputTree, options);
+function Babel(inputTree, options) {
+  if (!(this instanceof Babel)) {
+    return new Babel(inputTree, options);
   }
 
   this.inputTree = inputTree;
   this.options = options || {};
 }
 
-SixToFive.prototype = Object.create(Filter.prototype);
-SixToFive.prototype.constructor = SixToFive;
+Babel.prototype = Object.create(Filter.prototype);
+Babel.prototype.constructor = Babel;
 
-SixToFive.prototype.extensions = ['js'];
-SixToFive.prototype.targetExtension = 'js';
+Babel.prototype.extensions = ['js'];
+Babel.prototype.targetExtension = 'js';
 
-SixToFive.prototype.transform = function(string, options) {
+Babel.prototype.transform = function(string, options) {
   return transpiler.transform(string, options);
 };
 
-SixToFive.prototype.processString = function (string, relativePath) {
+Babel.prototype.processString = function (string, relativePath) {
   var options = this.copyOptions();
 
   options.filename = options.sourceMapName = options.sourceFileName = relativePath;
@@ -31,8 +31,8 @@ SixToFive.prototype.processString = function (string, relativePath) {
   return this.transform(string, options).code;
 };
 
-SixToFive.prototype.copyOptions = function() {
+Babel.prototype.copyOptions = function() {
   return clone(this.options);
 };
 
-module.exports = SixToFive;
+module.exports = Babel;
