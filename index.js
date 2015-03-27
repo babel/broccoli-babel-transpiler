@@ -24,15 +24,11 @@ Babel.prototype.transform = function(string, options) {
 };
 
 Babel.prototype.processString = function (string, relativePath) {
-  var options = this.copyOptions();
+  var options = clone(this.options);
 
   options.filename = options.sourceMapName = options.sourceFileName = relativePath;
 
   return this.transform(string, options).code;
-};
-
-Babel.prototype.copyOptions = function() {
-  return clone(this.options);
 };
 
 module.exports = Babel;
