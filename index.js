@@ -11,6 +11,7 @@ function Babel(inputTree, options) {
 
   this.inputTree = inputTree;
   this.options = options || {};
+  this.extensions = this.options.filterExtensions || ['js'];
 }
 
 Babel.prototype = Object.create(Filter.prototype);
@@ -32,7 +33,11 @@ Babel.prototype.processString = function (string, relativePath) {
 };
 
 Babel.prototype.copyOptions = function() {
-  return clone(this.options);
+  var cloned = clone(this.options);
+  if (cloned.filterExtensions) {
+    delete cloned.filterExtensions;
+  }
+  return cloned;
 };
 
 module.exports = Babel;
