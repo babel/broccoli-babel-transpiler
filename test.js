@@ -16,8 +16,6 @@ function build(path, options) {
 }
 
 describe('options', function() {
-
-
   var options, babel;
 
   before(function() {
@@ -29,7 +27,7 @@ describe('options', function() {
       filterExtensions: ['es6']
     };
 
-   babel = new Babel('', options);
+    babel = new Babel('', options);
   });
 
   it('are cloned', function() {
@@ -69,7 +67,7 @@ describe('options', function() {
     expect(transpilerOptions.sourceFileName).to.eql('relativePath');
   });
   it('does not propogate validExtensions', function () {
-      var transpilerOptions;
+    var transpilerOptions;
 
     babel.transform = function(string, options) {
       transpilerOptions = options;
