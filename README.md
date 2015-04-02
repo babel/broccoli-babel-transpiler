@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/babel/broccoli-babel-transpiler.svg?branch=master)](https://travis-ci.org/babel/broccoli-babel-transpiler)
 
 A [Broccoli](https://github.com/broccolijs/broccoli) plugin which
-transpile ES6 to readable ES5 by using [babel](https://github.com/babel/babel).
+transpiles ES6 to readable ES5 by using [babel](https://github.com/babel/babel).
 
 ## How to install?
 
@@ -25,8 +25,8 @@ github repo.
 
 ## About source map
 
-Currently this plugin only support inline source map, if you need
-separate source map feature, welcome to submit a pull request.
+Currently this plugin only supports inline source map. If you need
+separate source map feature, you're welcome to submit a pull request.
 
 ## Advanced usage
 
