@@ -16,6 +16,7 @@ function Babel(inputTree, options) {
 
   this.inputTree = inputTree;
   this.options = options || {};
+  this.extensions = this.options.filterExtensions || ['js'];
 }
 
 Babel.prototype = Object.create(Writer.prototype);
@@ -29,7 +30,11 @@ Babel.prototype.transform = function(string, options) {
 };
 
 Babel.prototype.copyOptions = function() {
-  return clone(this.options);
+  var cloned = clone(this.options);
+  if (cloned.filterExtensions) {
+    delete cloned.filterExtensions;
+  }
+  return cloned;
 };
 
 // Promise-enabled utilities.
@@ -46,16 +51,14 @@ function deepList(dir) {
   });
 }
 // Read file; transpile it if it's JavaScript.
-function readAndTranspile(loc, options) {
-  var self = Babel.prototype;
-
+function readAndTranspile(loc, options, ext) {
   return new rsvp.Promise(function(resolve, reject) {
     fs.readFile(loc, 'utf8', function(err, data) {
-      // Non-JS file.
-      if(path.extname(loc) !== '.'+self.targetExtension) {
+      // Non-target filetype.
+      if(ext.indexOf(path.extname(loc).replace('.','')) === -1) {
         resolve(data);
       }
-      // JS file to transpile.
+      // Target filetype to transpile.
       else {
         resolve(transpiler.transform(data, options));
       }
@@ -63,19 +66,24 @@ function readAndTranspile(loc, options) {
   });
 }
 // Write file.
-function writeOutput(loc, data) {
+function writeOutput(loc, data, ext) {
   return new rsvp.Promise(function(resolve, reject) {
     var dir = path.dirname(loc);
 
     // Create directory (deep). mkpath will chug along happily even if dir exists.
     mkpath(dir, function() {
-      // This is non-JS file data and not a Babel result object.
+      // This is non-target file data and not a Babel result object.
       if(!data.code) {
         fs.writeFile(loc, data, resolve);
       }
       // Write transpiled JS file, as well as map file, if requested.
       else {
-        fs.writeFile(loc, data.code, function(err) {
+        var srcMapUrl = '';
+        if(data.map) {
+          srcMapUrl = '\n//# sourceMappingURL='+path.basename(loc)+'.map';
+        }
+
+        fs.writeFile(loc.replace(path.extname(loc), '.'+ext), data.code+srcMapUrl, function(err) {
           if(data.map) {
             fs.writeFile(loc+'.map', JSON.stringify(data.map), resolve);
           } else {
@@ -101,8 +109,8 @@ Babel.prototype.write = function(readTree, destDir) {
         var options = self.copyOptions();
         options.filename = options.sourceMapName = options.sourceFileName = src;
 
-        return readAndTranspile(src, options).then(function(data) {
-          return writeOutput(dest, data);
+        return readAndTranspile(src, options, self.extensions).then(function(data) {
+          return writeOutput(dest, data, self.targetExtension);
         });
       }));
     });

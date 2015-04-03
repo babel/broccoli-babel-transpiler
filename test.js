@@ -16,8 +16,6 @@ function build(path, options) {
 }
 
 describe('options', function() {
-
-
   var options, babel;
 
   before(function() {
@@ -25,10 +23,11 @@ describe('options', function() {
       foo: 1,
       bar: {
         baz: 1
-      }
+      },
+      filterExtensions: ['es6']
     };
 
-   babel = new Babel('', options);
+    babel = new Babel('', options);
   });
 
   it('are cloned', function() {
@@ -67,7 +66,20 @@ describe('options', function() {
     expect(transpilerOptions.sourceMapName).to.eql('relativePath');
     expect(transpilerOptions.sourceFileName).to.eql('relativePath');
   });
-})
+  it('does not propogate validExtensions', function () {
+    var transpilerOptions;
+
+    babel.transform = function(string, options) {
+      transpilerOptions = options;
+      return { code: {} };
+    };
+
+    expect(transpilerOptions).to.eql(undefined);
+    babel.processString('path', 'relativePath');
+
+    expect(transpilerOptions.filterExtensions).to.eql(undefined);
+  });
+});
 
 describe('transpile ES6 to ES5', function() {
   afterEach(function () {
@@ -75,7 +87,10 @@ describe('transpile ES6 to ES5', function() {
   });
 
   it('basic', function () {
-    return build(inputPath, {}).then(function(results) {
+    return build(inputPath, {
+      inputSourceMap:false,
+      sourceMap: false
+    }).then(function(results) {
       var outputPath = results.directory;
 
       var output = fs.readFileSync(path.join(outputPath, 'fixtures.js')).toString();
@@ -95,6 +110,47 @@ describe('transpile ES6 to ES5', function() {
       var input = fs.readFileSync(path.join(inputPath,  'expected-inline-source-maps.js')).toString();
 
       expect(output).to.eql(input);
+    });
+  });
+});
+
+describe('filters files to transform', function() {
+  afterEach(function () {
+    builder.cleanup();
+  });
+
+  it('default', function () {
+    return build(inputPath, {
+      inputSourceMap:false,
+      sourceMap: false
+    }).then(function(results) {
+      var outputPath = results.directory;
+
+      var output = fs.readFileSync(path.join(outputPath, 'fixtures.js')).toString();
+      var input = fs.readFileSync(path.join(inputPath,  'expected.js')).toString();
+
+      expect(output).to.eql(input);
+      // Verify that .es6 file was not transformed
+      expect(fs.existsSync(path.join(outputPath, 'fixtures-es6.es6'))).to.be.ok;
+
+    });
+  });
+
+  it('uses specified filter', function () {
+    return build(inputPath, {
+      filterExtensions: ['es6'],
+      inputSourceMap:false,
+      sourceMap: false
+    }).then(function(results) {
+      var outputPath = results.directory;
+
+      var output = fs.readFileSync(path.join(outputPath, 'fixtures-es6.js')).toString();
+      var input = fs.readFileSync(path.join(inputPath,  'expected.js')).toString();
+
+      expect(output).to.eql(input);
+      // Verify that .es6 file was not transformed
+      expect(fs.existsSync(path.join(outputPath, 'fixtures-es6.es6'))).to.not.be.ok;
+
     });
   });
 });

@@ -22,3 +22,17 @@ var scriptTree = esTranspiler(inputTree, options);
 
 You can find [options](https://babeljs.io/docs/usage/options) at babel's
 github repo.
+
+## Advanced usage
+
+`filterExtensions` is an option to limit (or expand) the set of file extensions that
+will be transformed.
+
+The default `filterExtension` is `js`
+
+```js
+var esTranspiler = require('broccoli-babel-transpiler');
+var scriptTree = esTranspiler(inputTree, {
+    filterExtensions:['js', 'es6'] // babelize both .js and .es6 files
+});
+```
