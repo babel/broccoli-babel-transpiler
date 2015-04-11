@@ -7,7 +7,13 @@ var path = require('path');
 var Babel = require('./index');
 
 var builder;
-var inputPath = path.join(__dirname, 'fixtures');
+
+var inputPath = path.join(__dirname, 'fixtures', 'input');
+var expectedPath = path.join(__dirname, 'fixtures', 'expected');
+
+function file() {
+  return fs.readFileSync(path.join.apply(path, arguments)).toString();
+}
 
 function build(path, options) {
   builder = new broccoli.Builder(new Babel(path, options));
@@ -27,7 +33,7 @@ describe('options', function() {
       filterExtensions: ['es6']
     };
 
-    babel = new Babel('', options);
+    babel = new Babel('.', options);
   });
 
   it('are cloned', function() {
@@ -66,6 +72,7 @@ describe('options', function() {
     expect(transpilerOptions.sourceMapName).to.eql('relativePath');
     expect(transpilerOptions.sourceFileName).to.eql('relativePath');
   });
+
   it('does not propogate validExtensions', function () {
     var transpilerOptions;
 
@@ -88,13 +95,13 @@ describe('transpile ES6 to ES5', function() {
 
   it('basic', function () {
     return build(inputPath, {
-      inputSourceMap:false,
-      sourceMap: false
+      inputSourceMap: false,
+      sourceMap: false,
     }).then(function(results) {
       var outputPath = results.directory;
 
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures.js')).toString();
-      var input = fs.readFileSync(path.join(inputPath,  'expected.js')).toString();
+      var output = file(outputPath, 'index.js');
+      var input = file(expectedPath, 'index.js');
 
       expect(output).to.eql(input);
     });
@@ -106,8 +113,8 @@ describe('transpile ES6 to ES5', function() {
     }).then(function(results) {
       var outputPath = results.directory;
 
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures.js')).toString();
-      var input = fs.readFileSync(path.join(inputPath,  'expected-inline-source-maps.js')).toString();
+      var output = file(outputPath, 'index.js');
+      var input = file(expectedPath, 'index-source-maps.js');
 
       expect(output).to.eql(input);
     });
@@ -126,12 +133,12 @@ describe('filters files to transform', function() {
     }).then(function(results) {
       var outputPath = results.directory;
 
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures.js')).toString();
-      var input = fs.readFileSync(path.join(inputPath,  'expected.js')).toString();
+      var output = file(outputPath, 'index.js');
+      var input  = file(expectedPath,  'index.js');
 
       expect(output).to.eql(input);
       // Verify that .es6 file was not transformed
-      expect(fs.existsSync(path.join(outputPath, 'fixtures-es6.es6'))).to.be.ok;
+      expect(fs.existsSync(path.join(outputPath, 'index.es6'))).to.be.ok;
 
     });
   });
@@ -139,17 +146,16 @@ describe('filters files to transform', function() {
   it('uses specified filter', function () {
     return build(inputPath, {
       filterExtensions: ['es6'],
-      inputSourceMap:false,
+      inputSourceMap: false,
       sourceMap: false
     }).then(function(results) {
       var outputPath = results.directory;
 
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures-es6.js')).toString();
-      var input = fs.readFileSync(path.join(inputPath,  'expected.js')).toString();
+      var output = file(outputPath, 'index.js');
+      var input = file(expectedPath,  'index.js');
 
       expect(output).to.eql(input);
-      // Verify that .es6 file was not transformed
-      expect(fs.existsSync(path.join(outputPath, 'fixtures-es6.es6'))).to.not.be.ok;
+      expect(fs.existsSync(path.join(outputPath, 'index.es6'))).to.not.be.ok;
 
     });
   });
