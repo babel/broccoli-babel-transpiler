@@ -134,7 +134,7 @@ describe('filters files to transform', function() {
       var outputPath = results.directory;
 
       var output = file(outputPath, 'index.js');
-      var input  = file(expectedPath,  'index.js');
+      var input = file(expectedPath,  'index.js');
 
       expect(output).to.eql(input);
       // Verify that .es6 file was not transformed
@@ -146,16 +146,17 @@ describe('filters files to transform', function() {
   it('uses specified filter', function () {
     return build(inputPath, {
       filterExtensions: ['es6'],
+      targetExtension:  ['es6'],
       inputSourceMap: false,
       sourceMap: false
     }).then(function(results) {
       var outputPath = results.directory;
 
-      var output = file(outputPath, 'index.js');
+      var output = file(outputPath, 'index.es6');
       var input = file(expectedPath,  'index.js');
 
       expect(output).to.eql(input);
-      expect(fs.existsSync(path.join(outputPath, 'index.es6'))).to.not.be.ok;
+      expect(fs.existsSync(path.join(outputPath, 'index.js'))).to.be.ok;
 
     });
   });

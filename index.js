@@ -27,10 +27,11 @@ function Babel(inputTree, options) {
   }
 
   var options = options || {};
-  var extensions = options.filterExtensions || ['js'];
+  var extensions = options.filterExtensions;
 
   this.options = clone(options);
   delete this.options.filterExtensions;
+  delete this.options.targetExtension;
 
   options.extensions = extensions;
 
