@@ -29,7 +29,7 @@ function Babel(inputTree, options) {
   var options = options || {};
   var extensions = options.filterExtensions || ['js'];
 
-  this.options = copyOptions(options);
+  this.options = clone(options);
   delete this.options.filterExtensions;
 
   options.extensions = extensions;
@@ -94,13 +94,5 @@ Babel.prototype.processString = function (string, relativePath) {
 Babel.prototype.optionsString = function() {
   return (this._optionsString = JSON.stringify(this.options));
 };
-
-function copyOptions(options) {
-  var cloned = clone(options);
-  if (cloned.filterExtensions) {
-    delete cloned.filterExtensions;
-  }
-  return cloned;
-}
 
 module.exports = Babel;
