@@ -105,6 +105,12 @@ Babel.prototype._transform = function(string, options) {
   return transpiler.transform(string, options);
 };
 
+/*
+ * @private
+ *
+ * @method optionsString
+ * @returns a stringifeid version of the input options
+ */
 Babel.prototype.optionsString = function() {
   return (this._optionsString = JSON.stringify(this.options));
 };
