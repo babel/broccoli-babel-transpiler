@@ -80,15 +80,29 @@ Babel.prototype.cacheKeyProcessString = function(string, relativePath) {
   return crypto.createHash('md5').update(this.optionsString() + string).digest('hex');
 };
 
-Babel.prototype.transform = function(string, options) {
-  return transpiler.transform(string, options);
-};
-
+/* @public
+ *
+ * @method processString
+ * @param {String} string string contents of the file to be transformed
+ * @param {String} relativePath the file path at input time where the string content originated.
+ * @return {String} the result of the transformation
+ */
 Babel.prototype.processString = function (string, relativePath) {
   var options = this.options;
   options.filename = options.sourceMapName = options.sourceFileName = relativePath;
 
-  return this.transform(string, options).code;
+  return this._transform(string, options);
+};
+
+/* @private
+ *
+ * @method _transform
+ * @param {String} string string contents of the file to be transformed
+ * @param {String} options configuration for the transform
+ * @return {String} the result of the transformation
+ */
+Babel.prototype._transform = function(string, options) {
+  return transpiler.transform(string, options);
 };
 
 Babel.prototype.optionsString = function() {

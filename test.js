@@ -39,7 +39,7 @@ describe('options', function() {
   it('are cloned', function() {
     var transpilerOptions;
 
-    babel.transform = function(string, options) {
+    babel._transform = function(string, options) {
       transpilerOptions = options;
       return { code: {} };
     }
@@ -60,7 +60,7 @@ describe('options', function() {
   it('correct fileName, sourceMapName, sourceFileName', function() {
     var transpilerOptions;
 
-    babel.transform = function(string, options) {
+    babel._transform = function(string, options) {
       transpilerOptions = options;
       return { code: {} };
     }
@@ -76,7 +76,7 @@ describe('options', function() {
   it('does not propogate validExtensions', function () {
     var transpilerOptions;
 
-    babel.transform = function(string, options) {
+    babel._transform = function(string, options) {
       transpilerOptions = options;
       return { code: {} };
     };
