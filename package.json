@@ -29,9 +29,10 @@
   "homepage": "https://github.com/babel/broccoli-babel-transpiler",
   "dependencies": {
     "babel-core": "^5.0.0",
-    "broccoli-peristent-filter": "*",
-    "broccoli-persistent-filter": "0.0.1",
-    "clone": "^0.2.0"
+    "broccoli-kitchen-sink-helpers": "^0.2.6",
+    "broccoli-persistent-filter": "0.0.2",
+    "clone": "^0.2.0",
+    "rsvp": "^3.0.18"
   },
   "devDependencies": {
     "broccoli": "^0.13.3",

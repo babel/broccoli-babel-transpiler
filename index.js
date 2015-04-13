@@ -66,8 +66,8 @@ Babel.prototype.targetExtension = 'js';
  * @method cacheKey
  * @returns {String} ...
  */
-Babel.prototype.cacheKey = function() {
-  return Filter.prototype.cacheKey.call(this) + 'some-checksum-of-the-deps';
+Babel.prototype.baseDir = function() {
+  return __dirname;
 };
 
 /* @public
@@ -77,8 +77,9 @@ Babel.prototype.cacheKey = function() {
  * @param {String} relativePath
  * @return {String} ...
  */
+
 Babel.prototype.cacheKeyProcessString = function(string, relativePath) {
-  return crypto.createHash('md5').update(this.optionsString() + string).digest('hex');
+  return this.optionsHash() + crypto.createHash('md5').update(string, 'utf8').digest('hex');
 };
 
 /* @public
@@ -91,7 +92,6 @@ Babel.prototype.cacheKeyProcessString = function(string, relativePath) {
 Babel.prototype.processString = function (string, relativePath) {
   var options = this.options;
   options.filename = options.sourceMapName = options.sourceFileName = relativePath;
-
   return this._transform(string, options);
 };
 
@@ -103,7 +103,7 @@ Babel.prototype.processString = function (string, relativePath) {
  * @return {String} the result of the transformation
  */
 Babel.prototype._transform = function(string, options) {
-  return transpiler.transform(string, options);
+  return transpiler.transform(string, options).code;
 };
 
 /*
@@ -112,8 +112,11 @@ Babel.prototype._transform = function(string, options) {
  * @method optionsString
  * @returns a stringifeid version of the input options
  */
-Babel.prototype.optionsString = function() {
-  return (this._optionsString = JSON.stringify(this.options));
+Babel.prototype.optionsHash  = function() {
+  if (!this._optionsHash) {
+    this._optionsHash = crypto.createHash('md5').update(JSON.stringify(this.options), 'utf8').digest('hex');
+  }
+  return this._optionsHash;
 };
 
 module.exports = Babel;
