@@ -4,7 +4,7 @@ var transpiler = require('babel-core');
 var Filter     = require('broccoli-persistent-filter');
 var clone      = require('clone');
 var crypto     = require('crypto');
-
+var stringify  = require('json-stable-stringify');
 /*
  * @public
  *
@@ -114,7 +114,7 @@ Babel.prototype._transform = function(string, options) {
  */
 Babel.prototype.optionsHash  = function() {
   if (!this._optionsHash) {
-    this._optionsHash = crypto.createHash('md5').update(JSON.stringify(this.options), 'utf8').digest('hex');
+    this._optionsHash = crypto.createHash('md5').update(stringify(this.options), 'utf8').digest('hex');
   }
   return this._optionsHash;
 };

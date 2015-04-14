@@ -32,6 +32,7 @@
     "broccoli-kitchen-sink-helpers": "^0.2.6",
     "broccoli-persistent-filter": "0.0.2",
     "clone": "^0.2.0",
+    "json-stable-stringify": "^1.0.0",
     "rsvp": "^3.0.18"
   },
   "devDependencies": {
