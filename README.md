@@ -23,11 +23,6 @@ var scriptTree = esTranspiler(inputTree, options);
 You can find [options](https://babeljs.io/docs/usage/options) at babel's
 github repo.
 
-## About source map
-
-Currently this plugin only support inline source map, if you need
-separate source map feature, welcome to submit a pull request.
-
 ## Advanced usage
 
 `filterExtensions` is an option to limit (or expand) the set of file extensions that
