@@ -1,13 +1,13 @@
 'use strict';
 
 var transpiler = require('babel-core');
+var rsvp       = require('rsvp');
+var Writer     = require('broccoli-writer');
 var fs         = require('fs');
 var path       = require('path');
 var clone      = require('clone');
-var recreaddir = require('recursive-readdir');
+var walkSync   = require('walk-sync');
 var mkpath     = require('mkpath');
-var rsvp       = require('rsvp');
-var Writer     = require('broccoli-writer');
 
 function Babel(inputTree, options) {
   if (!(this instanceof Babel)) {
@@ -39,17 +39,6 @@ Babel.prototype.copyOptions = function() {
 
 // Promise-enabled utilities.
 
-// Recursively go through source directory and return file list.
-function deepList(dir) {
-  return new rsvp.Promise(function(resolve, reject) {
-    recreaddir(dir, function(err, files) {
-      resolve(files.map(function(file) {
-        // Normalize slashes in directories.
-        return file.replace(/\\/g, '/');
-      }));
-    });
-  });
-}
 // Read file; transpile it if it's JavaScript.
 function readAndTranspile(loc, options, ext) {
   return new rsvp.Promise(function(resolve, reject) {
@@ -99,21 +88,23 @@ Babel.prototype.write = function(readTree, destDir) {
   var self = this;
 
   return readTree(self.inputTree).then(function(srcDir) {
-
-    return deepList(srcDir).then(function(files) {
-      // File list is converted into promise collection as output is written.
-      return rsvp.all(files.map(function(file) {
-        var src = file,
-            dest = file.replace(srcDir, destDir);
-
-        var options = self.copyOptions();
-        options.filename = options.sourceMapName = options.sourceFileName = src;
-
-        return readAndTranspile(src, options, self.extensions).then(function(data) {
-          return writeOutput(dest, data, self.targetExtension);
-        });
-      }));
+    var files = walkSync(srcDir);
+    files = files.filter(function(file) {
+      return file.substr(-1) !== '/';
     });
+
+    // File list is converted into promise collection as output is written.
+    return rsvp.all(files.map(function(file) {
+      var src = srcDir+'/'+file,
+          dest = destDir+'/'+file;
+
+      var options = self.copyOptions();
+      options.filename = options.sourceMapName = options.sourceFileName = src;
+
+      return readAndTranspile(src, options, self.extensions).then(function(data) {
+        return writeOutput(dest, data, self.targetExtension);
+      });
+    }));
 
   });
 };

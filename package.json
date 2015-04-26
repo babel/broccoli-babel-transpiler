@@ -29,11 +29,12 @@
   "homepage": "https://github.com/babel/broccoli-babel-transpiler",
   "dependencies": {
     "babel-core": "^5.0.0",
+    "broccoli-caching-writer": "^0.5.5",
     "broccoli-writer": "^0.1.1",
     "clone": "^0.2.0",
     "mkpath": "^0.1.0",
-    "recursive-readdir": "^1.2.1",
-    "rsvp": "^3.0.18"
+    "rsvp": "^3.0.18",
+    "walk-sync": "^0.1.3"
   },
   "devDependencies": {
     "broccoli": "^0.13.3",
