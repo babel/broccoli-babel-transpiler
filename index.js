@@ -6,6 +6,8 @@ var clone      = require('clone');
 var path       = require('path');
 var fs         = require('fs');
 var stringify  = require('json-stable-stringify');
+var mergeTrees = require('broccoli-merge-trees');
+var funnel = require('broccoli-funnel');
 
 function getExtensionsRegex(extensions) {
   return extensions.map(function(extension) {
@@ -38,6 +40,15 @@ function Babel(inputTree, options) {
     // Note, Babel does not support this option so we must save it then
     // delete it from the options hash
     delete this.options.exportModuleMetadata;
+  }
+
+  if ( this.options.browserPolyfill ) {
+    delete this.options.browserPolyfill;
+    var src = 'node_modules/broccoli-babel-transpiler/node_modules/babel-core';
+    var polyfill = funnel(src, { files: ['browser-polyfill.js'] });
+    this.inputTree = mergeTrees([polyfill, inputTree]);
+  } else {
+    this.inputTree = inputTree;
   }
 }
 

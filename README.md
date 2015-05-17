@@ -51,3 +51,15 @@ var scriptTree = esTranspiler(inputTree, {
 ```
 
 `exportModuleMetadata` is an option that can be used to write a JSON file to the output tree that gives you metadata about the tree's imports and exports.
+
+## Polyfill
+
+In order to use some of the ES6 features you must include the Babel [polyfill](http://babeljs.io/docs/usage/polyfill/#usage-in-browser).
+
+You don't always need this, review which features need the polyfill here: [ES6 Features](https://babeljs.io/docs/learn-es6).
+
+```js
+var esTranspiler = require('broccoli-babel-transpiler');
+var scriptTree = esTranspiler(inputTree, { browserPolyfill: true });
+```
+
