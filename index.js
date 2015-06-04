@@ -79,7 +79,7 @@ Babel.prototype.baseDir = function() {
  */
 
 Babel.prototype.cacheKeyProcessString = function(string, relativePath) {
-  return this.optionsHash() + crypto.createHash('md5').update(string, 'utf8').digest('hex');
+  return this.optionsHash() + Filter.prototype.cacheKeyProcessString.call(this, string, relativePath);
 };
 
 /* @public
