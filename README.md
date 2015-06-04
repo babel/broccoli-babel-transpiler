@@ -23,6 +23,10 @@ var scriptTree = esTranspiler(inputTree, options);
 You can find [options](https://babeljs.io/docs/usage/options) at babel's
 github repo.
 
+### Examples
+
+You'll find three example projects using this plugin in the repository [broccoli-babel-examples](https://github.com/givanse/broccoli-babel-examples). Each one of them builds on top of the previous example so you can progess from bare minimum to serious development.
+
 ## About source map
 
 Currently this plugin only supports inline source map. If you need
