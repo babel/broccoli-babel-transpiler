@@ -188,4 +188,21 @@ describe('filters files to transform', function() {
       expect(output).to.eql(input);
     });
   });
+
+
+  it('moduleId === true', function() {
+    return build(inputPath, {
+      inputSourceMap: false,
+      sourceMap: false,
+      moduleId: true,
+      modules: 'amdStrict'
+    }).then(function(results) {
+      var outputPath = results.directory;
+
+      var output = fs.readFileSync(path.join(outputPath, 'true-module-fixture.js')).toString();
+      var input = fs.readFileSync(path.join(inputPath,  'true-module.js')).toString();
+
+      expect(output).to.eql(input);
+    });
+  });
 });

@@ -42,11 +42,11 @@ Babel.prototype.transform = function(string, options) {
 Babel.prototype.processString = function (string, relativePath) {
   var options = this.copyOptions();
 
+  options.filename = options.sourceMapName = options.sourceFileName = relativePath;
+
   if (options.moduleId === true) {
     options.moduleId = replaceExtensions(this.extensionsRegex, options.filename);
   }
-
-  options.filename = options.sourceMapName = options.sourceFileName = relativePath;
 
   return this.transform(string, options).code;
 };
