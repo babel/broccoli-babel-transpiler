@@ -62,10 +62,29 @@ describe('options', function() {
     expect(transpilerOptions).to.eql(undefined);
     babel.processString('path', 'relativePath');
 
+    expect(transpilerOptions.moduleId).to.eql(undefined);
     expect(transpilerOptions.filename).to.eql('relativePath');
     expect(transpilerOptions.sourceMapName).to.eql('relativePath');
     expect(transpilerOptions.sourceFileName).to.eql('relativePath');
   });
+
+  it('includes moduleId if options.moduleId is true', function() {
+    babel.options.moduleId = true;
+    babel.options.filename = 'relativePath.es6';
+
+    var transpilerOptions;
+
+    babel.transform = function(string, options) {
+      transpilerOptions = options;
+      return { code: {} };
+    }
+
+    expect(transpilerOptions).to.eql(undefined);
+    babel.processString('path', 'relativePath');
+
+    expect(transpilerOptions.moduleId).to.eql('relativePath');
+  });
+
   it('does not propogate validExtensions', function () {
     var transpilerOptions;
 
@@ -151,6 +170,22 @@ describe('filters files to transform', function() {
       // Verify that .es6 file was not transformed
       expect(fs.existsSync(path.join(outputPath, 'fixtures-es6.es6'))).to.not.be.ok;
 
+    });
+  });
+
+  it('named module', function() {
+    return build(inputPath, {
+      inputSourceMap: false,
+      sourceMap: false,
+      moduleId: "foo",
+      modules: 'amdStrict'
+    }).then(function(results) {
+      var outputPath = results.directory;
+
+      var output = fs.readFileSync(path.join(outputPath, 'named-module-fixture.js')).toString();
+      var input = fs.readFileSync(path.join(inputPath,  'named-module.js')).toString();
+
+      expect(output).to.eql(input);
     });
   });
 });
