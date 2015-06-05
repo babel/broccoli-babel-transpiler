@@ -44,8 +44,11 @@ function Babel(inputTree, options) {
 
   if ( this.options.browserPolyfill ) {
     delete this.options.browserPolyfill;
-    var src = 'node_modules/broccoli-babel-transpiler/node_modules/babel-core';
-    var polyfill = funnel(src, { files: ['browser-polyfill.js'] });
+
+    var babelCorePath = require.resolve('babel-core');
+    babelCorePath = babelCorePath.replace(/\/babel-core\/.*$/, '/babel-core');
+
+    var polyfill = funnel(babelCorePath, { files: ['browser-polyfill.js'] });
     this.inputTree = mergeTrees([polyfill, inputTree]);
   } else {
     this.inputTree = inputTree;
