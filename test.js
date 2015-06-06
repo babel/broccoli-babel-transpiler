@@ -27,7 +27,7 @@ describe('options', function() {
       filterExtensions: ['es6']
     };
 
-    babel = new Babel('', options);
+    babel = new Babel('foo', options);
   });
 
   it('are cloned', function() {

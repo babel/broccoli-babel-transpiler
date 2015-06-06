@@ -23,7 +23,8 @@ function Babel(inputTree, options) {
     return new Babel(inputTree, options);
   }
 
-  this.inputTree = inputTree;
+  Filter.call(this, inputTree, options);
+
   this.options = options || {};
   this.extensions = this.options.filterExtensions || ['js'];
   this.extensionsRegex = getExtensionsRegex(this.extensions);
