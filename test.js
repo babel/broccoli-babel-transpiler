@@ -206,3 +206,20 @@ describe('filters files to transform', function() {
     });
   });
 });
+
+describe('module metadata', function() {
+  it('exports module metadata', function() {
+    return build(inputPath, {
+      exportModuleMetadata: true,
+      moduleId: true,
+      modules: 'amdStrict',
+      sourceMap: false,
+      inputSourceMap: false
+    }).then(function(results) {
+      var outputPath = results.directory;
+      var output = fs.readFileSync(path.join(outputPath , 'dep-graph.json'), 'utf8');
+      var expectation = fs.readFileSync(path.join(inputPath, 'dep-graph.json'), 'utf8');
+      expect(output).to.eql(expectation);
+    });
+  });
+});
