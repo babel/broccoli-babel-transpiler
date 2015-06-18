@@ -25,8 +25,13 @@ github repo.
 
 ### Examples
 
-You'll find three example projects using this plugin in the repository [broccoli-babel-examples](https://github.com/givanse/broccoli-babel-examples). Each one of them builds on top of the previous example so you can progess from bare minimum to serious development.
+You'll find three example projects using this plugin in the repository [broccoli-babel-examples](https://github.com/givanse/broccoli-babel-examples).
+Each one of them builds on top of the previous example so you can progess from bare minimum to ambitious development.
 
+ * [es6-fruits](https://github.com/givanse/broccoli-babel-examples/tree/master/es6-fruits) - Execute a single ES6 script.
+ * [es6-website](https://github.com/givanse/broccoli-babel-examples/tree/master/es6-website) - Build a simple website.
+ * [es6-modules](https://github.com/givanse/broccoli-babel-examples/tree/master/es6-modules) - Handle modules and unit tests.
+ 
 ## About source map
 
 Currently this plugin only supports inline source map. If you need
