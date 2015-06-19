@@ -30,7 +30,8 @@
   "dependencies": {
     "babel-core": "^5.0.0",
     "broccoli-filter": "^0.1.7",
-    "clone": "^0.2.0"
+    "clone": "^0.2.0",
+    "json-stable-stringify": "^1.0.0"
   },
   "devDependencies": {
     "broccoli": "^0.13.3",

@@ -30,8 +30,7 @@ separate source map feature, you're welcome to submit a pull request.
 
 ## Advanced usage
 
-`filterExtensions` is an option to limit (or expand) the set of file extensions that
-will be transformed.
+`filterExtensions` is an option to limit (or expand) the set of file extensions that will be transformed.
 
 The default `filterExtension` is `js`
 
@@ -41,3 +40,5 @@ var scriptTree = esTranspiler(inputTree, {
     filterExtensions:['js', 'es6'] // babelize both .js and .es6 files
 });
 ```
+
+`exportMetadata` is an option that can be used to write a JSON file to the output tree that gives you metadata about the tree's imports and exports.

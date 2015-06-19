@@ -3,6 +3,9 @@
 var transpiler = require('babel-core');
 var Filter     = require('broccoli-filter');
 var clone      = require('clone');
+var path       = require('path');
+var fs         = require('fs');
+var stringify  = require('json-stable-stringify');
 
 function getExtensionsRegex(extensions) {
   return extensions.map(function(extension) {
@@ -28,6 +31,14 @@ function Babel(inputTree, options) {
   this.options = options || {};
   this.extensions = this.options.filterExtensions || ['js'];
   this.extensionsRegex = getExtensionsRegex(this.extensions);
+  this.moduleMetadata = {};
+
+  if (this.options.exportModuleMetadata) {
+    this.exportModuleMetadata = this.options.exportModuleMetadata;
+    // Note, Babel does not support this option so we must save it then
+    // delete it from the options hash
+    delete this.options.exportModuleMetadata;
+  }
 }
 
 Babel.prototype = Object.create(Filter.prototype);
@@ -35,6 +46,17 @@ Babel.prototype.constructor = Babel;
 
 Babel.prototype.extensions = ['js'];
 Babel.prototype.targetExtension = 'js';
+
+Babel.prototype.write = function(readTree, destDir) {
+  var self = this;
+  return Filter.prototype.write.call(this, readTree, destDir).then(function() {
+    if (self.exportModuleMetadata) {
+      fs.writeFileSync(destDir + path.sep + 'dep-graph.json', stringify(self.moduleMetadata, {
+        space: 2
+      }));
+    }
+  });
+};
 
 Babel.prototype.transform = function(string, options) {
   return transpiler.transform(string, options);
@@ -49,7 +71,14 @@ Babel.prototype.processString = function (string, relativePath) {
     options.moduleId = replaceExtensions(this.extensionsRegex, options.filename);
   }
 
-  return this.transform(string, options).code;
+  var transpiled = this.transform(string, options);
+  var key = options.moduleId ? options.moduleId : relativePath;
+
+  if (transpiled.metadata && transpiled.metadata.modules) {
+    this.moduleMetadata[key] = transpiled.metadata.modules;
+  }
+  
+  return transpiled.code;
 };
 
 Babel.prototype.copyOptions = function() {
