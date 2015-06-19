@@ -43,9 +43,7 @@ function Babel(inputTree, options) {
 
 Babel.prototype = Object.create(Filter.prototype);
 Babel.prototype.constructor = Babel;
-
-Babel.prototype.extensions = ['js'];
-Babel.prototype.targetExtension = 'js';
+Babel.prototype.targetExtension = ['js'];
 
 Babel.prototype.write = function(readTree, destDir) {
   var self = this;
