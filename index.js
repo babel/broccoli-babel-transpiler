@@ -1,7 +1,7 @@
 'use strict';
 
 var transpiler = require('babel-core');
-var Filter     = require('broccoli-filter');
+var Filter     = require('cauliflower-filter');
 var clone      = require('clone');
 var path       = require('path');
 var fs         = require('fs');
@@ -45,11 +45,11 @@ Babel.prototype = Object.create(Filter.prototype);
 Babel.prototype.constructor = Babel;
 Babel.prototype.targetExtension = ['js'];
 
-Babel.prototype.write = function(readTree, destDir) {
+Babel.prototype.rebuild = function() {
   var self = this;
-  return Filter.prototype.write.call(this, readTree, destDir).then(function() {
+  return Filter.prototype.rebuild.call(this).then(function() {
     if (self.exportModuleMetadata) {
-      fs.writeFileSync(destDir + path.sep + 'dep-graph.json', stringify(self.moduleMetadata, {
+      fs.writeFileSync(self.outputPath + path.sep + 'dep-graph.json', stringify(self.moduleMetadata, {
         space: 2
       }));
     }
