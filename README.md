@@ -41,4 +41,4 @@ var scriptTree = esTranspiler(inputTree, {
 });
 ```
 
-`exportMetadata` is an option that can be used to write a JSON file to the output tree that gives you metadata about the tree's imports and exports.
+`exportModuleMetadata` is an option that can be used to write a JSON file to the output tree that gives you metadata about the tree's imports and exports.
