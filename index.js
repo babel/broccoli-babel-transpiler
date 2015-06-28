@@ -42,7 +42,7 @@ function Babel(inputTree, options) {
     delete this.options.exportModuleMetadata;
   }
 
-  if ( this.options.browserPolyfill ) {
+  if (this.options.browserPolyfill) {
     delete this.options.browserPolyfill;
 
     var babelCorePath = require.resolve('babel-core');

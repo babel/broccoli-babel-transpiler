@@ -62,4 +62,3 @@ You don't always need this, review which features need the polyfill here: [ES6 F
 var esTranspiler = require('broccoli-babel-transpiler');
 var scriptTree = esTranspiler(inputTree, { browserPolyfill: true });
 ```
-
