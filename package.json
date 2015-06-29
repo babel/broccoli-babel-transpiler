@@ -29,14 +29,15 @@
   "homepage": "https://github.com/babel/broccoli-babel-transpiler",
   "dependencies": {
     "babel-core": "^5.0.0",
-    "json-stable-stringify": "^1.0.0",
-    "cauliflower-filter": "^1.0.4",
     "broccoli-funnel": "^0.2.3",
     "broccoli-merge-trees": "^0.2.1",
-    "clone": "^0.2.0"
+    "cauliflower-filter": "^1.1.0",
+    "clone": "^0.2.0",
+    "json-stable-stringify": "^1.0.0"
   },
   "devDependencies": {
     "broccoli": "^0.16.3",
+    "broccoli-test-helpers": "0.0.8",
     "chai": "^1.10.0",
     "mocha": "^1.21.4",
     "rimraf": "^2.2.8"

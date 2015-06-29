@@ -7,7 +7,7 @@ var path       = require('path');
 var fs         = require('fs');
 var stringify  = require('json-stable-stringify');
 var mergeTrees = require('broccoli-merge-trees');
-var funnel = require('broccoli-funnel');
+var funnel     = require('broccoli-funnel');
 
 function getExtensionsRegex(extensions) {
   return extensions.map(function(extension) {
@@ -31,9 +31,9 @@ function Babel(inputTree, options) {
   Filter.call(this, inputTree, options);
 
   this.options = options || {};
+  this.moduleMetadata = {};
   this.extensions = this.options.filterExtensions || ['js'];
   this.extensionsRegex = getExtensionsRegex(this.extensions);
-  this.moduleMetadata = {};
 
   if (this.options.exportModuleMetadata) {
     this.exportModuleMetadata = this.options.exportModuleMetadata;
@@ -63,11 +63,23 @@ Babel.prototype.rebuild = function() {
   var self = this;
   return Filter.prototype.rebuild.call(this).then(function() {
     if (self.exportModuleMetadata) {
-      fs.writeFileSync(self.outputPath + path.sep + 'dep-graph.json', stringify(self.moduleMetadata, {
-        space: 2
-      }));
+      self._generateDepGraph();
     }
   });
+};
+
+Babel.prototype._generateDepGraph = function() {
+  var residentImports = this._cache.keys().map(byImportName);
+  var imports = Object.keys(this.moduleMetadata);
+  var evictedImports = diff(imports, residentImports);
+
+  if (evictedImports.length > 0) {
+    evictedImports.forEach(function(importName) {
+      delete this.moduleMetadata[importName];
+    }, this);
+  }
+
+  fs.writeFileSync(this.outputPath + path.sep + 'dep-graph.json', stringify(this.moduleMetadata, { space: 2 }));
 };
 
 Babel.prototype.transform = function(string, options) {
@@ -89,7 +101,7 @@ Babel.prototype.processString = function (string, relativePath) {
   if (transpiled.metadata && transpiled.metadata.modules) {
     this.moduleMetadata[key] = transpiled.metadata.modules;
   }
-  
+
   return transpiled.code;
 };
 
@@ -100,5 +112,17 @@ Babel.prototype.copyOptions = function() {
   }
   return cloned;
 };
+
+function byImportName(relativePath) {
+  return relativePath.replace(path.extname(relativePath), '');
+}
+
+function diff(array, exclusions) {
+  return array.filter(function(item) {
+    return !exclusions.some(function(exclude) {
+      return item === exclude;
+    });
+  });
+}
 
 module.exports = Babel;
