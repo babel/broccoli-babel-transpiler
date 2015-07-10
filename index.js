@@ -27,13 +27,12 @@ function Babel(inputTree, options) {
   }
 
   var options = options || {};
-  var extensions = options.filterExtensions;
+
+  //this.extensions = options.filterExtensions || this.extensions;
 
   this.options = clone(options);
   delete this.options.filterExtensions;
   delete this.options.targetExtension;
-
-  options.extensions = extensions;
 
   Filter.call(this, inputTree, options);
 }
