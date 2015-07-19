@@ -5,18 +5,17 @@ var expect = require('chai').expect;
 var broccoli = require('broccoli');
 var path = require('path');
 var Babel = require('./index');
+var helpers = require('broccoli-test-helpers');
+var makeTestHelper = helpers.makeTestHelper;
+var cleanupBuilders = helpers.cleanupBuilders;
 
-var builder;
 var inputPath = path.join(__dirname, 'fixtures');
+var expectations = path.join(__dirname, 'expectations');
 
-function build(path, options) {
-  builder = new broccoli.Builder(new Babel(path, options));
-
-  return builder.build();
-}
+var babel;
 
 describe('options', function() {
-  var options, babel;
+  var options;
 
   before(function() {
     options = {
@@ -101,32 +100,43 @@ describe('options', function() {
 });
 
 describe('transpile ES6 to ES5', function() {
+
+  before(function() {
+    babel = makeTestHelper({
+      subject: function() {
+        return new Babel(arguments[0], arguments[1]);
+      },
+      fixturePath: inputPath
+    });
+  });
+
+
   afterEach(function () {
-    builder.cleanup();
+    return cleanupBuilders();
   });
 
   it('basic', function () {
-    return build(inputPath, {
+    return babel('files', {
       inputSourceMap:false,
       sourceMap: false
     }).then(function(results) {
       var outputPath = results.directory;
 
       var output = fs.readFileSync(path.join(outputPath, 'fixtures.js')).toString();
-      var input = fs.readFileSync(path.join(inputPath,  'expected.js')).toString();
+      var input = fs.readFileSync(path.join(expectations,  'expected.js')).toString();
 
       expect(output).to.eql(input);
     });
   });
 
   it('inline source maps', function () {
-    return build(inputPath, {
+    return babel('files', {
       sourceMap: 'inline'
     }).then(function(results) {
       var outputPath = results.directory;
 
       var output = fs.readFileSync(path.join(outputPath, 'fixtures.js')).toString();
-      var input = fs.readFileSync(path.join(inputPath,  'expected-inline-source-maps.js')).toString();
+      var input = fs.readFileSync(path.join(expectations,  'expected-inline-source-maps.js')).toString();
 
       expect(output).to.eql(input);
     });
@@ -134,19 +144,29 @@ describe('transpile ES6 to ES5', function() {
 });
 
 describe('filters files to transform', function() {
+
+  before(function() {
+    babel = makeTestHelper({
+      subject: function() {
+        return new Babel(arguments[0], arguments[1]);
+      },
+      fixturePath: inputPath
+    });
+  });
+
   afterEach(function () {
-    builder.cleanup();
+    return cleanupBuilders();
   });
 
   it('default', function () {
-    return build(inputPath, {
+    return babel('files', {
       inputSourceMap:false,
       sourceMap: false
     }).then(function(results) {
       var outputPath = results.directory;
 
       var output = fs.readFileSync(path.join(outputPath, 'fixtures.js')).toString();
-      var input = fs.readFileSync(path.join(inputPath,  'expected.js')).toString();
+      var input = fs.readFileSync(path.join(expectations,  'expected.js')).toString();
 
       expect(output).to.eql(input);
       // Verify that .es6 file was not transformed
@@ -156,7 +176,7 @@ describe('filters files to transform', function() {
   });
 
   it('uses specified filter', function () {
-    return build(inputPath, {
+    return babel('files', {
       filterExtensions: ['es6'],
       inputSourceMap:false,
       sourceMap: false
@@ -164,7 +184,7 @@ describe('filters files to transform', function() {
       var outputPath = results.directory;
 
       var output = fs.readFileSync(path.join(outputPath, 'fixtures-es6.js')).toString();
-      var input = fs.readFileSync(path.join(inputPath,  'expected.js')).toString();
+      var input = fs.readFileSync(path.join(expectations,  'expected.js')).toString();
 
       expect(output).to.eql(input);
       // Verify that .es6 file was not transformed
@@ -174,7 +194,7 @@ describe('filters files to transform', function() {
   });
 
   it('named module', function() {
-    return build(inputPath, {
+    return babel('files', {
       inputSourceMap: false,
       sourceMap: false,
       moduleId: "foo",
@@ -183,7 +203,7 @@ describe('filters files to transform', function() {
       var outputPath = results.directory;
 
       var output = fs.readFileSync(path.join(outputPath, 'named-module-fixture.js')).toString();
-      var input = fs.readFileSync(path.join(inputPath,  'named-module.js')).toString();
+      var input = fs.readFileSync(path.join(expectations,  'named-module.js')).toString();
 
       expect(output).to.eql(input);
     });
@@ -191,7 +211,7 @@ describe('filters files to transform', function() {
 
 
   it('moduleId === true', function() {
-    return build(inputPath, {
+    return babel('files', {
       inputSourceMap: false,
       sourceMap: false,
       moduleId: true,
@@ -200,7 +220,7 @@ describe('filters files to transform', function() {
       var outputPath = results.directory;
 
       var output = fs.readFileSync(path.join(outputPath, 'true-module-fixture.js')).toString();
-      var input = fs.readFileSync(path.join(inputPath,  'true-module.js')).toString();
+      var input = fs.readFileSync(path.join(expectations,  'true-module.js')).toString();
 
       expect(output).to.eql(input);
     });
@@ -208,8 +228,21 @@ describe('filters files to transform', function() {
 });
 
 describe('module metadata', function() {
+  before(function() {
+    babel = makeTestHelper({
+      subject: function() {
+        return new Babel(arguments[0], arguments[1]);
+      },
+      fixturePath: inputPath
+    });
+  });
+
+  afterEach(function () {
+    return cleanupBuilders();
+  });
+
   it('exports module metadata', function() {
-    return build(inputPath, {
+    return babel('files', {
       exportModuleMetadata: true,
       moduleId: true,
       modules: 'amdStrict',
@@ -217,8 +250,45 @@ describe('module metadata', function() {
       inputSourceMap: false
     }).then(function(results) {
       var outputPath = results.directory;
+      var output = fs.readFileSync(path.join(outputPath, 'dep-graph.json'), 'utf8');
+      var expectation = fs.readFileSync(path.join(expectations, 'dep-graph.json'), 'utf8');
+      expect(output).to.eql(expectation);
+    });
+  });
+
+  it('handles adding and removing files', function() {
+    return babel('files', {
+      exportModuleMetadata: true,
+      moduleId: true,
+      modules: 'amdStrict',
+      sourceMap: false,
+      inputSourceMap: false
+    }).then(function(results) {
+      // Normal build
+      var outputPath = results.directory;
       var output = fs.readFileSync(path.join(outputPath , 'dep-graph.json'), 'utf8');
-      var expectation = fs.readFileSync(path.join(inputPath, 'dep-graph.json'), 'utf8');
+      var expectation = fs.readFileSync(path.join(expectations, 'dep-graph.json'), 'utf8');
+      expect(output).to.eql(expectation);
+
+      // Move away files/fixtures.js
+      fs.renameSync(path.join(inputPath, 'files', 'fixtures.js'), path.join(inputPath, 'fixtures.js'));
+      return results.builder();
+    }).then(function(results) {
+      // Add back file/fixtures.js
+      fs.renameSync(path.join(inputPath, 'fixtures.js'), path.join(inputPath, 'files', 'fixtures.js'));
+
+      // Build without files/fixtures.js
+      var outputPath = results.directory;
+      var output = fs.readFileSync(path.join(outputPath, 'dep-graph.json'), 'utf8');
+      var expectation = fs.readFileSync(path.join(expectations, 'pruned-dep-graph.json'), 'utf8');
+      expect(output).to.eql(expectation);
+
+      return results.builder();
+    }).then(function(results) {
+      // Back to the first build
+      var outputPath = results.directory;
+      var output = fs.readFileSync(path.join(outputPath, 'dep-graph.json'), 'utf8');
+      var expectation = fs.readFileSync(path.join(expectations, 'dep-graph.json'), 'utf8');
       expect(output).to.eql(expectation);
     });
   });
