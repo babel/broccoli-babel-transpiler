@@ -37,14 +37,12 @@ function Babel(inputTree, options) {
 
   if (this.options.exportModuleMetadata) {
     this.exportModuleMetadata = this.options.exportModuleMetadata;
-    // Note, Babel does not support this option so we must save it then
-    // delete it from the options hash
-    delete this.options.exportModuleMetadata;
   }
+  // Note, Babel does not support this option so we must save it then
+  // delete it from the options hash
+  delete this.options.exportModuleMetadata;
 
   if (this.options.browserPolyfill) {
-    delete this.options.browserPolyfill;
-
     var babelCorePath = require.resolve('babel-core');
     babelCorePath = babelCorePath.replace(/\/babel-core\/.*$/, '/babel-core');
 
@@ -53,6 +51,7 @@ function Babel(inputTree, options) {
   } else {
     this.inputTree = inputTree;
   }
+  delete this.options.browserPolyfill;
 }
 
 Babel.prototype = Object.create(Filter.prototype);
