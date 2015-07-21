@@ -40,6 +40,7 @@
     "broccoli-test-helpers": "0.0.8",
     "chai": "^1.10.0",
     "mocha": "^1.21.4",
+    "mock-fs": "^3.0.0",
     "rimraf": "^2.2.8"
   }
 }
