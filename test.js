@@ -6,6 +6,8 @@ var broccoli = require('broccoli');
 var path = require('path');
 var Babel = require('./index');
 var helpers = require('broccoli-test-helpers');
+var mockFs = require('mock-fs');
+var stringify = require('json-stable-stringify');
 var makeTestHelper = helpers.makeTestHelper;
 var cleanupBuilders = helpers.cleanupBuilders;
 
@@ -292,4 +294,55 @@ describe('module metadata', function() {
       expect(output).to.eql(expectation);
     });
   });
+
+  describe('_generateDepGraph', function() {
+
+    beforeEach(function() {
+      mockFs({
+        'tmp': {}
+      });
+      babel = new Babel('foo');
+      babel.outputPath = 'tmp'
+    });
+
+    afterEach(function() {
+      mockFs.restore();
+      babel.outputPath = null;
+    });
+
+    it('should generate a graph', function() {
+      babel._cache.keys = function() {
+        return ['foo.js', 'bar.js'];
+      };
+
+      babel.moduleMetadata = {
+        foo: {},
+        bar: {}
+      };
+
+      babel._generateDepGraph();
+
+      expect(fs.readFileSync(path.join(babel.outputPath, 'dep-graph.json'), 'utf8')).to.eql(stringify({
+        bar: {},
+        foo: {}
+      }, { space: 2 }));
+    });
+
+    it('should evict imports from the graph that are no longer in the tree', function() {
+      babel._cache.keys = function() {
+        return ['foo.js'];
+      };
+
+      babel.moduleMetadata = {
+        foo: {}
+      };
+
+      babel._generateDepGraph();
+
+      expect(fs.readFileSync(path.join(babel.outputPath, 'dep-graph.json'), 'utf8')).to.eql(stringify({
+        foo: {}
+      }, { space: 2 }));
+    });
+  });
+
 });

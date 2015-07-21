@@ -99,7 +99,7 @@ Babel.prototype.processString = function (string, relativePath) {
   var key = options.moduleId ? options.moduleId : relativePath;
 
   if (transpiled.metadata && transpiled.metadata.modules) {
-    this.moduleMetadata[key] = transpiled.metadata.modules;
+    this.moduleMetadata[byImportName(key)] = transpiled.metadata.modules;
   }
 
   return transpiled.code;
