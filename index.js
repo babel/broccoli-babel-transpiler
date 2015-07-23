@@ -11,7 +11,7 @@ var funnel     = require('broccoli-funnel');
 
 function getExtensionsRegex(extensions) {
   return extensions.map(function(extension) {
-    return new RegExp('\.' + extensions + '$');
+    return new RegExp('\.' + extension + '$');
   });
 }
 
