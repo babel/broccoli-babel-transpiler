@@ -180,7 +180,7 @@ describe('filters files to transform', function() {
   it('uses specified filter', function () {
     return babel('files', {
       filterExtensions: ['es6'],
-      inputSourceMap:false,
+      inputSourceMap: false,
       sourceMap: false
     }).then(function(results) {
       var outputPath = results.directory;
@@ -192,6 +192,25 @@ describe('filters files to transform', function() {
       // Verify that .es6 file was not transformed
       expect(fs.existsSync(path.join(outputPath, 'fixtures-es6.es6'))).to.not.be.ok;
 
+    });
+  });
+
+  it('uses multiple specified filters', function() {
+    return babel('files', {
+      filterExtensions: ['js', 'es6'],
+      inputSourceMap: false,
+      sourceMap: false
+    }).then(function(results) {
+      var outputPath = results.directory;
+      
+      var es6ExtOutput = fs.readFileSync(path.join(outputPath, 'fixtures-es6.js')).toString();
+      var jsExtOutput = fs.readFileSync(path.join(outputPath, 'fixtures.js')).toString();
+      var input = fs.readFileSync(path.join(expectations, 'expected.js')).toString();
+
+      expect(es6ExtOutput).to.eql(input);
+      expect(jsExtOutput).to.eql(input);
+      // Verify that .es6 file was not transformed
+      expect(fs.existsSync(path.join(outputPath, 'fixtures-es6.es6'))).to.not.be.ok;
     });
   });
 
