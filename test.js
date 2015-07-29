@@ -86,7 +86,7 @@ describe('options', function() {
     expect(transpilerOptions.moduleId).to.eql('relativePath');
   });
 
-  it('does not propogate validExtensions', function () {
+  it('does not propagate validExtensions', function () {
     var transpilerOptions;
 
     babel.transform = function(string, options) {
@@ -364,4 +364,28 @@ describe('module metadata', function() {
     });
   });
 
+});
+
+describe('consume broccoli-babel-transpiler options', function() {
+  it('enabled', function() {
+    var options = {
+      exportModuleMetadata: true,
+      browserPolyfill: true 
+    };
+
+    babel = new Babel('foo', options);
+    var code = babel.processString('path', 'relativePath');
+    expect(code).to.be.ok;
+  });
+
+  it('explicitly disabled', function() {
+    var options = {
+      exportModuleMetadata: false,
+      browserPolyfill: false 
+    };
+
+    babel = new Babel('foo', options);
+    var code = babel.processString('path', 'relativePath');
+    expect(code).to.be.ok;
+  });
 });
