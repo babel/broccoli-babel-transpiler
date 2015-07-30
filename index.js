@@ -58,9 +58,9 @@ Babel.prototype = Object.create(Filter.prototype);
 Babel.prototype.constructor = Babel;
 Babel.prototype.targetExtension = ['js'];
 
-Babel.prototype.rebuild = function() {
+Babel.prototype.build = function() {
   var self = this;
-  return Filter.prototype.rebuild.call(this).then(function() {
+  return Filter.prototype.build.call(this).then(function() {
     if (self.exportModuleMetadata) {
       self._generateDepGraph();
     }
