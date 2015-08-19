@@ -6,8 +6,9 @@ var broccoli = require('broccoli');
 var path = require('path');
 var Babel = require('./index');
 var helpers = require('broccoli-test-helpers');
-var mockFs = require('mock-fs');
 var stringify = require('json-stable-stringify');
+var mkdirp = require('mkdirp').sync;
+var rm = require('rimraf').sync;
 var makeTestHelper = helpers.makeTestHelper;
 var cleanupBuilders = helpers.cleanupBuilders;
 
@@ -202,7 +203,7 @@ describe('filters files to transform', function() {
       sourceMap: false
     }).then(function(results) {
       var outputPath = results.directory;
-      
+
       var es6ExtOutput = fs.readFileSync(path.join(outputPath, 'fixtures-es6.js')).toString();
       var jsExtOutput = fs.readFileSync(path.join(outputPath, 'fixtures.js')).toString();
       var input = fs.readFileSync(path.join(expectations, 'expected.js')).toString();
@@ -315,17 +316,15 @@ describe('module metadata', function() {
   });
 
   describe('_generateDepGraph', function() {
-
+    var tmp = path.join(process.cwd(), 'test-temp');
     beforeEach(function() {
-      mockFs({
-        'tmp': {}
-      });
+      mkdirp(tmp);
       babel = new Babel('foo');
-      babel.outputPath = 'tmp'
+      babel.outputPath = tmp;
     });
 
     afterEach(function() {
-      mockFs.restore();
+      rm(tmp);
       babel.outputPath = null;
     });
 
@@ -370,7 +369,7 @@ describe('consume broccoli-babel-transpiler options', function() {
   it('enabled', function() {
     var options = {
       exportModuleMetadata: true,
-      browserPolyfill: true 
+      browserPolyfill: true
     };
 
     babel = new Babel('foo', options);
@@ -381,7 +380,7 @@ describe('consume broccoli-babel-transpiler options', function() {
   it('explicitly disabled', function() {
     var options = {
       exportModuleMetadata: false,
-      browserPolyfill: false 
+      browserPolyfill: false
     };
 
     babel = new Babel('foo', options);
