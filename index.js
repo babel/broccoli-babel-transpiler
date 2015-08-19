@@ -34,6 +34,7 @@ function Babel(inputTree, options) {
   this.moduleMetadata = {};
   this.extensions = this.options.filterExtensions || ['js'];
   this.extensionsRegex = getExtensionsRegex(this.extensions);
+  this.name = 'broccoli-babel-transpiler';
 
   if (this.options.exportModuleMetadata) {
     this.exportModuleMetadata = this.options.exportModuleMetadata;
