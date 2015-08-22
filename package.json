@@ -31,7 +31,7 @@
     "babel-core": "^5.0.0",
     "broccoli-funnel": "^0.2.3",
     "broccoli-merge-trees": "^0.2.1",
-    "broccoli-filter": "1.2.0",
+    "broccoli-persistent-filter": "^1.0.1",
     "clone": "^0.2.0",
     "json-stable-stringify": "^1.0.0"
   },

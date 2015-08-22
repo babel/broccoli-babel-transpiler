@@ -1,7 +1,7 @@
 'use strict';
 
 var transpiler = require('babel-core');
-var Filter     = require('broccoli-filter');
+var Filter     = require('broccoli-persistent-filter');
 var clone      = require('clone');
 var path       = require('path');
 var fs         = require('fs');
@@ -23,14 +23,17 @@ function replaceExtensions(extensionsRegex, name) {
   return name;
 }
 
-function Babel(inputTree, options) {
+function Babel(inputTree, _options) {
   if (!(this instanceof Babel)) {
-    return new Babel(inputTree, options);
+    return new Babel(inputTree, _options);
   }
 
+  var options = _options || {};
+  options.persist = true;
   Filter.call(this, inputTree, options);
 
-  this.options = options || {};
+  delete options.persist;
+  this.options = options;
   this.moduleMetadata = {};
   this.extensions = this.options.filterExtensions || ['js'];
   this.extensionsRegex = getExtensionsRegex(this.extensions);
@@ -58,6 +61,10 @@ function Babel(inputTree, options) {
 Babel.prototype = Object.create(Filter.prototype);
 Babel.prototype.constructor = Babel;
 Babel.prototype.targetExtension = ['js'];
+
+Babel.prototype.baseDir = function() {
+  return __dirname;
+};
 
 Babel.prototype.build = function() {
   var self = this;
