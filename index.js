@@ -30,7 +30,7 @@ function Babel(inputTree, _options) {
   }
 
   var options = _options || {};
-  options.persist = true;
+  options.persist = !options.exportModuleMetadata; // TODO: make this also work in cache
   Filter.call(this, inputTree, options);
 
   delete options.persist;
@@ -77,6 +77,7 @@ Babel.prototype.build = function() {
 };
 
 Babel.prototype._generateDepGraph = function() {
+  debugger;
   var residentImports = this._cache.keys().map(byImportName);
   var imports = Object.keys(this.moduleMetadata);
   var evictedImports = diff(imports, residentImports);
