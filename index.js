@@ -1,13 +1,14 @@
 'use strict';
 
 var transpiler = require('babel-core');
-var Filter     = require('broccoli-filter');
+var Filter     = require('broccoli-persistent-filter');
 var clone      = require('clone');
 var path       = require('path');
 var fs         = require('fs');
 var stringify  = require('json-stable-stringify');
 var mergeTrees = require('broccoli-merge-trees');
 var funnel     = require('broccoli-funnel');
+var crypto     = require('crypto');
 
 function getExtensionsRegex(extensions) {
   return extensions.map(function(extension) {
@@ -23,14 +24,17 @@ function replaceExtensions(extensionsRegex, name) {
   return name;
 }
 
-function Babel(inputTree, options) {
+function Babel(inputTree, _options) {
   if (!(this instanceof Babel)) {
-    return new Babel(inputTree, options);
+    return new Babel(inputTree, _options);
   }
 
+  var options = _options || {};
+  options.persist = !options.exportModuleMetadata; // TODO: make this also work in cache
   Filter.call(this, inputTree, options);
 
-  this.options = options || {};
+  delete options.persist;
+  this.options = options;
   this.moduleMetadata = {};
   this.extensions = this.options.filterExtensions || ['js'];
   this.extensionsRegex = getExtensionsRegex(this.extensions);
@@ -59,6 +63,10 @@ Babel.prototype = Object.create(Filter.prototype);
 Babel.prototype.constructor = Babel;
 Babel.prototype.targetExtension = ['js'];
 
+Babel.prototype.baseDir = function() {
+  return __dirname;
+};
+
 Babel.prototype.build = function() {
   var self = this;
   return Filter.prototype.build.call(this).then(function() {
@@ -69,6 +77,7 @@ Babel.prototype.build = function() {
 };
 
 Babel.prototype._generateDepGraph = function() {
+  debugger;
   var residentImports = this._cache.keys().map(byImportName);
   var imports = Object.keys(this.moduleMetadata);
   var evictedImports = diff(imports, residentImports);
@@ -84,6 +93,23 @@ Babel.prototype._generateDepGraph = function() {
 
 Babel.prototype.transform = function(string, options) {
   return transpiler.transform(string, options);
+};
+
+/*
+ * @private
+ *
+ * @method optionsString
+ * @returns a stringifeid version of the input options
+ */
+Babel.prototype.optionsHash  = function() {
+  if (!this._optionsHash) {
+    this._optionsHash = crypto.createHash('md5').update(stringify(this.options), 'utf8').digest('hex');
+  }
+  return this._optionsHash;
+};
+
+Babel.prototype.cacheKeyProcessString = function(string, relativePath) {
+  return this.optionsHash() + Filter.prototype.cacheKeyProcessString.call(this, string, relativePath);
 };
 
 Babel.prototype.processString = function (string, relativePath) {
