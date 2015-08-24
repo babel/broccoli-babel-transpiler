@@ -8,6 +8,7 @@ var fs         = require('fs');
 var stringify  = require('json-stable-stringify');
 var mergeTrees = require('broccoli-merge-trees');
 var funnel     = require('broccoli-funnel');
+var crypto     = require('crypto');
 
 function getExtensionsRegex(extensions) {
   return extensions.map(function(extension) {
@@ -91,6 +92,23 @@ Babel.prototype._generateDepGraph = function() {
 
 Babel.prototype.transform = function(string, options) {
   return transpiler.transform(string, options);
+};
+
+/*
+ * @private
+ *
+ * @method optionsString
+ * @returns a stringifeid version of the input options
+ */
+Babel.prototype.optionsHash  = function() {
+  if (!this._optionsHash) {
+    this._optionsHash = crypto.createHash('md5').update(stringify(this.options), 'utf8').digest('hex');
+  }
+  return this._optionsHash;
+};
+
+Babel.prototype.cacheKeyProcessString = function(string, relativePath) {
+  return this.optionsHash() + Filter.prototype.cacheKeyProcessString.call(this, string, relativePath);
 };
 
 Babel.prototype.processString = function (string, relativePath) {
