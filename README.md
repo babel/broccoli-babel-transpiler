@@ -1,8 +1,6 @@
 # broccoli-babel-transpiler
 
 [![Build Status](https://travis-ci.org/babel/broccoli-babel-transpiler.svg?branch=master)](https://travis-ci.org/babel/broccoli-babel-transpiler)
-[![Build status](https://ci.appveyor.com/api/projects/status/gvt0rheb1c2c4jwd?svg=true)](https://ci.appveyor.com/project/embercli/broccoli-persistent-filter)
-
 
 A [Broccoli](https://github.com/broccolijs/broccoli) plugin which
 transpiles ES6 to readable ES5 by using [babel](https://github.com/babel/babel).
