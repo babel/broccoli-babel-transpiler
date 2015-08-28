@@ -77,7 +77,6 @@ Babel.prototype.build = function() {
 };
 
 Babel.prototype._generateDepGraph = function() {
-  debugger;
   var residentImports = this._cache.keys().map(byImportName);
   var imports = Object.keys(this.moduleMetadata);
   var evictedImports = diff(imports, residentImports);
