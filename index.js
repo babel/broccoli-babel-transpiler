@@ -100,7 +100,7 @@ Babel.prototype.transform = function(string, options) {
  * @method optionsString
  * @returns a stringifeid version of the input options
  */
-Babel.prototype.optionsHash  = function() {
+Babel.prototype.optionsHash = function() {
   if (!this._optionsHash) {
     this._optionsHash = crypto.createHash('md5').update(stringify(this.options), 'utf8').digest('hex');
   }
@@ -111,7 +111,7 @@ Babel.prototype.cacheKeyProcessString = function(string, relativePath) {
   return this.optionsHash() + Filter.prototype.cacheKeyProcessString.call(this, string, relativePath);
 };
 
-Babel.prototype.processString = function (string, relativePath) {
+Babel.prototype.processString = function(string, relativePath) {
   var options = this.copyOptions();
 
   options.filename = options.sourceMapName = options.sourceFileName = relativePath;
