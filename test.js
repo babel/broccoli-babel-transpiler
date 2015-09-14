@@ -316,6 +316,7 @@ describe('module metadata', function() {
   describe('_generateDepGraph', function() {
     var tmp = path.join(process.cwd(), 'test-temp');
     beforeEach(function() {
+      rm(tmp);
       fs.mkdirSync(tmp);
       babel = new Babel('foo');
       babel.outputPath = tmp;
