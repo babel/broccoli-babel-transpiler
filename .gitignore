@@ -1,3 +1,4 @@
-node_modules/
-tmp/
-fixtures/tmp/
+/node_modules/
+/tmp/
+/fixtures/tmp/
+/test-temp
