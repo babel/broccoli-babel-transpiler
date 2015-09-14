@@ -2,12 +2,10 @@
 
 var fs     = require('fs');
 var expect = require('chai').expect;
-var broccoli = require('broccoli');
 var path = require('path');
 var Babel = require('./index');
 var helpers = require('broccoli-test-helpers');
 var stringify = require('json-stable-stringify');
-var mkdirp = require('mkdirp').sync;
 var rm = require('rimraf').sync;
 var makeTestHelper = helpers.makeTestHelper;
 var cleanupBuilders = helpers.cleanupBuilders;
@@ -318,7 +316,7 @@ describe('module metadata', function() {
   describe('_generateDepGraph', function() {
     var tmp = path.join(process.cwd(), 'test-temp');
     beforeEach(function() {
-      mkdirp(tmp);
+      fs.mkdirSync(tmp);
       babel = new Babel('foo');
       babel.outputPath = tmp;
     });
