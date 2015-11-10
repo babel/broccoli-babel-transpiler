@@ -249,121 +249,121 @@ describe('filters files to transform', function() {
   });
 });
 
-describe('module metadata', function() {
-  before(function() {
-    babel = makeTestHelper({
-      subject: function() {
-        return new Babel(arguments[0], arguments[1]);
-      },
-      fixturePath: inputPath
-    });
-  });
+// describe('module metadata', function() {
+//   before(function() {
+//     babel = makeTestHelper({
+//       subject: function() {
+//         return new Babel(arguments[0], arguments[1]);
+//       },
+//       fixturePath: inputPath
+//     });
+//   });
 
-  afterEach(function () {
-    return cleanupBuilders();
-  });
+//   afterEach(function () {
+//     return cleanupBuilders();
+//   });
 
-  it('exports module metadata', function() {
-    return babel('files', {
-      exportModuleMetadata: true,
-      moduleId: true,
-      modules: 'amdStrict',
-      sourceMap: false,
-      inputSourceMap: false
-    }).then(function(results) {
-      var outputPath = results.directory;
-      var output = fs.readFileSync(path.join(outputPath, 'dep-graph.json'), 'utf8');
-      var expectation = fs.readFileSync(path.join(expectations, 'dep-graph.json'), 'utf8');
-      expect(output).to.eql(expectation);
-    });
-  });
+//   it('exports module metadata', function() {
+//     return babel('files', {
+//       exportModuleMetadata: true,
+//       moduleId: true,
+//       modules: 'amdStrict',
+//       sourceMap: false,
+//       inputSourceMap: false
+//     }).then(function(results) {
+//       var outputPath = results.directory;
+//       var output = fs.readFileSync(path.join(outputPath, 'dep-graph.json'), 'utf8');
+//       var expectation = fs.readFileSync(path.join(expectations, 'dep-graph.json'), 'utf8');
+//       expect(output).to.eql(expectation);
+//     });
+//   });
 
-  it('handles adding and removing files', function() {
-    return babel('files', {
-      exportModuleMetadata: true,
-      moduleId: true,
-      modules: 'amdStrict',
-      sourceMap: false,
-      inputSourceMap: false
-    }).then(function(results) {
-      // Normal build
-      var outputPath = results.directory;
-      var output = fs.readFileSync(path.join(outputPath , 'dep-graph.json'), 'utf8');
-      var expectation = fs.readFileSync(path.join(expectations, 'dep-graph.json'), 'utf8');
-      expect(output).to.eql(expectation);
+//   it('handles adding and removing files', function() {
+//     return babel('files', {
+//       exportModuleMetadata: true,
+//       moduleId: true,
+//       modules: 'amdStrict',
+//       sourceMap: false,
+//       inputSourceMap: false
+//     }).then(function(results) {
+//       // Normal build
+//       var outputPath = results.directory;
+//       var output = fs.readFileSync(path.join(outputPath , 'dep-graph.json'), 'utf8');
+//       var expectation = fs.readFileSync(path.join(expectations, 'dep-graph.json'), 'utf8');
+//       expect(output).to.eql(expectation);
 
-      // Move away files/fixtures.js
-      fs.renameSync(path.join(inputPath, 'files', 'fixtures.js'), path.join(inputPath, 'fixtures.js'));
-      return results.builder();
-    }).then(function(results) {
-      // Add back file/fixtures.js
-      fs.renameSync(path.join(inputPath, 'fixtures.js'), path.join(inputPath, 'files', 'fixtures.js'));
+//       // Move away files/fixtures.js
+//       fs.renameSync(path.join(inputPath, 'files', 'fixtures.js'), path.join(inputPath, 'fixtures.js'));
+//       return results.builder();
+//     }).then(function(results) {
+//       // Add back file/fixtures.js
+//       fs.renameSync(path.join(inputPath, 'fixtures.js'), path.join(inputPath, 'files', 'fixtures.js'));
 
-      // Build without files/fixtures.js
-      var outputPath = results.directory;
-      var output = fs.readFileSync(path.join(outputPath, 'dep-graph.json'), 'utf8');
-      var expectation = fs.readFileSync(path.join(expectations, 'pruned-dep-graph.json'), 'utf8');
-      expect(output).to.eql(expectation);
+//       // Build without files/fixtures.js
+//       var outputPath = results.directory;
+//       var output = fs.readFileSync(path.join(outputPath, 'dep-graph.json'), 'utf8');
+//       var expectation = fs.readFileSync(path.join(expectations, 'pruned-dep-graph.json'), 'utf8');
+//       expect(output).to.eql(expectation);
 
-      return results.builder();
-    }).then(function(results) {
-      // Back to the first build
-      var outputPath = results.directory;
-      var output = fs.readFileSync(path.join(outputPath, 'dep-graph.json'), 'utf8');
-      var expectation = fs.readFileSync(path.join(expectations, 'dep-graph.json'), 'utf8');
-      expect(output).to.eql(expectation);
-    });
-  });
+//       return results.builder();
+//     }).then(function(results) {
+//       // Back to the first build
+//       var outputPath = results.directory;
+//       var output = fs.readFileSync(path.join(outputPath, 'dep-graph.json'), 'utf8');
+//       var expectation = fs.readFileSync(path.join(expectations, 'dep-graph.json'), 'utf8');
+//       expect(output).to.eql(expectation);
+//     });
+//   });
 
-  describe('_generateDepGraph', function() {
-    var tmp = path.join(process.cwd(), 'test-temp');
-    beforeEach(function() {
-      mkdirp(tmp);
-      babel = new Babel('foo');
-      babel.outputPath = tmp;
-    });
+//   describe('_generateDepGraph', function() {
+//     var tmp = path.join(process.cwd(), 'test-temp');
+//     beforeEach(function() {
+//       mkdirp(tmp);
+//       babel = new Babel('foo');
+//       babel.outputPath = tmp;
+//     });
 
-    afterEach(function() {
-      rm(tmp);
-      babel.outputPath = null;
-    });
+//     afterEach(function() {
+//       rm(tmp);
+//       babel.outputPath = null;
+//     });
 
-    it('should generate a graph', function() {
-      babel._cache.keys = function() {
-        return ['foo.js', 'bar.js'];
-      };
+//     it('should generate a graph', function() {
+//       babel._cache.keys = function() {
+//         return ['foo.js', 'bar.js'];
+//       };
 
-      babel.moduleMetadata = {
-        foo: {},
-        bar: {}
-      };
+//       babel.moduleMetadata = {
+//         foo: {},
+//         bar: {}
+//       };
 
-      babel._generateDepGraph();
+//       babel._generateDepGraph();
 
-      expect(fs.readFileSync(path.join(babel.outputPath, 'dep-graph.json'), 'utf8')).to.eql(stringify({
-        bar: {},
-        foo: {}
-      }, { space: 2 }));
-    });
+//       expect(fs.readFileSync(path.join(babel.outputPath, 'dep-graph.json'), 'utf8')).to.eql(stringify({
+//         bar: {},
+//         foo: {}
+//       }, { space: 2 }));
+//     });
 
-    it('should evict imports from the graph that are no longer in the tree', function() {
-      babel._cache.keys = function() {
-        return ['foo.js'];
-      };
+//     it('should evict imports from the graph that are no longer in the tree', function() {
+//       babel._cache.keys = function() {
+//         return ['foo.js'];
+//       };
 
-      babel.moduleMetadata = {
-        foo: {}
-      };
+//       babel.moduleMetadata = {
+//         foo: {}
+//       };
 
-      babel._generateDepGraph();
+//       babel._generateDepGraph();
 
-      expect(fs.readFileSync(path.join(babel.outputPath, 'dep-graph.json'), 'utf8')).to.eql(stringify({
-        foo: {}
-      }, { space: 2 }));
-    });
-  });
+//       expect(fs.readFileSync(path.join(babel.outputPath, 'dep-graph.json'), 'utf8')).to.eql(stringify({
+//         foo: {}
+//       }, { space: 2 }));
+//     });
+//   });
 
-});
+// });
 
 describe('consume broccoli-babel-transpiler options', function() {
   it('enabled', function() {
