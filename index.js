@@ -39,6 +39,7 @@ function Babel(inputTree, _options) {
   this.extensions = this.options.filterExtensions || ['js'];
   this.extensionsRegex = getExtensionsRegex(this.extensions);
   this.name = 'broccoli-babel-transpiler';
+  this.annotation = this.options.annotation || 'Babel';
 
   if (this.options.exportModuleMetadata) {
     this.exportModuleMetadata = this.options.exportModuleMetadata;
@@ -46,6 +47,7 @@ function Babel(inputTree, _options) {
   // Note, Babel does not support this option so we must save it then
   // delete it from the options hash
   delete this.options.exportModuleMetadata;
+  delete this.options.annotation;
 
   if (this.options.browserPolyfill) {
     var babelCorePath = require.resolve('babel-core');
