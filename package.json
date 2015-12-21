@@ -32,7 +32,7 @@
     "broccoli-persistent-filter": "^1.0.1",
     "broccoli-funnel": "^1.0.0",
     "broccoli-merge-trees": "^1.0.0",
-    "clone": "^0.2.0",
+    "clone": "^1.0.2",
     "json-stable-stringify": "^1.0.0"
   },
   "devDependencies": {
