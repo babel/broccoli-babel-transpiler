@@ -221,13 +221,13 @@ describe('filters files to transform', function() {
     });
   });
 
-  // "modules" no longer supported. What is the translation?
-  it.skip('named module', function() {
+  // "modules" no longer supported. Use "transform-es2015-modules-amd" instead
+  it('named module', function() {
     return babel('files', {
       inputSourceMap: false,
       sourceMap: false,
       moduleId: "foo",
-      modules: 'amdStrict'
+      plugins: ["transform-es2015-modules-amd"],
     }).then(function(results) {
       var outputPath = results.directory;
 
@@ -239,13 +239,13 @@ describe('filters files to transform', function() {
   });
 
 
-  // "modules" no longer supported. What is the translation?
-  it.skip('moduleId === true', function() {
+  // "modules" no longer supported. Use "transform-es2015-modules-amd" instead
+  it('moduleId === true', function() {
     return babel('files', {
       inputSourceMap: false,
       sourceMap: false,
       moduleId: true,
-      modules: 'amdStrict'
+      plugins: ["transform-es2015-modules-amd"],
     }).then(function(results) {
       var outputPath = results.directory;
 

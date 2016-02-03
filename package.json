@@ -37,6 +37,7 @@
     "json-stable-stringify": "^1.0.0"
   },
   "devDependencies": {
+    "babel-plugin-transform-es2015-modules-amd": "^6.4.3",
     "broccoli": "^0.16.3",
     "broccoli-test-helpers": "0.0.8",
     "chai": "^1.10.0",
