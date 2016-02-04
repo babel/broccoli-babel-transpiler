@@ -1,6 +1,6 @@
-"use strict";
-
 define("true-module-fixture", ["exports"], function (exports) {
+  "use strict";
+
   Object.defineProperty(exports, "__esModule", {
     value: true
   });

@@ -36,8 +36,8 @@
     "json-stable-stringify": "^1.0.0"
   },
   "devDependencies": {
-    "babel-plugin-transform-es2015-block-scoping": "^6.3.13",
-    "babel-plugin-transform-es2015-modules-amd": "^6.3.13",
+    "babel-plugin-transform-es2015-block-scoping": "^6.4.0",
+    "babel-plugin-transform-es2015-modules-amd": "^6.4.3",
     "babel-plugin-transform-strict-mode": "^6.3.13",
     "broccoli": "^0.16.3",
     "broccoli-test-helpers": "0.0.8",
