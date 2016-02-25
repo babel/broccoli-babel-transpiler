@@ -30,7 +30,11 @@ function Babel(inputTree, _options) {
   }
 
   var options = _options || {};
-  options.persist = !options.exportModuleMetadata; // TODO: make this also work in cache
+  
+  if (options.persist === undefined)
+    options.persist = !options.exportModuleMetadata; // TODO: make this also work in cache
+  }
+
   Filter.call(this, inputTree, options);
 
   delete options.persist;
