@@ -17,12 +17,6 @@ var expectations = path.join(__dirname, 'expectations');
 
 var babel;
 
-function readFileSync() {
-  // babel doesn't support Windows newlines
-  // https://github.com/babel/babel/pull/2290
-  return fs.readFileSync.apply(this, arguments).replace(/\r\n/g, '\n');
-}
-
 describe('options', function() {
   var options;
 
@@ -131,8 +125,8 @@ describe('transpile ES6 to ES5', function() {
     }).then(function(results) {
       var outputPath = results.directory;
 
-      var output = readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
-      var input = readFileSync(path.join(expectations, 'expected.js'), 'utf8');
+      var output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
+      var input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
 
       expect(output).to.eql(input);
     });
@@ -144,8 +138,8 @@ describe('transpile ES6 to ES5', function() {
     }).then(function(results) {
       var outputPath = results.directory;
 
-      var output = readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
-      var input = readFileSync(path.join(expectations, 'expected-inline-source-maps.js'), 'utf8');
+      var output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
+      var input = fs.readFileSync(path.join(expectations, 'expected-inline-source-maps.js'), 'utf8');
 
       expect(output).to.eql(input);
     });
@@ -174,8 +168,8 @@ describe('filters files to transform', function() {
     }).then(function(results) {
       var outputPath = results.directory;
 
-      var output = readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
-      var input = readFileSync(path.join(expectations, 'expected.js'), 'utf8');
+      var output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
+      var input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
 
       expect(output).to.eql(input);
       // Verify that .es6 file was not transformed
@@ -192,8 +186,8 @@ describe('filters files to transform', function() {
     }).then(function(results) {
       var outputPath = results.directory;
 
-      var output = readFileSync(path.join(outputPath, 'fixtures-es6.js'), 'utf8');
-      var input = readFileSync(path.join(expectations, 'expected.js'), 'utf8');
+      var output = fs.readFileSync(path.join(outputPath, 'fixtures-es6.js'), 'utf8');
+      var input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
 
       expect(output).to.eql(input);
       // Verify that .es6 file was not transformed
@@ -210,9 +204,9 @@ describe('filters files to transform', function() {
     }).then(function(results) {
       var outputPath = results.directory;
 
-      var es6ExtOutput = readFileSync(path.join(outputPath, 'fixtures-es6.js'), 'utf8');
-      var jsExtOutput = readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
-      var input = readFileSync(path.join(expectations, 'expected.js'), 'utf8');
+      var es6ExtOutput = fs.readFileSync(path.join(outputPath, 'fixtures-es6.js'), 'utf8');
+      var jsExtOutput = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
+      var input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
 
       expect(es6ExtOutput).to.eql(input);
       expect(jsExtOutput).to.eql(input);
@@ -230,8 +224,8 @@ describe('filters files to transform', function() {
     }).then(function(results) {
       var outputPath = results.directory;
 
-      var output = readFileSync(path.join(outputPath, 'named-module-fixture.js'), 'utf8');
-      var input = readFileSync(path.join(expectations, 'named-module.js'), 'utf8');
+      var output = fs.readFileSync(path.join(outputPath, 'named-module-fixture.js'), 'utf8');
+      var input = fs.readFileSync(path.join(expectations, 'named-module.js'), 'utf8');
 
       expect(output).to.eql(input);
     });
@@ -247,8 +241,8 @@ describe('filters files to transform', function() {
     }).then(function(results) {
       var outputPath = results.directory;
 
-      var output = readFileSync(path.join(outputPath, 'true-module-fixture.js'), 'utf8');
-      var input = readFileSync(path.join(expectations, 'true-module.js'), 'utf8');
+      var output = fs.readFileSync(path.join(outputPath, 'true-module-fixture.js'), 'utf8');
+      var input = fs.readFileSync(path.join(expectations, 'true-module.js'), 'utf8');
 
       expect(output).to.eql(input);
     });
@@ -278,8 +272,8 @@ describe('filters files to transform', function() {
 //       inputSourceMap: false
 //     }).then(function(results) {
 //       var outputPath = results.directory;
-//       var output = readFileSync(path.join(outputPath, 'dep-graph.json'), 'utf8');
-//       var expectation = readFileSync(path.join(expectations, 'dep-graph.json'), 'utf8');
+//       var output = fs.readFileSync(path.join(outputPath, 'dep-graph.json'), 'utf8');
+//       var expectation = fs.readFileSync(path.join(expectations, 'dep-graph.json'), 'utf8');
 //       expect(output).to.eql(expectation);
 //     });
 //   });
@@ -294,8 +288,8 @@ describe('filters files to transform', function() {
 //     }).then(function(results) {
 //       // Normal build
 //       var outputPath = results.directory;
-//       var output = readFileSync(path.join(outputPath, 'dep-graph.json'), 'utf8');
-//       var expectation = readFileSync(path.join(expectations, 'dep-graph.json'), 'utf8');
+//       var output = fs.readFileSync(path.join(outputPath, 'dep-graph.json'), 'utf8');
+//       var expectation = fs.readFileSync(path.join(expectations, 'dep-graph.json'), 'utf8');
 //       expect(output).to.eql(expectation);
 
 //       // Move away files/fixtures.js
@@ -307,16 +301,16 @@ describe('filters files to transform', function() {
 
 //       // Build without files/fixtures.js
 //       var outputPath = results.directory;
-//       var output = readFileSync(path.join(outputPath, 'dep-graph.json'), 'utf8');
-//       var expectation = readFileSync(path.join(expectations, 'pruned-dep-graph.json'), 'utf8');
+//       var output = fs.readFileSync(path.join(outputPath, 'dep-graph.json'), 'utf8');
+//       var expectation = fs.readFileSync(path.join(expectations, 'pruned-dep-graph.json'), 'utf8');
 //       expect(output).to.eql(expectation);
 
 //       return results.builder();
 //     }).then(function(results) {
 //       // Back to the first build
 //       var outputPath = results.directory;
-//       var output = readFileSync(path.join(outputPath, 'dep-graph.json'), 'utf8');
-//       var expectation = readFileSync(path.join(expectations, 'dep-graph.json'), 'utf8');
+//       var output = fs.readFileSync(path.join(outputPath, 'dep-graph.json'), 'utf8');
+//       var expectation = fs.readFileSync(path.join(expectations, 'dep-graph.json'), 'utf8');
 //       expect(output).to.eql(expectation);
 //     });
 //   });
@@ -346,7 +340,7 @@ describe('filters files to transform', function() {
 
 //       babel._generateDepGraph();
 
-//       expect(readFileSync(path.join(babel.outputPath, 'dep-graph.json'), 'utf8')).to.eql(stringify({
+//       expect(fs.readFileSync(path.join(babel.outputPath, 'dep-graph.json'), 'utf8')).to.eql(stringify({
 //         bar: {},
 //         foo: {}
 //       }, { space: 2 }));
@@ -363,7 +357,7 @@ describe('filters files to transform', function() {
 
 //       babel._generateDepGraph();
 
-//       expect(readFileSync(path.join(babel.outputPath, 'dep-graph.json'), 'utf8')).to.eql(stringify({
+//       expect(fs.readFileSync(path.join(babel.outputPath, 'dep-graph.json'), 'utf8')).to.eql(stringify({
 //         foo: {}
 //       }, { space: 2 }));
 //     });
