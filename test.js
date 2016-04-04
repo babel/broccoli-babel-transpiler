@@ -53,7 +53,7 @@ describe('options', function() {
     expect(transpilerOptions.bar.baz).to.eql(1);
   });
 
-  it('correct fileName, sourceMapName, sourceFileName', function() {
+  it('correct fileName, sourceMapTarget, sourceFileName', function() {
     var transpilerOptions;
 
     babel.transform = function(string, options) {
@@ -66,7 +66,7 @@ describe('options', function() {
 
     expect(transpilerOptions.moduleId).to.eql(undefined);
     expect(transpilerOptions.filename).to.eql('relativePath');
-    expect(transpilerOptions.sourceMapName).to.eql('relativePath');
+    expect(transpilerOptions.sourceMapTarget).to.eql('relativePath');
     expect(transpilerOptions.sourceFileName).to.eql('relativePath');
   });
 
@@ -215,12 +215,13 @@ describe('filters files to transform', function() {
     });
   });
 
+  // "modules" no longer supported. Use "transform-es2015-modules-amd" instead
   it('named module', function() {
     return babel('files', {
       inputSourceMap: false,
       sourceMap: false,
       moduleId: "foo",
-      modules: 'amdStrict'
+      plugins: ["transform-es2015-modules-amd"],
     }).then(function(results) {
       var outputPath = results.directory;
 
@@ -232,12 +233,13 @@ describe('filters files to transform', function() {
   });
 
 
+  // "modules" no longer supported. Use "transform-es2015-modules-amd" instead
   it('moduleId === true', function() {
     return babel('files', {
       inputSourceMap: false,
       sourceMap: false,
       moduleId: true,
-      modules: 'amdStrict'
+      plugins: ["transform-es2015-modules-amd"],
     }).then(function(results) {
       var outputPath = results.directory;
 
