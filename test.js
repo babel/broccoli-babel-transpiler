@@ -21,6 +21,7 @@ describe('options', function() {
   var options;
 
   before(function() {
+    this.timeout(5000); //TODO: this is strange
     options = {
       foo: 1,
       bar: {
@@ -119,6 +120,7 @@ describe('transpile ES6 to ES5', function() {
   });
 
   it('basic', function () {
+    this.timeout(5000); //TODO: this is strange
     return babel('files', {
       inputSourceMap:false,
       sourceMaps: false
