@@ -53,7 +53,7 @@ describe('options', function() {
     expect(transpilerOptions.bar.baz).to.eql(1);
   });
 
-  it('correct fileName, sourceMapName, sourceFileName', function() {
+  it('correct fileName, sourceMapTarget, sourceFileName', function() {
     var transpilerOptions;
 
     babel.transform = function(string, options) {
@@ -66,7 +66,7 @@ describe('options', function() {
 
     expect(transpilerOptions.moduleId).to.eql(undefined);
     expect(transpilerOptions.filename).to.eql('relativePath');
-    expect(transpilerOptions.sourceMapName).to.eql('relativePath');
+    expect(transpilerOptions.sourceMapTarget).to.eql('relativePath');
     expect(transpilerOptions.sourceFileName).to.eql('relativePath');
   });
 
@@ -121,7 +121,7 @@ describe('transpile ES6 to ES5', function() {
   it('basic', function () {
     return babel('files', {
       inputSourceMap:false,
-      sourceMap: false
+      sourceMaps: false
     }).then(function(results) {
       var outputPath = results.directory;
 
@@ -134,7 +134,7 @@ describe('transpile ES6 to ES5', function() {
 
   it('inline source maps', function () {
     return babel('files', {
-      sourceMap: 'inline'
+      sourceMaps: 'inline'
     }).then(function(results) {
       var outputPath = results.directory;
 
@@ -164,7 +164,7 @@ describe('filters files to transform', function() {
   it('default', function () {
     return babel('files', {
       inputSourceMap:false,
-      sourceMap: false
+      sourceMaps: false
     }).then(function(results) {
       var outputPath = results.directory;
 
@@ -181,8 +181,8 @@ describe('filters files to transform', function() {
   it('uses specified filter', function () {
     return babel('files', {
       filterExtensions: ['es6'],
-      inputSourceMap: false,
-      sourceMap: false
+      inputSourceMap:false,
+      sourceMaps: false
     }).then(function(results) {
       var outputPath = results.directory;
 
@@ -218,9 +218,9 @@ describe('filters files to transform', function() {
   it('named module', function() {
     return babel('files', {
       inputSourceMap: false,
-      sourceMap: false,
+      sourceMaps: false,
       moduleId: "foo",
-      modules: 'amdStrict'
+      plugins: ['transform-es2015-modules-amd']
     }).then(function(results) {
       var outputPath = results.directory;
 
@@ -235,9 +235,9 @@ describe('filters files to transform', function() {
   it('moduleId === true', function() {
     return babel('files', {
       inputSourceMap: false,
-      sourceMap: false,
+      sourceMaps: false,
       moduleId: true,
-      modules: 'amdStrict'
+      plugins: ['transform-es2015-modules-amd']
     }).then(function(results) {
       var outputPath = results.directory;
 
@@ -267,8 +267,8 @@ describe.skip('module metadata', function() {
     return babel('files', {
       exportModuleMetadata: true,
       moduleId: true,
-      modules: 'amdStrict',
-      sourceMap: false,
+      plugins: ['transform-es2015-modules-amd'],
+      sourceMaps: false,
       inputSourceMap: false
     }).then(function(results) {
       var outputPath = results.directory;
@@ -282,8 +282,8 @@ describe.skip('module metadata', function() {
     return babel('files', {
       exportModuleMetadata: true,
       moduleId: true,
-      modules: 'amdStrict',
-      sourceMap: false,
+      plugins: ['transform-es2015-modules-amd'],
+      sourceMaps: false,
       inputSourceMap: false
     }).then(function(results) {
       // Normal build
