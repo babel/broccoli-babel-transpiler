@@ -388,3 +388,46 @@ describe('consume broccoli-babel-transpiler options', function() {
     expect(code).to.be.ok;
   });
 });
+
+describe('when options change', function() {
+  var originalHash, options;
+
+  beforeEach(function() {
+    options = {
+      bar: 1,
+      baz: function() {}
+    };
+
+    var babel = new Babel('foo', options);
+
+    originalHash = babel.optionsHash();
+  });
+
+  it('clears cache for added properties', function() {
+    options.foo = 1;
+    var babelNew = new Babel('foo', options);
+
+    expect(babelNew.optionsHash()).to.not.eql(originalHash);
+  });
+
+  it('clears cache for updated properties', function() {
+    options.bar = 2;
+    var babelNew = new Babel('foo', options);
+
+    expect(babelNew.optionsHash()).to.not.eql(originalHash);
+  });
+
+  it('clears cache for added methods', function() {
+    options.foo = function() {};
+    var babelNew = new Babel('foo', options);
+
+    expect(babelNew.optionsHash()).to.not.eql(originalHash);
+  });
+
+  it('clears cache for updated methods', function() {
+    options.baz = function() { return 1; };
+    var babelNew = new Babel('foo', options);
+
+    expect(babelNew.optionsHash()).to.not.eql(originalHash);
+  });   
+});
