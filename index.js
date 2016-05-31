@@ -101,9 +101,19 @@ Babel.prototype.transform = function(string, options) {
  * @returns a stringifeid version of the input options
  */
 Babel.prototype.optionsHash = function() {
+  var options = this.options;
+  var hash = {};
+  var key, value;
+
   if (!this._optionsHash) {
-    this._optionsHash = crypto.createHash('md5').update(stringify(this.options), 'utf8').digest('hex');
+    for (key in options) {
+      value = options[key];
+      hash[key] = (typeof value === 'function') ? (value + '') : value;
+    }
+
+    this._optionsHash = crypto.createHash('md5').update(stringify(hash), 'utf8').digest('hex');
   }
+
   return this._optionsHash;
 };
 
