@@ -47,6 +47,10 @@ function Babel(inputTree, _options) {
   // delete it from the options hash
   delete this.options.exportModuleMetadata;
 
+  if (!this.options.presets) {
+    this.options.presets = ['es2015'];
+  }
+
   if (this.options.browserPolyfill) {
     var babelCorePath = require.resolve('babel-core');
     babelCorePath = babelCorePath.replace(/\/babel-core\/.*$/, '/babel-core');
@@ -124,7 +128,7 @@ Babel.prototype.cacheKeyProcessString = function(string, relativePath) {
 Babel.prototype.processString = function(string, relativePath) {
   var options = this.copyOptions();
 
-  options.filename = options.sourceMapName = options.sourceFileName = relativePath;
+  options.filename = options.sourceMapTarget = options.sourceFileName = relativePath;
 
   if (options.moduleId === true) {
     options.moduleId = replaceExtensions(this.extensionsRegex, options.filename);

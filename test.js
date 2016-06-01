@@ -53,7 +53,7 @@ describe('options', function() {
     expect(transpilerOptions.bar.baz).to.eql(1);
   });
 
-  it('correct fileName, sourceMapName, sourceFileName', function() {
+  it('correct fileName, sourceMapTarget, sourceFileName', function() {
     var transpilerOptions;
 
     babel.transform = function(string, options) {
@@ -66,7 +66,7 @@ describe('options', function() {
 
     expect(transpilerOptions.moduleId).to.eql(undefined);
     expect(transpilerOptions.filename).to.eql('relativePath');
-    expect(transpilerOptions.sourceMapName).to.eql('relativePath');
+    expect(transpilerOptions.sourceMapTarget).to.eql('relativePath');
     expect(transpilerOptions.sourceFileName).to.eql('relativePath');
   });
 
@@ -120,7 +120,7 @@ describe('transpile ES6 to ES5', function() {
 
   it('basic', function () {
     return babel('files', {
-      inputSourceMap:false,
+      inputSourceMap: false,
       sourceMap: false
     }).then(function(results) {
       var outputPath = results.directory;
@@ -220,7 +220,9 @@ describe('filters files to transform', function() {
       inputSourceMap: false,
       sourceMap: false,
       moduleId: "foo",
-      modules: 'amdStrict'
+      plugins: [
+        'transform-es2015-modules-amd'
+      ]
     }).then(function(results) {
       var outputPath = results.directory;
 
@@ -237,7 +239,9 @@ describe('filters files to transform', function() {
       inputSourceMap: false,
       sourceMap: false,
       moduleId: true,
-      modules: 'amdStrict'
+      plugins: [
+        ['transform-es2015-modules-amd']
+      ]
     }).then(function(results) {
       var outputPath = results.directory;
 
@@ -267,7 +271,9 @@ describe.skip('module metadata', function() {
     return babel('files', {
       exportModuleMetadata: true,
       moduleId: true,
-      modules: 'amdStrict',
+      plugins: [
+        'transform-es2015-modules-amd'
+      ],
       sourceMap: false,
       inputSourceMap: false
     }).then(function(results) {
@@ -282,7 +288,9 @@ describe.skip('module metadata', function() {
     return babel('files', {
       exportModuleMetadata: true,
       moduleId: true,
-      modules: 'amdStrict',
+      plugins: [
+        'transform-es2015-modules-amd'
+      ],
       sourceMap: false,
       inputSourceMap: false
     }).then(function(results) {
