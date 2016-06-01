@@ -120,7 +120,7 @@ describe('transpile ES6 to ES5', function() {
 
   it('basic', function () {
     return babel('files', {
-      inputSourceMap:false,
+      inputSourceMap: false,
       sourceMap: false
     }).then(function(results) {
       var outputPath = results.directory;
