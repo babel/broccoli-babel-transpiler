@@ -220,7 +220,9 @@ describe('filters files to transform', function() {
       inputSourceMap: false,
       sourceMap: false,
       moduleId: "foo",
-      modules: 'amdStrict'
+      plugins: [
+        'transform-es2015-modules-amd'
+      ]
     }).then(function(results) {
       var outputPath = results.directory;
 
@@ -237,7 +239,9 @@ describe('filters files to transform', function() {
       inputSourceMap: false,
       sourceMap: false,
       moduleId: true,
-      modules: 'amdStrict'
+      plugins: [
+        ['transform-es2015-modules-amd']
+      ]
     }).then(function(results) {
       var outputPath = results.directory;
 
@@ -267,7 +271,9 @@ describe.skip('module metadata', function() {
     return babel('files', {
       exportModuleMetadata: true,
       moduleId: true,
-      modules: 'amdStrict',
+      plugins: [
+        'transform-es2015-modules-amd'
+      ],
       sourceMap: false,
       inputSourceMap: false
     }).then(function(results) {
@@ -282,7 +288,9 @@ describe.skip('module metadata', function() {
     return babel('files', {
       exportModuleMetadata: true,
       moduleId: true,
-      modules: 'amdStrict',
+      plugins: [
+        'transform-es2015-modules-amd'
+      ],
       sourceMap: false,
       inputSourceMap: false
     }).then(function(results) {
