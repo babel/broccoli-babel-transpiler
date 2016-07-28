@@ -390,12 +390,19 @@ describe('consume broccoli-babel-transpiler options', function() {
 });
 
 describe('when options change', function() {
-  var originalHash, options;
+  var originalHash, options, fakeConsole, consoleMessages;
 
   beforeEach(function() {
+    fakeConsole = {
+      warn: function(message) { consoleMessages.push(message); }
+    };
+    consoleMessages = [];
+
     options = {
       bar: 1,
-      baz: function() {}
+      baz: function() {},
+      console: fakeConsole,
+      plugins: []
     };
 
     var babel = new Babel('foo', options);
@@ -405,13 +412,150 @@ describe('when options change', function() {
 
   it('clears cache for added properties', function() {
     options.foo = 1;
+    options.console = fakeConsole;
     var babelNew = new Babel('foo', options);
 
     expect(babelNew.optionsHash()).to.not.eql(originalHash);
   });
 
+  it('includes object plugins cacheKey result in hash', function() {
+    options.plugins = [
+      { cacheKey: function() { return 'hi!'; }}
+    ];
+    options.console = fakeConsole;
+    var babelNew = new Babel('foo', options);
+
+    expect(babelNew.optionsHash()).to.not.eql(originalHash);
+  });
+
+  it('includes function plugins cacheKey result in hash', function() {
+    function fakePlugin() {}
+    fakePlugin.cacheKey = function() { return 'Hi!'; };
+
+    options.plugins = [
+      fakePlugin
+    ];
+    options.console = fakeConsole;
+    var babelNew = new Babel('foo', options);
+
+    expect(babelNew.optionsHash()).to.not.eql(originalHash);
+  });
+
+  it('includes string plugins in hash calculation', function() {
+    options.plugins = [
+      'foo'
+    ];
+    options.console = fakeConsole;
+    var babelNew = new Babel('foo', options);
+
+    expect(babelNew.optionsHash()).to.not.eql(originalHash);
+  });
+
+  it('includes plugins specified with options in hash calculation when cacheable', function() {
+    var pluginOptions = { foo: 'bar' };
+    options.plugins = [
+      ['foo', pluginOptions]
+    ];
+    options.console = fakeConsole;
+    var first = new Babel('foo', options);
+    var firstOptions = first.optionsHash();
+
+    options.console = fakeConsole;
+    var second = new Babel('foo', options);
+    var secondOptions = second.optionsHash();
+    expect(firstOptions).to.eql(secondOptions);
+
+    pluginOptions.qux = 'huzzah';
+    options.console = fakeConsole;
+    var third = new Babel('foo', options);
+    var thirdOptions = third.optionsHash();
+
+    expect(firstOptions).to.not.eql(thirdOptions);
+  });
+
+  it('invalidates plugins specified with options when not-cacheable', function() {
+    function thing() { }
+    var pluginOptions = { foo: 'bar', thing: thing };
+    options.plugins = [
+      ['foo', pluginOptions]
+    ];
+    options.console = fakeConsole;
+    var first = new Babel('foo', options);
+    var firstOptions = first.optionsHash();
+
+    options.console = fakeConsole;
+    var second = new Babel('foo', options);
+    var secondOptions = second.optionsHash();
+    expect(firstOptions).to.not.eql(secondOptions);
+  });
+
+  it('plugins specified with options can have functions with `baseDir`', function() {
+    var dir = path.join(inputPath, 'plugin-a');
+    function thing() { }
+    thing.baseDir = function() { return dir; };
+    var pluginOptions = { foo: 'bar', thing: thing };
+    options.plugins = [
+      ['foo', pluginOptions]
+    ];
+
+    options.console = fakeConsole;
+    var first = new Babel('foo', options);
+    var firstOptions = first.optionsHash();
+
+    options.console = fakeConsole;
+    var second = new Babel('foo', options);
+    var secondOptions = second.optionsHash();
+    expect(firstOptions).to.eql(secondOptions);
+
+    dir = path.join(inputPath, 'plugin-b');
+    options.console = fakeConsole;
+    var third = new Babel('foo', options);
+    var thirdOptions = third.optionsHash();
+
+    expect(firstOptions).to.not.eql(thirdOptions);
+  });
+
+  it('a plugins `baseDir` method is used for hash generation', function() {
+    var dir = path.join(inputPath, 'plugin-a');
+
+    function plugin() {}
+    plugin.baseDir = function() {
+      return dir;
+    };
+    options.plugins = [ plugin ];
+
+    options.console = fakeConsole;
+    var first = new Babel('foo', options);
+    var firstOptions = first.optionsHash();
+
+    dir = path.join(inputPath, 'plugin-b');
+    options.console = fakeConsole;
+    var second = new Babel('foo', options);
+    var secondOptions = second.optionsHash();
+
+    expect(firstOptions).to.not.eql(secondOptions);
+  });
+
+  it('a plugin without a baseDir invalidates the cache every time', function() {
+    function plugin() {}
+    plugin.toString = function() { return '<derp plugin>'; };
+    options.plugins = [ plugin ];
+
+    options.console = fakeConsole;
+    var babel1 = new Babel('foo', options);
+    options.console = fakeConsole;
+    var babel2 = new Babel('foo', options);
+
+    expect(babel1.optionsHash()).to.not.eql(babel2.optionsHash());
+    expect(consoleMessages).to.eql([
+      'broccoli-babel-transpiler is opting out of caching due to a plugin that does not provide a caching strategy: `<derp plugin>`.',
+      'broccoli-babel-transpiler is opting out of caching due to a plugin that does not provide a caching strategy: `<derp plugin>`.'
+    ]);
+  });
+
   it('clears cache for updated properties', function() {
     options.bar = 2;
+    options.console = fakeConsole;
     var babelNew = new Babel('foo', options);
 
     expect(babelNew.optionsHash()).to.not.eql(originalHash);
@@ -419,6 +563,7 @@ describe('when options change', function() {
 
   it('clears cache for added methods', function() {
     options.foo = function() {};
+    options.console = fakeConsole;
     var babelNew = new Babel('foo', options);
 
     expect(babelNew.optionsHash()).to.not.eql(originalHash);
@@ -426,8 +571,9 @@ describe('when options change', function() {
 
   it('clears cache for updated methods', function() {
     options.baz = function() { return 1; };
+    options.console = fakeConsole;
     var babelNew = new Babel('foo', options);
 
     expect(babelNew.optionsHash()).to.not.eql(originalHash);
-  });   
+  });
 });

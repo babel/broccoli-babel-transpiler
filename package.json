@@ -33,6 +33,7 @@
     "broccoli-funnel": "^1.0.0",
     "broccoli-merge-trees": "^1.0.0",
     "clone": "^0.2.0",
+    "hash-for-dep": "^1.0.2",
     "json-stable-stringify": "^1.0.0"
   },
   "devDependencies": {
