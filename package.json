@@ -3,6 +3,9 @@
   "version": "5.5.0",
   "description": "A Broccoli plugin which transpile ES6 to readable ES5 by using babel.",
   "main": "index.js",
+  "files": [
+    "index.js"
+  ],
   "scripts": {
     "test": "mocha test.js",
     "test:debug": "mocha debug test.js"
