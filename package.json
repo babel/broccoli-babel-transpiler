@@ -43,10 +43,10 @@
     "babel-plugin-transform-es2015-modules-amd": "^6.4.3",
     "babel-plugin-transform-strict-mode": "^6.3.13",
     "broccoli": "^0.16.3",
-    "broccoli-test-helpers": "0.0.8",
+    "broccoli-test-helpers": "0.0.9",
     "chai": "^3.5.0",
     "mkdirp": "^0.5.1",
-    "mocha": "^2.4.5",
+    "mocha": "^3.0.1",
     "rimraf": "^2.4.2"
   },
   "publishConfig": {
