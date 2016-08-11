@@ -32,10 +32,11 @@
   "homepage": "https://github.com/babel/broccoli-babel-transpiler",
   "dependencies": {
     "babel-core": "^6.0.0",
-    "broccoli-persistent-filter": "^1.0.1",
     "broccoli-funnel": "^1.0.0",
     "broccoli-merge-trees": "^1.0.0",
+    "broccoli-persistent-filter": "^1.0.1",
     "clone": "^1.0.2",
+    "hash-for-dep": "^1.0.2",
     "json-stable-stringify": "^1.0.0"
   },
   "devDependencies": {

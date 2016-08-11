@@ -9,6 +9,7 @@ var stringify  = require('json-stable-stringify');
 var mergeTrees = require('broccoli-merge-trees');
 var funnel     = require('broccoli-funnel');
 var crypto     = require('crypto');
+var hashForDep = require('hash-for-dep');
 
 function getExtensionsRegex(extensions) {
   return extensions.map(function(extension) {
@@ -34,6 +35,10 @@ function Babel(inputTree, _options) {
   Filter.call(this, inputTree, options);
 
   delete options.persist;
+
+  this.console = options.console || console;
+  delete options.console;
+
   this.options = options;
   this.moduleMetadata = {};
   this.extensions = this.options.filterExtensions || ['js'];
@@ -109,6 +114,66 @@ Babel.prototype.optionsHash = function() {
     for (key in options) {
       value = options[key];
       hash[key] = (typeof value === 'function') ? (value + '') : value;
+    }
+
+    if (options.plugins) {
+      hash.plugins = [];
+
+      var cacheableItems = options.plugins.slice();
+
+      for (var i = 0; i < cacheableItems.length; i++) {
+        var item = cacheableItems[i];
+
+        var type = typeof item;
+        var augmentsCacheKey = false;
+        var providesBaseDir = false;
+        var requiresBaseDir = true;
+
+        if (type === 'function') {
+          augmentsCacheKey = typeof item.cacheKey === 'function';
+          providesBaseDir = typeof item.baseDir === 'function';
+
+          if (augmentsCacheKey) {
+            hash.plugins.push(item.cacheKey());
+          }
+
+          if (providesBaseDir) {
+            var depHash = hashForDep(item.baseDir());
+
+            hash.plugins.push(depHash);
+          }
+
+          if (!providesBaseDir && requiresBaseDir){
+            // prevent caching completely if the plugin doesn't provide baseDir
+            // we cannot ensure that we aren't causing invalid caching pain...
+            this.console.warn('broccoli-babel-transpiler is opting out of caching due to a plugin that does not provide a caching strategy: `' + item + '`.');
+            hash.plugins.push((new Date).getTime() + '|' + Math.random());
+            break;
+          }
+        } else if (Array.isArray(item)) {
+          item.forEach(function(part) {
+            cacheableItems.push(part);
+          });
+
+          continue;
+        } else if (type !== 'object' || item === null) {
+          // handle native strings, numbers, or null (which can JSON.stringify properly)
+          hash.plugins.push(item);
+          continue;
+        } else if (type === 'object') {
+          // itereate all keys in the item and push them into the cache
+          var keys = Object.keys(item);
+          keys.forEach(function(key) {
+            cacheableItems.push(key);
+            cacheableItems.push(item[key]);
+          });
+          continue;
+        } else {
+          this.console.warn('broccoli-babel-transpiler is opting out of caching due to an non-cacheable item: `' + item + '` (' + type + ').');
+          hash.plugins.push((new Date).getTime() + '|' + Math.random());
+          break;
+        }
+      }
     }
 
     this._optionsHash = crypto.createHash('md5').update(stringify(hash), 'utf8').digest('hex');
