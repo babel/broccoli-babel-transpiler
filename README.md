@@ -33,7 +33,7 @@ Each one of them builds on top of the previous example so you can progess from b
  * [es6-fruits](https://github.com/givanse/broccoli-babel-examples/tree/master/es6-fruits) - Execute a single ES6 script.
  * [es6-website](https://github.com/givanse/broccoli-babel-examples/tree/master/es6-website) - Build a simple website.
  * [es6-modules](https://github.com/givanse/broccoli-babel-examples/tree/master/es6-modules) - Handle modules and unit tests.
- 
+
 ## About source map
 
 Currently this plugin only supports inline source map. If you need
@@ -64,3 +64,40 @@ You don't always need this, review which features need the polyfill here: [ES6 F
 var esTranspiler = require('broccoli-babel-transpiler');
 var scriptTree = esTranspiler(inputTree, { browserPolyfill: true });
 ```
+
+## Plugins
+
+Use of custom plugins works similarly to `babel` itself. You would pass a `plugins` array in `options`:
+
+```js
+var esTranspiler = require('broccoli-babel-transpiler');
+var applyFeatureFlags = require('babel-plugin-feature-flags');
+
+var featureFlagPlugin = applyFeatureFlags({
+  import: { module: 'ember-metal/features' },
+  features: {
+    'ember-metal-blah': true
+  }
+});
+
+var scriptTree = esTranspiler(inputTree, {
+  plugins: [
+    featureFlagPlugin
+  ]
+});
+```
+
+### Caching
+
+broccoli-babel-transpiler uses a persistent cache to enable rebuilds to be significantly faster (by avoiding transpilation for files that have not changed).
+However, since a plugin can do many things to affect the transpiled output it must also influence the cache key to ensure transpiled files are rebuilt
+if the plugin changes (or the plugins configuration).
+
+In order to aid plugin developers in this process, broccoli-babel-transpiler will invoke two methods on a plugin so that it can augment the cache key:
+
+* `cacheKey` - This method is used to describe any runtime information that may want to invalidate the cached result of each file transpilation. This is
+  generally only needed when the configuration provided to the plugin is used to modify the AST output by a plugin like `babel-plugin-filter-imports` (module
+  exports to strip from a build), `babel-plugin-feature-flags` (configured features and current status to strip or embed in a final build), or
+  `babel-plugin-htmlbars-inline-precompile` (uses `ember-template-compiler.js` to compile inlined templates).
+* `baseDir` - This method is expected to return the plugins base dir. The provided `baseDir` is used to ensure the cache is invalidated if any of the
+  plugin's files change (including its deps). Each plugin should implement `baseDir` as: `Plugin.prototype.baseDir = function() { return \_\_dirname; };`.
