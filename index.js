@@ -48,9 +48,15 @@ function Babel(inputTree, _options) {
   if (this.options.exportModuleMetadata) {
     this.exportModuleMetadata = this.options.exportModuleMetadata;
   }
+
+  if (this.options.helperWhiteList) {
+    this.helperWhiteList = this.options.helperWhiteList;
+  }
+
   // Note, Babel does not support this option so we must save it then
   // delete it from the options hash
   delete this.options.exportModuleMetadata;
+  delete this.options.helperWhiteList;
 
   if (this.options.browserPolyfill) {
     var babelCorePath = require.resolve('babel-core');
@@ -198,6 +204,14 @@ Babel.prototype.processString = function(string, relativePath) {
   var transpiled = this.transform(string, options);
   var key = options.moduleId ? options.moduleId : relativePath;
 
+  if (this.helperWhiteList) {
+    var invalidHelpers = transpiled.metadata.usedHelpers.filter(function(helper) {
+      return this.helperWhiteList.indexOf(helper) === -1;
+    }, this);
+
+    validateHelpers(invalidHelpers, relativePath);
+  }
+
   if (transpiled.metadata && transpiled.metadata.modules) {
     this.moduleMetadata[byImportName(key)] = transpiled.metadata.modules;
   }
@@ -223,6 +237,27 @@ function diff(array, exclusions) {
       return item === exclude;
     });
   });
+}
+
+function validateHelpers(invalidHelpers, relativePath) {
+  if (invalidHelpers.length > 0) {
+    var message = relativePath + ' was transformed and relies on `' + invalidHelpers[0] + '`, which was not included in the helper whitelist. Either add this helper to the whitelist or refactor to not be dependent on this runtime helper.';
+
+    if (invalidHelpers.length > 1) {
+      var helpers = invalidHelpers.map(function(item, i) {
+        if (i === invalidHelpers.length - 1) {
+          return '& `' + item;
+        } else if (i === invalidHelpers.length - 2) {
+          return item + '`, ';
+        }
+
+        return item + '`, `';
+      }).join('');
+
+      message = relativePath + ' was transformed and relies on `' + helpers + '`, which were not included in the helper whitelist. Either add these helpers to the whitelist or refactor to not be dependent on these runtime helper.';
+    }
+    throw new Error(message);
+  }
 }
 
 module.exports = Babel;
