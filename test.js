@@ -273,6 +273,36 @@ describe('filters files to transform', function() {
       expect(output).to.eql(input);
     });
   });
+
+  it('throws if a single helper is not whitelisted', function() {
+    return babel('files', {
+      helperWhiteList: ['classCallCheck', 'possibleConstructorReturn'],
+      plugins: ['transform-es2015-classes']
+    }).catch(function(err) {
+      expect(err.message).to.equal('fixtures-classes.js was transformed and relies on `inherits`, which was not included in the helper whitelist. Either add this helper to the whitelist or refactor to not be dependent on this runtime helper.');
+    });
+  });
+
+  it('throws if multiple helpers are not whitelisted', function() {
+    return babel('files', {
+      helperWhiteList: [],
+      plugins: ['transform-es2015-classes']
+    }).catch(function(err) {
+      expect(err.message).to.equal('fixtures-classes.js was transformed and relies on `classCallCheck`, `inherits`, & `possibleConstructorReturn`, which were not included in the helper whitelist. Either add these helpers to the whitelist or refactor to not be dependent on these runtime helper.');
+    });
+  });
+
+  it('does not throw if helpers are specified', function() {
+    return babel('files', {
+      helperWhiteList: ['classCallCheck', 'possibleConstructorReturn', 'inherits'],
+      plugins: ['transform-es2015-classes']
+    }).then(function(results) {
+      var outputPath = results.directory;
+      var output = fs.readFileSync(path.join(outputPath, 'fixtures-classes.js'), 'utf8');
+      var input = fs.readFileSync(path.join(expectations, 'classes.js'), 'utf8');
+      expect(output).to.eql(input);
+    });
+  });
 });
 
 describe.skip('module metadata', function() {
