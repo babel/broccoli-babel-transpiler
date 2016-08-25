@@ -14,7 +14,7 @@ export let Foo = function (_Bar) {
   function Foo() {
     _classCallCheck(this, Foo);
 
-    return _possibleConstructorReturn(this, Object.getPrototypeOf(Foo).apply(this, arguments));
+    return _possibleConstructorReturn(this, (Foo.__proto__ || Object.getPrototypeOf(Foo)).apply(this, arguments));
   }
 
   return Foo;
