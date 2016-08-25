@@ -48,8 +48,7 @@
     "broccoli-test-helpers": "0.0.8",
     "chai": "^3.5.0",
     "mkdirp": "^0.5.1",
-    "mocha": "^3.0.2",
-    "rimraf": "^2.4.2"
+    "mocha": "^3.0.2"
   },
   "publishConfig": {
     "tag": "next"
