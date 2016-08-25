@@ -31,7 +31,6 @@ function Babel(inputTree, _options) {
   }
 
   var options = _options || {};
-  options.persist = !options.exportModuleMetadata; // TODO: make this also work in cache
   Filter.call(this, inputTree, options);
 
   delete options.persist;
@@ -40,14 +39,9 @@ function Babel(inputTree, _options) {
   delete options.console;
 
   this.options = options;
-  this.moduleMetadata = {};
   this.extensions = this.options.filterExtensions || ['js'];
   this.extensionsRegex = getExtensionsRegex(this.extensions);
   this.name = 'broccoli-babel-transpiler';
-
-  if (this.options.exportModuleMetadata) {
-    this.exportModuleMetadata = this.options.exportModuleMetadata;
-  }
 
   if (this.options.helperWhiteList) {
     this.helperWhiteList = this.options.helperWhiteList;
@@ -55,7 +49,6 @@ function Babel(inputTree, _options) {
 
   // Note, Babel does not support this option so we must save it then
   // delete it from the options hash
-  delete this.options.exportModuleMetadata;
   delete this.options.helperWhiteList;
 
   if (this.options.browserPolyfill) {
@@ -78,29 +71,6 @@ Babel.prototype.baseDir = function() {
   return __dirname;
 };
 
-Babel.prototype.build = function() {
-  var self = this;
-  return Filter.prototype.build.call(this).then(function() {
-    if (self.exportModuleMetadata) {
-      self._generateDepGraph();
-    }
-  });
-};
-
-Babel.prototype._generateDepGraph = function() {
-  var residentImports = this._cache.keys().map(byImportName);
-  var imports = Object.keys(this.moduleMetadata);
-  var evictedImports = diff(imports, residentImports);
-
-  if (evictedImports.length > 0) {
-    evictedImports.forEach(function(importName) {
-      delete this.moduleMetadata[importName];
-    }, this);
-  }
-
-  fs.writeFileSync(this.outputPath + path.sep + 'dep-graph.json', stringify(this.moduleMetadata, { space: 2 }));
-};
-
 Babel.prototype.transform = function(string, options) {
   return transpiler.transform(string, options);
 };
@@ -109,7 +79,7 @@ Babel.prototype.transform = function(string, options) {
  * @private
  *
  * @method optionsString
- * @returns a stringifeid version of the input options
+ * @returns a stringified version of the input options
  */
 Babel.prototype.optionsHash = function() {
   var options = this.options;
@@ -167,7 +137,7 @@ Babel.prototype.optionsHash = function() {
           hash.plugins.push(item);
           continue;
         } else if (type === 'object') {
-          // itereate all keys in the item and push them into the cache
+          // iterate all keys in the item and push them into the cache
           var keys = Object.keys(item);
           keys.forEach(function(key) {
             cacheableItems.push(key);
@@ -202,7 +172,6 @@ Babel.prototype.processString = function(string, relativePath) {
   }
 
   var transpiled = this.transform(string, options);
-  var key = options.moduleId ? options.moduleId : relativePath;
 
   if (this.helperWhiteList) {
     var invalidHelpers = transpiled.metadata.usedHelpers.filter(function(helper) {
@@ -210,10 +179,6 @@ Babel.prototype.processString = function(string, relativePath) {
     }, this);
 
     validateHelpers(invalidHelpers, relativePath);
-  }
-
-  if (transpiled.metadata && transpiled.metadata.modules) {
-    this.moduleMetadata[byImportName(key)] = transpiled.metadata.modules;
   }
 
   return transpiled.code;
@@ -226,18 +191,6 @@ Babel.prototype.copyOptions = function() {
   }
   return cloned;
 };
-
-function byImportName(relativePath) {
-  return relativePath.replace(path.extname(relativePath), '');
-}
-
-function diff(array, exclusions) {
-  return array.filter(function(item) {
-    return !exclusions.some(function(exclude) {
-      return item === exclude;
-    });
-  });
-}
 
 function validateHelpers(invalidHelpers, relativePath) {
   if (invalidHelpers.length > 0) {
