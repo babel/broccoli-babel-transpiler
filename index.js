@@ -34,6 +34,8 @@ function Babel(inputTree, _options) {
   Filter.call(this, inputTree, options);
 
   delete options.persist;
+  delete options.annotation;
+  delete options.description;
 
   this.console = options.console || console;
   delete options.console;
