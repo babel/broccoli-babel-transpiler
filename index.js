@@ -31,6 +31,7 @@ function Babel(inputTree, _options) {
   }
 
   var options = _options || {};
+  options.persist = 'persist' in options ? options.persist : true;
   Filter.call(this, inputTree, options);
 
   delete options.persist;

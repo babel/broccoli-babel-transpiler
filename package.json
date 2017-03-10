@@ -50,6 +50,9 @@
     "mkdirp": "^0.5.1",
     "mocha": "^3.0.2"
   },
+  "engines": {
+    "node": ">= 4"
+  },
   "publishConfig": {
     "tag": "next"
   }
