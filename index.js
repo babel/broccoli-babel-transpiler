@@ -192,6 +192,9 @@ Babel.prototype.copyOptions = function() {
   if (cloned.filterExtensions) {
     delete cloned.filterExtensions;
   }
+  if (cloned.targetExtension) {
+    delete cloned.targetExtension;
+  }
   return cloned;
 };
 
