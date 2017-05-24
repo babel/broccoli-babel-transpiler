@@ -86,7 +86,7 @@ describe('options', function() {
     expect(transpilerOptions.moduleId).to.eql('relativePath');
   });
 
-  it('does not propagate validExtensions', function () {
+  it('does not propagate filterExtensions', function () {
     var transpilerOptions;
 
     babel.transform = function(string, options) {
