@@ -10,6 +10,19 @@ var mergeTrees = require('broccoli-merge-trees');
 var funnel     = require('broccoli-funnel');
 var crypto     = require('crypto');
 var hashForDep = require('hash-for-dep');
+var os         = require('os');
+var workerpool = require('workerpool');
+var Promise    = require('rsvp').Promise;
+
+// TODO change API and remove this
+var moduleResolve = require('amd-name-resolver').moduleResolve;
+
+// create a worker pool using an external worker script
+// one worker per core
+// TODO - benchmark with other number of workers
+var pool = workerpool.pool(__dirname + '/worker.js', { maxWorkers: os.cpus().length });
+
+
 
 function getExtensionsRegex(extensions) {
   return extensions.map(function(extension) {
@@ -25,6 +38,23 @@ function replaceExtensions(extensionsRegex, name) {
   return name;
 }
 
+function pluginCanBeParallelized(plugin) {
+  return Object.prototype.toString.call(plugin) === '[object Array]' &&
+         plugin.length === 3 &&
+         typeof (plugin[0]) === 'string' &&
+         typeof (plugin[1]) === 'string';
+}
+
+function pluginsAreParallelizable(plugins) {
+  var retval = plugins === undefined || plugins.every(pluginCanBeParallelized);
+  return retval;
+}
+
+function resolveModuleIsParallelizable(resolveModule) {
+  var retval = typeof resolveModule=== 'function' && resolveModule === moduleResolve;
+  return retval;
+}
+
 function Babel(inputTree, _options) {
   if (!(this instanceof Babel)) {
     return new Babel(inputTree, _options);
@@ -32,9 +62,11 @@ function Babel(inputTree, _options) {
 
   var options = _options || {};
   options.persist = 'persist' in options ? options.persist : true;
+  options.async = true;
   Filter.call(this, inputTree, options);
 
   delete options.persist;
+  delete options.async; // TODO do I need to do this?
   delete options.annotation;
   delete options.description;
 
@@ -75,7 +107,47 @@ Babel.prototype.baseDir = function() {
 };
 
 Babel.prototype.transform = function(string, options) {
-  return transpiler.transform(string, options);
+  var plugins = options.plugins;
+  var resolveModuleFunction = options.resolveModuleSource;
+
+  if (!pluginsAreParallelizable(plugins) || !resolveModuleIsParallelizable(resolveModuleFunction)) {
+    console.log('cannot parallelize - running in main thread');
+    return Promise.resolve(transpiler.transform(string, options));
+  }
+  else {
+    // can be parallelized
+
+    // TODO - need to change the API for this as well...
+    // (so it will also be passthrough to )
+    // just set this to true, the worker will take care of re-wiring this
+    options.resolveModuleSource_amd = true;
+    delete options.resolveModuleSource;
+
+    // (plugins is a passthrough)
+
+    // send the job to the worker pool
+    // this returns a Promise
+    return new Promise(function(resolve, reject) {
+      pool.exec('transform', [string, options])
+      .then(
+        function onResolved(result) {
+          resolve(result);
+        },
+        function onRejected(err) {
+          console.log('[ERROR]');
+          console.log(err);
+          if (err.name === 'Error' && (err.message === 'Worker terminated unexpectedly' ||
+                                       err.message === 'Worker is terminated')) {
+            // retry if it's a worker error
+            resolve(pool.exec('transform', [string, options]));
+          }
+          else {
+            reject(err);
+          }
+        }
+      );
+    });
+  }
 };
 
 /*
@@ -174,17 +246,20 @@ Babel.prototype.processString = function(string, relativePath) {
     options.moduleId = replaceExtensions(this.extensionsRegex, options.filename);
   }
 
-  var transpiled = this.transform(string, options);
+  var plugin = this;
+  return this.transform(string, options)
+  .then(function (transpiled) {
 
-  if (this.helperWhiteList) {
-    var invalidHelpers = transpiled.metadata.usedHelpers.filter(function(helper) {
-      return this.helperWhiteList.indexOf(helper) === -1;
-    }, this);
+    if (plugin.helperWhiteList) {
+      var invalidHelpers = transpiled.metadata.usedHelpers.filter(function(helper) {
+        return plugin.helperWhiteList.indexOf(helper) === -1;
+      }, plugin);
 
-    validateHelpers(invalidHelpers, relativePath);
-  }
+      validateHelpers(invalidHelpers, relativePath);
+    }
 
-  return transpiled.code;
+    return transpiled.code;
+  });
 };
 
 Babel.prototype.copyOptions = function() {
