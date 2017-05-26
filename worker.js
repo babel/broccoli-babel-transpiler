@@ -1,13 +1,12 @@
-/* globals console, require */
-// TODO (take those out later)
-'use strict'; // jshint ignore:line
+'use strict';
 
 var transpiler = require('babel-core');
 var workerpool = require('workerpool');
+var Promise = require('rsvp').Promise;
 
+// TODO - remove
 var moduleResolve = require('amd-name-resolver').moduleResolve;
 
-var Promise = require('rsvp').Promise;
 
 
 // transpile the input string, using the input options
@@ -15,7 +14,7 @@ function transform(string, options) {
 
   if (options.resolveModuleSource_amd !== undefined) {
     // converting this is easy for now
-    // TODO - change this API to something similar to the plugins
+    // TODO - change this API to be like the plugins
     options.resolveModuleSource = moduleResolve;
     delete options.resolveModuleSource_amd;
   }
@@ -28,9 +27,7 @@ function transform(string, options) {
         var requireFile = plugin[1];
         var options = plugin[2];
 
-        var something = require(requireFile);
-        var newPlugin = something.buildPlugin(options);
-        return newPlugin;
+        return require(requireFile).buildPlugin(options);
       }
       else {
         // plugin is a string, that's fine
@@ -46,16 +43,10 @@ function transform(string, options) {
 
     resolve(result);
   })
-  // .catch(Promise.reject); // TODO - use this after debugging
-  .catch(function(err) {
-    console.log('[REMOTE] [ERROR]');
-    console.log(err);
-    return Promise.reject(err); // TODO - should I throw in the main process?
-  });
-
+  .catch(Promise.reject); // TODO - not sure if this is needed
 }
 
-// create a worker and register public functions
+// create worker and register public functions
 workerpool.worker({
   transform: transform
 });
