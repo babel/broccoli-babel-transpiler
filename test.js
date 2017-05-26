@@ -10,6 +10,7 @@ var stringify = require('json-stable-stringify');
 var mkdirp = require('mkdirp').sync;
 var makeTestHelper = helpers.makeTestHelper;
 var cleanupBuilders = helpers.cleanupBuilders;
+var Promise = require('rsvp').Promise;
 
 var inputPath = path.join(__dirname, 'fixtures');
 var expectations = path.join(__dirname, 'expectations');
@@ -123,6 +124,47 @@ describe('transpile ES6 to ES5', function() {
       sourceMap: false,
       plugins: [
         'transform-strict-mode',
+        'transform-es2015-block-scoping'
+      ]
+    }).then(function(results) {
+      var outputPath = results.directory;
+
+      var output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
+      var input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
+
+      expect(output).to.eql(input);
+    });
+  });
+
+  it('basic - parallel API', function () {
+    return babel('files', {
+      inputSourceMap: false,
+      sourceMap: false,
+      plugins: [
+        ['transform-strict-mode', './fixtures/transform-strict-mode-parallel', {}],
+        ['transform-es2015-block-scoping', './fixtures/transform-es2015-block-scoping-parallel', {}]
+      ]
+    }).then(function(results) {
+      var outputPath = results.directory;
+
+      var output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
+      var input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
+
+      expect(output).to.eql(input);
+    });
+  });
+
+  it('basic - in main process', function () {
+    var pluginFunction = require('babel-plugin-transform-strict-mode');
+    pluginFunction.baseDir = function() {
+      return path.join(__dirname, 'node_modules', 'babel-plugin-transform-strict-mode');
+    };
+    return babel('files', {
+      inputSourceMap: false,
+      sourceMap: false,
+      // cannot parallelize if any of the plugins are functions
+      plugins: [
+        pluginFunction,
         'transform-es2015-block-scoping'
       ]
     }).then(function(results) {
