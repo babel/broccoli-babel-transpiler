@@ -4,30 +4,22 @@ var transpiler = require('babel-core');
 var workerpool = require('workerpool');
 var Promise = require('rsvp').Promise;
 
-// TODO - remove
-var moduleResolve = require('amd-name-resolver').moduleResolve;
-
-
 
 // transpile the input string, using the input options
 function transform(string, options) {
 
-  if (options.resolveModuleSource_amd !== undefined) {
-    // converting this is easy for now
-    // TODO - change this API to be like the plugins
-    options.resolveModuleSource = moduleResolve;
-    delete options.resolveModuleSource_amd;
+  if (options.resolveModuleSource !== undefined) {
+    // convert to work with Babel, if needed
+    if (Object.prototype.toString.call(options.resolveModuleSource) === '[object Array]') {
+      options.resolveModuleSource = require(options.resolveModuleSource[1]).build(options.resolveModuleSource[2]);
+    }
   }
 
   if (options.plugins !== undefined) {
-    // convert plugins to work with Babel
+    // convert plugins to work with Babel, if needed
     options.plugins = options.plugins.map(function(plugin) {
       if (Object.prototype.toString.call(plugin) === '[object Array]') {
-        var name = plugin[0]; // name - not used at the moment
-        var requireFile = plugin[1];
-        var options = plugin[2];
-
-        return require(requireFile).buildPlugin(options);
+        return require(plugin[1]).build(plugin[2]);
       }
       else {
         // plugin is a string, that's fine

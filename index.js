@@ -14,14 +14,9 @@ var os         = require('os');
 var workerpool = require('workerpool');
 var Promise    = require('rsvp').Promise;
 
-// TODO change API and remove this
-var moduleResolve = require('amd-name-resolver').moduleResolve;
-
 // create a worker pool using an external worker script
-// one worker per core
-// TODO - benchmark with other number of workers
+// TODO - benchmark to find optimal number of workers/core
 var pool = workerpool.pool(__dirname + '/worker.js', { maxWorkers: os.cpus().length });
-
 
 
 function getExtensionsRegex(extensions) {
@@ -47,20 +42,20 @@ function pluginCanBeParallelized(plugin) {
 }
 
 function pluginsAreParallelizable(plugins) {
-  var retval = plugins === undefined || plugins.every(pluginCanBeParallelized);
-  return retval;
+  return plugins === undefined || plugins.every(pluginCanBeParallelized);
 }
 
 function resolveModuleIsParallelizable(resolveModule) {
   return resolveModule === undefined ||
-         (typeof resolveModule=== 'function' && resolveModule === moduleResolve);
+         (Object.prototype.toString.call(resolveModule) === '[object Array]' &&
+          resolveModule.length === 3 &&
+          typeof (resolveModule[0]) === 'string' &&
+          typeof (resolveModule[1]) === 'string');
 }
 
 function transformIsParallelizable(options) {
-  var plugins = options.plugins;
-  var resolveModuleFunction = options.resolveModuleSource;
-
-  return pluginsAreParallelizable(plugins) && resolveModuleIsParallelizable(resolveModuleFunction);
+  return pluginsAreParallelizable(options.plugins) &&
+         resolveModuleIsParallelizable(options.resolveModuleSource);
 }
 
 
@@ -75,7 +70,7 @@ function Babel(inputTree, _options) {
   Filter.call(this, inputTree, options);
 
   delete options.persist;
-  delete options.async; // TODO do I need to do this?
+  delete options.async;
   delete options.annotation;
   delete options.description;
 
@@ -117,14 +112,6 @@ Babel.prototype.baseDir = function() {
 
 Babel.prototype.transform = function(string, options) {
   if (transformIsParallelizable(options)) {
-    // TODO - need to change the API for this as well...
-    // (so it will also be passthrough too)
-    // just set this to true, the worker will take care of re-wiring this
-    options.resolveModuleSource_amd = true;
-    delete options.resolveModuleSource;
-
-    // (plugins is a passthrough)
-
     // send the job to the worker pool
     return new Promise(function(resolve, reject) {
       pool.exec('transform', [string, options])

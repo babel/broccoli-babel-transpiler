@@ -3,7 +3,7 @@
 module.exports = {
   name: 'transform-strict-mode',
 
-  buildPlugin: function(options) {
+  build: function(options) {
     return 'transform-strict-mode';
   }
 };

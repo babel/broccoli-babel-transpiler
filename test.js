@@ -11,6 +11,7 @@ var mkdirp = require('mkdirp').sync;
 var makeTestHelper = helpers.makeTestHelper;
 var cleanupBuilders = helpers.cleanupBuilders;
 var Promise = require('rsvp').Promise;
+var moduleResolve = require('amd-name-resolver').moduleResolve;
 
 var inputPath = path.join(__dirname, 'fixtures');
 var expectations = path.join(__dirname, 'expectations');
@@ -154,7 +155,7 @@ describe('transpile ES6 to ES5', function() {
     });
   });
 
-  it('basic - in main process', function () {
+  it('basic (in main process)', function () {
     var pluginFunction = require('babel-plugin-transform-strict-mode');
     pluginFunction.baseDir = function() {
       return path.join(__dirname, 'node_modules', 'babel-plugin-transform-strict-mode');
@@ -189,6 +190,44 @@ describe('transpile ES6 to ES5', function() {
 
       var output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
       var input = fs.readFileSync(path.join(expectations, 'expected-inline-source-maps.js'), 'utf8');
+
+      expect(output).to.eql(input);
+    });
+  });
+
+  it('resolveModuleSource (in main process)', function () {
+    return babel('files', {
+      inputSourceMap: false,
+      sourceMap: false,
+      plugins: [
+        'transform-strict-mode',
+        'transform-es2015-block-scoping'
+      ],
+      resolveModuleSource: moduleResolve
+    }).then(function(results) {
+      var outputPath = results.directory;
+
+      var output = fs.readFileSync(path.join(outputPath, 'fixtures-imports.js'), 'utf8');
+      var input = fs.readFileSync(path.join(expectations, 'imports.js'), 'utf8');
+
+      expect(output).to.eql(input);
+    });
+  });
+
+  it('resolveModuleSource - parallel API', function () {
+    return babel('files', {
+      inputSourceMap: false,
+      sourceMap: false,
+      plugins: [
+        'transform-strict-mode',
+        'transform-es2015-block-scoping'
+      ],
+      resolveModuleSource: ['amd-name-resolver', './fixtures/amd-name-resolver-parallel', {}]
+    }).then(function(results) {
+      var outputPath = results.directory;
+
+      var output = fs.readFileSync(path.join(outputPath, 'fixtures-imports.js'), 'utf8');
+      var input = fs.readFileSync(path.join(expectations, 'imports.js'), 'utf8');
 
       expect(output).to.eql(input);
     });
