@@ -34,8 +34,7 @@ function transform(string, options) {
     delete result.ast;
 
     resolve(result);
-  })
-  .catch(Promise.reject); // TODO - not sure if this is needed
+  });
 }
 
 // create worker and register public functions
