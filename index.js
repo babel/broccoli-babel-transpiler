@@ -122,7 +122,7 @@ Babel.prototype.transform = function(string, options) {
         function onRejected(err) {
           if (err.name === 'Error' && (err.message === 'Worker terminated unexpectedly' ||
                                        err.message === 'Worker is terminated')) {
-            // retry if it's a worker error
+            // retry one time if it's a worker error
             resolve(pool.exec('transform', [string, options]));
           }
           else {

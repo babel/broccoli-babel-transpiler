@@ -114,7 +114,6 @@ describe('transpile ES6 to ES5', function() {
     });
   });
 
-
   afterEach(function () {
     return cleanupBuilders();
   });
@@ -195,7 +194,7 @@ describe('transpile ES6 to ES5', function() {
     });
   });
 
-  it('resolveModuleSource (in main process)', function () {
+  it('modules (in main process)', function () {
     return babel('files', {
       inputSourceMap: false,
       sourceMap: false,
@@ -214,7 +213,7 @@ describe('transpile ES6 to ES5', function() {
     });
   });
 
-  it('resolveModuleSource - parallel API', function () {
+  it('modules - parallel API', function () {
     return babel('files', {
       inputSourceMap: false,
       sourceMap: false,
@@ -593,5 +592,80 @@ describe('when options change', function() {
     var babelNew = new Babel('foo', options);
 
     expect(babelNew.optionsHash()).to.not.eql(originalHash);
+  });
+});
+
+describe('on error', function() {
+
+  before(function() {
+    babel = makeTestHelper({
+      subject: function() {
+        return new Babel(arguments[0], arguments[1]);
+      },
+      fixturePath: inputPath
+    });
+  });
+
+  afterEach(function () {
+    return cleanupBuilders();
+  });
+
+  it('returns error from the main process', function () {
+    var pluginFunction = require('babel-plugin-transform-strict-mode');
+    pluginFunction.baseDir = function() {
+      return path.join(__dirname, 'node_modules', 'babel-plugin-transform-strict-mode');
+    };
+    return babel('errors', {
+      inputSourceMap: false,
+      sourceMap: false,
+      plugins: [
+        pluginFunction,
+        'transform-es2015-block-scoping'
+      ]
+    }).then(
+      function onSuccess(results) {
+        expect.fail('', '', 'babel should throw an error');
+      },
+      function onFailure(error) {
+        expect(error.file).to.eql('fixtures.js');
+      }
+    );
+  });
+
+  it('returns error from a worker process', function () {
+    return babel('errors', {
+      inputSourceMap: false,
+      sourceMap: false,
+      plugins: [
+        'transform-strict-mode',
+        'transform-es2015-block-scoping'
+      ]
+    }).then(
+      function onSuccess(results) {
+        expect.fail('', '', 'babel should throw an error');
+      },
+      function onFailure(error) {
+        expect(error.file).to.eql('fixtures.js');
+      }
+    );
+  });
+
+  it.skip('retries job is worker process is terminated', function () {
+    // TODO
+    return babel('errors', {
+      inputSourceMap: false,
+      sourceMap: false,
+      plugins: [
+        'transform-strict-mode',
+        'transform-es2015-block-scoping'
+      ]
+    }).then(
+      function onSuccess(results) {
+        expect.fail('', '', 'babel should throw an error');
+      },
+      function onFailure(error) {
+        expect(error.file).to.eql('fixtures.js');
+      }
+    );
   });
 });
