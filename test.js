@@ -626,8 +626,8 @@ describe('on error', function() {
       function onSuccess(results) {
         expect.fail('', '', 'babel should throw an error');
       },
-      function onFailure(error) {
-        expect(error.file).to.eql('fixtures.js');
+      function onFailure(err) {
+        expect(err.message).to.eql('fixtures.js: Unexpected token (1:9)');
       }
     );
   });
@@ -644,13 +644,13 @@ describe('on error', function() {
       function onSuccess(results) {
         expect.fail('', '', 'babel should throw an error');
       },
-      function onFailure(error) {
-        expect(error.file).to.eql('fixtures.js');
+      function onFailure(err) {
+        expect(err.message).to.eql('fixtures.js: Unexpected token (1:9)');
       }
     );
   });
 
-  it.skip('retries job is worker process is terminated', function () {
+  it.skip('retries job if worker process is terminated', function () {
     // TODO
     return babel('errors', {
       inputSourceMap: false,
@@ -663,8 +663,8 @@ describe('on error', function() {
       function onSuccess(results) {
         expect.fail('', '', 'babel should throw an error');
       },
-      function onFailure(error) {
-        expect(error.file).to.eql('fixtures.js');
+      function onFailure(err) {
+        expect(err.message).to.eql('fixtures.js: Unexpected token (1:9)');
       }
     );
   });
