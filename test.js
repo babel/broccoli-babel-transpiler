@@ -36,8 +36,8 @@ describe('options', function() {
 
     babel.transform = function(string, options) {
       transpilerOptions = options;
-      return { code: {} };
-    }
+      return Promise.resolve({ code: {} });
+    };
 
     expect(transpilerOptions).to.eql(undefined);
     babel.processString('path', 'relativePath');
@@ -57,8 +57,8 @@ describe('options', function() {
 
     babel.transform = function(string, options) {
       transpilerOptions = options;
-      return { code: {} };
-    }
+      return Promise.resolve({ code: {} });
+    };
 
     expect(transpilerOptions).to.eql(undefined);
     babel.processString('path', 'relativePath');
@@ -77,8 +77,8 @@ describe('options', function() {
 
     babel.transform = function(string, options) {
       transpilerOptions = options;
-      return { code: {} };
-    }
+      return Promise.resolve({ code: {} });
+    };
 
     expect(transpilerOptions).to.eql(undefined);
     babel.processString('path', 'relativePath');
@@ -91,7 +91,7 @@ describe('options', function() {
 
     babel.transform = function(string, options) {
       transpilerOptions = options;
-      return { code: {} };
+      return Promise.resolve({ code: {} });
     };
 
     expect(transpilerOptions).to.eql(undefined);
