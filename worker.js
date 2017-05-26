@@ -23,13 +23,19 @@ function transform(string, options) {
   if (options.plugins !== undefined) {
     // convert plugins to work with Babel
     options.plugins = options.plugins.map(function(plugin) {
-      var name = plugin[0]; // TODO - not used?
-      var requireFile = plugin[1];
-      var options = plugin[2];
+      if (Object.prototype.toString.call(plugin) === '[object Array]') {
+        var name = plugin[0]; // name - not used at the moment
+        var requireFile = plugin[1];
+        var options = plugin[2];
 
-      var something = require(requireFile);
-      var newPlugin = something.buildPlugin(options);
-      return newPlugin;
+        var something = require(requireFile);
+        var newPlugin = something.buildPlugin(options);
+        return newPlugin;
+      }
+      else {
+        // plugin is a string, that's fine
+        return plugin;
+      }
     });
   }
 

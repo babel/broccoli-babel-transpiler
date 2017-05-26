@@ -39,10 +39,11 @@ function replaceExtensions(extensionsRegex, name) {
 }
 
 function pluginCanBeParallelized(plugin) {
-  return Object.prototype.toString.call(plugin) === '[object Array]' &&
-         plugin.length === 3 &&
-         typeof (plugin[0]) === 'string' &&
-         typeof (plugin[1]) === 'string';
+  return typeof plugin === 'string' ||
+         (Object.prototype.toString.call(plugin) === '[object Array]' &&
+          plugin.length === 3 &&
+          typeof (plugin[0]) === 'string' &&
+          typeof (plugin[1]) === 'string');
 }
 
 function pluginsAreParallelizable(plugins) {
@@ -51,9 +52,17 @@ function pluginsAreParallelizable(plugins) {
 }
 
 function resolveModuleIsParallelizable(resolveModule) {
-  var retval = typeof resolveModule=== 'function' && resolveModule === moduleResolve;
-  return retval;
+  return resolveModule === undefined ||
+         (typeof resolveModule=== 'function' && resolveModule === moduleResolve);
 }
+
+function transformIsParallelizable(options) {
+  var plugins = options.plugins;
+  var resolveModuleFunction = options.resolveModuleSource;
+
+  return pluginsAreParallelizable(plugins) && resolveModuleIsParallelizable(resolveModuleFunction);
+}
+
 
 function Babel(inputTree, _options) {
   if (!(this instanceof Babel)) {
@@ -136,18 +145,9 @@ Babel.prototype._generateDepGraph = function() {
 };
 
 Babel.prototype.transform = function(string, options) {
-  var plugins = options.plugins;
-  var resolveModuleFunction = options.resolveModuleSource;
-
-  if (!pluginsAreParallelizable(plugins) || !resolveModuleIsParallelizable(resolveModuleFunction)) {
-    console.log('cannot parallelize - running in main thread');
-    return Promise.resolve(transpiler.transform(string, options));
-  }
-  else {
-    // can be parallelized
-
+  if (transformIsParallelizable(options)) {
     // TODO - need to change the API for this as well...
-    // (so it will also be passthrough to )
+    // (so it will also be passthrough too)
     // just set this to true, the worker will take care of re-wiring this
     options.resolveModuleSource_amd = true;
     delete options.resolveModuleSource;
@@ -155,7 +155,6 @@ Babel.prototype.transform = function(string, options) {
     // (plugins is a passthrough)
 
     // send the job to the worker pool
-    // this returns a Promise
     return new Promise(function(resolve, reject) {
       pool.exec('transform', [string, options])
       .then(
@@ -163,8 +162,6 @@ Babel.prototype.transform = function(string, options) {
           resolve(result);
         },
         function onRejected(err) {
-          console.log('[ERROR]');
-          console.log(err);
           if (err.name === 'Error' && (err.message === 'Worker terminated unexpectedly' ||
                                        err.message === 'Worker is terminated')) {
             // retry if it's a worker error
@@ -176,6 +173,9 @@ Babel.prototype.transform = function(string, options) {
         }
       );
     });
+  }
+  else {
+    return Promise.resolve(transpiler.transform(string, options));
   }
 };
 
