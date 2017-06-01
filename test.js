@@ -155,6 +155,28 @@ describe('transpile ES6 to ES5', function() {
     });
   });
 
+  it('basic - parallel API (in main process)', function () {
+    var pluginFunction = require('babel-plugin-transform-es2015-block-scoping');
+    pluginFunction.baseDir = function() {
+      return path.join(__dirname, 'node_modules', 'babel-plugin-transform-es2015-block-scoping');
+    };
+    return babel('files', {
+      inputSourceMap: false,
+      sourceMap: false,
+      plugins: [
+        ['some-plugin', './fixtures/transform-strict-mode-parallel', {}],
+        pluginFunction,
+      ]
+    }).then(function(results) {
+      var outputPath = results.directory;
+
+      var output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
+      var input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
+
+      expect(output).to.eql(input);
+    });
+  });
+
   it('basic (in main process)', function () {
     var pluginFunction = require('babel-plugin-transform-strict-mode');
     pluginFunction.baseDir = function() {

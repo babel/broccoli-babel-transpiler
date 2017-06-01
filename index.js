@@ -13,6 +13,7 @@ var hashForDep = require('hash-for-dep');
 var os         = require('os');
 var workerpool = require('workerpool');
 var Promise    = require('rsvp').Promise;
+var transformOptions = require('./transform-options');
 
 // create a worker pool using an external worker script
 // TODO - benchmark to find optimal number of workers/core
@@ -133,7 +134,7 @@ Babel.prototype.transform = function(string, options) {
     });
   }
   else {
-    return Promise.resolve(transpiler.transform(string, options));
+    return Promise.resolve(transpiler.transform(string, transformOptions(options)));
   }
 };
 
