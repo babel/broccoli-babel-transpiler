@@ -13,6 +13,7 @@ var makeTestHelper = helpers.makeTestHelper;
 var cleanupBuilders = helpers.cleanupBuilders;
 var Promise = require('rsvp').Promise;
 var moduleResolve = require('amd-name-resolver').moduleResolve;
+var transformOptions = require('./lib/transform-options');
 
 var inputPath = path.join(__dirname, 'fixtures');
 var expectations = path.join(__dirname, 'expectations');
@@ -715,5 +716,74 @@ describe('on error', function() {
         expect(err.message).to.eql('Worker terminated unexpectedly');
       }
     );
+  });
+});
+
+describe('transform options', function() {
+
+  it('passes other options through', function () {
+    var options = {
+      inputSourceMap: false,
+      sourceMap: false,
+      somethingElse: 'foo',
+    };
+    expect(transformOptions(options)).to.eql({
+      inputSourceMap: false,
+      sourceMap: false,
+      somethingElse: 'foo',
+    });
+  });
+
+  it('leaves plugin functions and strings alone', function () {
+    var pluginFunction = function doSomething() {
+      return 'something';
+    };
+    var options = {
+      plugins: [
+        pluginFunction,
+        'transform-strict-mode',
+        'transform-es2015-block-scoping'
+      ]
+    };
+    expect(transformOptions(options)).to.eql({
+      plugins: [
+        pluginFunction,
+        'transform-strict-mode',
+        'transform-es2015-block-scoping'
+      ]
+    });
+  });
+
+  it('builds plugins using the parallel API', function () {
+    var options = {
+      plugins: [
+        ['some plugins name', fixtureFullPath('transform-strict-mode-parallel'), { foo: 'bar' }],
+        'transform-es2015-block-scoping'
+      ]
+    };
+    expect(transformOptions(options)).to.eql({
+      plugins: [
+        'transform-strict-mode',
+        'transform-es2015-block-scoping'
+      ]
+    });
+  });
+
+  it('leaves resolveModuleSource function alone', function () {
+    var options = {
+      resolveModuleSource: moduleResolve
+    };
+    expect(transformOptions(options)).to.eql({
+      resolveModuleSource: moduleResolve
+    });
+  });
+
+  it('builds resolveModuleSource using the parallel API', function () {
+    var options = {
+      resolveModuleSource: ['amd-name-resolver-||', fixtureFullPath('amd-name-resolver-parallel'), {}]
+    };
+    expect(transformOptions(options)).to.eql({
+      resolveModuleSource: moduleResolve
+    });
   });
 });
