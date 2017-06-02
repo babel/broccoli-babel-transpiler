@@ -14,6 +14,7 @@ var os         = require('os');
 var workerpool = require('workerpool');
 var Promise    = require('rsvp').Promise;
 var transformOptions = require('./lib/transform-options');
+var ParallelApi = require('./lib/parallel-api');
 
 // create a worker pool using an external worker script
 // TODO - benchmark to find optimal number of workers/core
@@ -33,32 +34,6 @@ function replaceExtensions(extensionsRegex, name) {
 
   return name;
 }
-
-function pluginCanBeParallelized(plugin) {
-  return typeof plugin === 'string' ||
-         (Object.prototype.toString.call(plugin) === '[object Array]' &&
-          plugin.length === 3 &&
-          typeof (plugin[0]) === 'string' &&
-          typeof (plugin[1]) === 'string');
-}
-
-function pluginsAreParallelizable(plugins) {
-  return plugins === undefined || plugins.every(pluginCanBeParallelized);
-}
-
-function resolveModuleIsParallelizable(resolveModule) {
-  return resolveModule === undefined ||
-         (Object.prototype.toString.call(resolveModule) === '[object Array]' &&
-          resolveModule.length === 3 &&
-          typeof (resolveModule[0]) === 'string' &&
-          typeof (resolveModule[1]) === 'string');
-}
-
-function transformIsParallelizable(options) {
-  return pluginsAreParallelizable(options.plugins) &&
-         resolveModuleIsParallelizable(options.resolveModuleSource);
-}
-
 
 function Babel(inputTree, _options) {
   if (!(this instanceof Babel)) {
@@ -141,7 +116,7 @@ Babel.prototype._generateDepGraph = function() {
 };
 
 Babel.prototype.transform = function(string, options) {
-  if (transformIsParallelizable(options)) {
+  if (ParallelApi.transformIsParallelizable(options)) {
     // send the job to the worker pool
     return pool.exec('transform', [string, options]).catch(function (err) {
       if (typeof err === 'object' && err !== null &&
