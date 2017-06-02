@@ -7,7 +7,7 @@ var pluginFunction = require('babel-plugin-transform-strict-mode');
 module.exports = {
   name: 'transform-strict-mode',
 
-  build: function(options) {
+  build(options) {
     if (fs.existsSync(options.ripFile)) {
       // already died once
       fs.unlinkSync(options.ripFile);
