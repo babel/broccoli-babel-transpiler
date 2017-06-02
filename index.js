@@ -13,11 +13,11 @@ var hashForDep = require('hash-for-dep');
 var os         = require('os');
 var workerpool = require('workerpool');
 var Promise    = require('rsvp').Promise;
-var transformOptions = require('./transform-options');
+var transformOptions = require('./lib/transform-options');
 
 // create a worker pool using an external worker script
 // TODO - benchmark to find optimal number of workers/core
-var pool = workerpool.pool(__dirname + '/worker.js', { maxWorkers: os.cpus().length });
+var pool = workerpool.pool(path.join(__dirname, 'lib', 'worker.js'), { maxWorkers: os.cpus().length });
 
 
 function getExtensionsRegex(extensions) {
