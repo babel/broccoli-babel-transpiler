@@ -114,23 +114,15 @@ Babel.prototype.baseDir = function() {
 Babel.prototype.transform = function(string, options) {
   if (transformIsParallelizable(options)) {
     // send the job to the worker pool
-    return new Promise(function(resolve, reject) {
-      pool.exec('transform', [string, options])
-      .then(
-        function onResolved(result) {
-          resolve(result);
-        },
-        function onRejected(err) {
-          if (err.name === 'Error' && (err.message === 'Worker terminated unexpectedly' ||
-                                       err.message === 'Worker is terminated')) {
-            // retry one time if it's a worker error
-            resolve(pool.exec('transform', [string, options]));
-          }
-          else {
-            reject(err);
-          }
-        }
-      );
+    return pool.exec('transform', [string, options]).catch(function (err) {
+      if (typeof err === 'object' && err !== null &&
+          (err.message === 'Worker terminated unexpectedly' || err.message === 'Worker is terminated')) {
+        // retry one time if it's a worker error
+        return pool.exec('transform', [string, options]);
+      }
+      else {
+        throw err;
+      }
     });
   }
   else {
