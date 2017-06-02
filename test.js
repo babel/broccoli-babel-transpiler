@@ -14,6 +14,7 @@ var cleanupBuilders = helpers.cleanupBuilders;
 var Promise = require('rsvp').Promise;
 var moduleResolve = require('amd-name-resolver').moduleResolve;
 var transformOptions = require('./lib/transform-options');
+var ParallelApi = require('./lib/parallel-api');
 
 var inputPath = path.join(__dirname, 'fixtures');
 var expectations = path.join(__dirname, 'expectations');
@@ -785,5 +786,124 @@ describe('transform options', function() {
     expect(transformOptions(options)).to.eql({
       resolveModuleSource: moduleResolve
     });
+  });
+});
+
+describe('can plugin be parallelized', function() {
+  it('string - yes', function () {
+    expect(ParallelApi.pluginCanBeParallelized('transform-es2025')).to.eql(true);
+  });
+
+  it('function - no', function () {
+    expect(ParallelApi.pluginCanBeParallelized(function() {})).to.eql(false);
+  });
+
+  it('[] - no', function () {
+    expect(ParallelApi.pluginCanBeParallelized([])).to.eql(false);
+  });
+
+  it('["plugin-name", { options }] - no', function () {
+    expect(ParallelApi.pluginCanBeParallelized(['plugin-name', {foo: 'bar'}])).to.eql(false);
+  });
+
+  it('["plugin-name", "file/to/require", { options }] - yes', function () {
+    expect(ParallelApi.pluginCanBeParallelized(['plugin-name', 'file/to/require', {foo: 'bar'}])).to.eql(true);
+  });
+});
+
+describe('can plugins be parallelized', function() {
+  it('undefined - yes', function () {
+    expect(ParallelApi.pluginsAreParallelizable(undefined)).to.eql(true);
+  });
+
+  it('[] - yes', function () {
+    expect(ParallelApi.pluginsAreParallelizable([])).to.eql(true);
+  });
+
+  it('array of plugins that are parllelizable - yes', function () {
+    var plugins = [
+      'some-plugin',
+      'some-other-plugin',
+      ['plugin-name', 'file/to/require', {foo: 'bar'}],
+    ];
+    expect(ParallelApi.pluginsAreParallelizable(plugins)).to.eql(true);
+  });
+
+  it('one plugin is not parallelizable - no', function () {
+    var plugins = [
+      'some-plugin',
+      'some-other-plugin',
+      ['plugin-name', 'file/to/require', {foo: 'bar'}],
+      function() {},
+    ];
+    expect(ParallelApi.pluginsAreParallelizable(plugins)).to.eql(false);
+  });
+});
+
+
+describe('can resolveModule be parallelized', function() {
+  it('undefined - yes', function () {
+    expect(ParallelApi.resolveModuleIsParallelizable(undefined)).to.eql(true);
+  });
+
+  it('string - no', function () {
+    expect(ParallelApi.resolveModuleIsParallelizable('some-module')).to.eql(false);
+  });
+
+  it('function - no', function () {
+    expect(ParallelApi.resolveModuleIsParallelizable(function() {})).to.eql(false);
+  });
+
+  it('[] - no', function () {
+    expect(ParallelApi.resolveModuleIsParallelizable([])).to.eql(false);
+  });
+
+  it('["module-name", "file/to/require", { options }] - yes', function () {
+    expect(ParallelApi.resolveModuleIsParallelizable(['module-name', 'file/to/require', {foo: 'bar'}])).to.eql(true);
+  });
+});
+
+describe('can transform be parallelized', function() {
+  it('no plugins or resolveModule - yes', function () {
+    var options = {};
+    expect(ParallelApi.transformIsParallelizable(options)).to.eql(true);
+  });
+
+  it('plugins are parallelizable - yes', function () {
+    var options = {
+      plugins: [ 'some-plugin' ],
+    };
+    expect(ParallelApi.transformIsParallelizable(options)).to.eql(true);
+  });
+
+  it('resolveModule is parallelizable - yes', function () {
+    var options = {
+      resolveModuleSource: [ 'some-module', 'file/to/require', {foo: 'bar'}],
+    };
+    expect(ParallelApi.transformIsParallelizable(options)).to.eql(true);
+  });
+
+  it('both are parallelizable - yes', function () {
+    var options = {
+      plugins: [ 'some-plugin' ],
+      resolveModuleSource: [ 'some-module', 'file/to/require', {foo: 'bar'}],
+    };
+    expect(ParallelApi.transformIsParallelizable(options)).to.eql(true);
+  });
+
+  it('plugins not parallelizable - no', function () {
+    var options = {
+      plugins: [ function() {} ],
+      resolveModuleSource: [ 'some-module', 'file/to/require', {foo: 'bar'}],
+    };
+    expect(ParallelApi.transformIsParallelizable(options)).to.eql(false);
+  });
+
+  it('resolveModuleSource not parallelizable - no', function () {
+    var options = {
+      plugins: [ 'some-plugin' ],
+      resolveModuleSource: function() {},
+    };
+    expect(ParallelApi.transformIsParallelizable(options)).to.eql(false);
   });
 });
