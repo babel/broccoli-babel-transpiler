@@ -19,6 +19,10 @@ var expectations = path.join(__dirname, 'expectations');
 
 var babel;
 
+function fixtureFullPath(filename) {
+  return path.join(__dirname, 'fixtures', filename);
+}
+
 describe('options', function() {
   var options;
 
@@ -142,8 +146,8 @@ describe('transpile ES6 to ES5', function() {
       inputSourceMap: false,
       sourceMap: false,
       plugins: [
-        ['transform-strict-mode', './fixtures/transform-strict-mode-parallel', {}],
-        ['transform-es2015-block-scoping', './fixtures/transform-es2015-block-scoping-parallel', {}]
+        ['transform-strict-mode-||', fixtureFullPath('transform-strict-mode-parallel'), {}],
+        ['transform-es2015-block-scoping-||', fixtureFullPath('transform-es2015-block-scoping-parallel'), {}]
       ]
     }).then(function(results) {
       var outputPath = results.directory;
@@ -164,7 +168,7 @@ describe('transpile ES6 to ES5', function() {
       inputSourceMap: false,
       sourceMap: false,
       plugins: [
-        ['some-plugin', './fixtures/transform-strict-mode-parallel', {}],
+        ['some-plugin-||', fixtureFullPath('transform-strict-mode-parallel'), {}],
         pluginFunction,
       ]
     }).then(function(results) {
@@ -244,7 +248,7 @@ describe('transpile ES6 to ES5', function() {
         'transform-strict-mode',
         'transform-es2015-block-scoping'
       ],
-      resolveModuleSource: ['amd-name-resolver', './fixtures/amd-name-resolver-parallel', {}]
+      resolveModuleSource: ['amd-name-resolver-||', fixtureFullPath('amd-name-resolver-parallel'), {}]
     }).then(function(results) {
       var outputPath = results.directory;
 
@@ -682,7 +686,7 @@ describe('on error', function() {
       inputSourceMap: false,
       sourceMap: false,
       plugins: [
-        ['transform-strict-mode', './fixtures/transform-strict-mode-die-once', { ripFile: ripFilePath }],
+        ['transform-strict-mode-||', fixtureFullPath('transform-strict-mode-die-once'), { ripFile: ripFilePath }],
         'transform-es2015-block-scoping'
       ]
     }).then(function(results) {
@@ -700,7 +704,7 @@ describe('on error', function() {
       inputSourceMap: false,
       sourceMap: false,
       plugins: [
-        ['transform-strict-mode', './fixtures/transform-strict-mode-die-always', {}],
+        ['transform-strict-mode-||', fixtureFullPath('transform-strict-mode-die-always'), {}],
         'transform-es2015-block-scoping'
       ]
     }).then(
