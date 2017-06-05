@@ -1,24 +1,14 @@
 'use strict';
 
-var transpiler = require('babel-core');
 var Filter     = require('broccoli-persistent-filter');
 var clone      = require('clone');
-var path       = require('path');
 var fs         = require('fs');
 var stringify  = require('json-stable-stringify');
 var mergeTrees = require('broccoli-merge-trees');
 var funnel     = require('broccoli-funnel');
 var crypto     = require('crypto');
 var hashForDep = require('hash-for-dep');
-var os         = require('os');
-var workerpool = require('workerpool');
-var Promise    = require('rsvp').Promise;
-var transformOptions = require('./lib/transform-options');
 var ParallelApi = require('./lib/parallel-api');
-
-// create a worker pool using an external worker script
-// TODO - benchmark to find optimal number of workers/core
-var pool = workerpool.pool(path.join(__dirname, 'lib', 'worker.js'), { maxWorkers: os.cpus().length });
 
 
 function getExtensionsRegex(extensions) {
@@ -116,22 +106,7 @@ Babel.prototype._generateDepGraph = function() {
 };
 
 Babel.prototype.transform = function(string, options) {
-  if (ParallelApi.transformIsParallelizable(options)) {
-    // send the job to the worker pool
-    return pool.exec('transform', [string, options]).catch(function (err) {
-      if (typeof err === 'object' && err !== null &&
-          (err.message === 'Worker terminated unexpectedly' || err.message === 'Worker is terminated')) {
-        // retry one time if it's a worker error
-        return pool.exec('transform', [string, options]);
-      }
-      else {
-        throw err;
-      }
-    });
-  }
-  else {
-    return Promise.resolve(transpiler.transform(string, transformOptions(options)));
-  }
+  return ParallelApi.transformString(string, options);
 };
 
 /*

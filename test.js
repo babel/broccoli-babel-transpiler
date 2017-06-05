@@ -14,7 +14,6 @@ var makeTestHelper = helpers.makeTestHelper;
 var cleanupBuilders = helpers.cleanupBuilders;
 var Promise = require('rsvp').Promise;
 var moduleResolve = require('amd-name-resolver').moduleResolve;
-var transformOptions = require('./lib/transform-options');
 var ParallelApi = require('./lib/parallel-api');
 
 var inputPath = path.join(__dirname, 'fixtures');
@@ -818,7 +817,7 @@ describe('transform options', function() {
       sourceMap: false,
       somethingElse: 'foo',
     };
-    expect(transformOptions(options)).to.eql({
+    expect(ParallelApi.transformOptions(options)).to.eql({
       inputSourceMap: false,
       sourceMap: false,
       somethingElse: 'foo',
@@ -836,7 +835,7 @@ describe('transform options', function() {
         'transform-es2015-block-scoping'
       ]
     };
-    expect(transformOptions(options)).to.eql({
+    expect(ParallelApi.transformOptions(options)).to.eql({
       plugins: [
         pluginFunction,
         'transform-strict-mode',
@@ -852,7 +851,7 @@ describe('transform options', function() {
         'transform-es2015-block-scoping'
       ]
     };
-    expect(transformOptions(options)).to.eql({
+    expect(ParallelApi.transformOptions(options)).to.eql({
       plugins: [
         'transform-strict-mode',
         'transform-es2015-block-scoping'
@@ -864,7 +863,7 @@ describe('transform options', function() {
     var options = {
       resolveModuleSource: moduleResolve
     };
-    expect(transformOptions(options)).to.eql({
+    expect(ParallelApi.transformOptions(options)).to.eql({
       resolveModuleSource: moduleResolve
     });
   });
@@ -873,7 +872,7 @@ describe('transform options', function() {
     var options = {
       resolveModuleSource: ['amd-name-resolver-||', fixtureFullPath('amd-name-resolver-parallel'), {}]
     };
-    expect(transformOptions(options)).to.eql({
+    expect(ParallelApi.transformOptions(options)).to.eql({
       resolveModuleSource: moduleResolve
     });
   });
