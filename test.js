@@ -996,3 +996,62 @@ describe('can transform be parallelized', function() {
     expect(ParallelApi.transformIsParallelizable(options)).to.eql(false);
   });
 });
+
+describe('large operations', function() {
+  var inputTreePath = path.join(os.tmpdir(), 'lots-of-files');
+  var expectedContents;
+
+  before(function() {
+    babel = makeTestHelper({
+      subject: function() {
+        return new Babel(arguments[0], arguments[1]);
+      },
+      fixturePath: inputPath
+    });
+
+    if (!fs.existsSync(inputTreePath)) { fs.mkdirSync(inputTreePath); }
+
+    // 100 lines in each file
+    var fileContents = Array.apply(null, {length: 100}).map(function(e, i) {
+      return 'const x' + i + ' = 0;';
+    }).join('\n');
+    expectedContents = '"use strict";\n\n' + Array.apply(null, {length: 100}).map(function(e, i) {
+      return 'var x' + i + ' = 0;';
+    }).join('\n');
+
+    // 2000 files
+    var i;
+    for (i = 0; i < 2000; i++) {
+      fs.writeFileSync(path.join(inputTreePath, 'file-' + i + '.js'), fileContents);
+    }
+  });
+  afterEach(function () {
+    return cleanupBuilders();
+  });
+  after(function() {
+    fs.readdirSync(inputTreePath).forEach(function(file) {
+      fs.unlinkSync(path.join(inputTreePath, file));
+    });
+    fs.rmdirSync(inputTreePath);
+  });
+
+  it('handles thousands of files', function () {
+    this.timeout(2*60*1000); // 2 minutes
+
+    return babel(inputTreePath, {
+      inputSourceMap:false,
+      sourceMap: false,
+      plugins: [
+        ['transform-strict-mode-||', fixtureFullPath('transform-strict-mode-parallel'), {}],
+        'transform-es2015-block-scoping'
+      ]
+    }).then(function(results) {
+      var outputPath = results.directory;
+
+      fs.readdirSync(outputPath).forEach(function(file) {
+        var output = fs.readFileSync(path.join(outputPath, file), 'utf8');
+        expect(output).to.eql(expectedContents);
+      });
+    });
+  });
+});
