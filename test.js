@@ -1014,7 +1014,7 @@ describe('large operations', function() {
   });
 
   it('handles thousands of files', function () {
-    this.timeout(2*60*1000); // 2 minutes
+    this.timeout(5*60*1000); // 5 minutes
 
     return babel(inputTreePath, {
       inputSourceMap:false,
