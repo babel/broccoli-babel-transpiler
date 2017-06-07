@@ -885,6 +885,27 @@ describe('can transform be parallelized', function() {
   });
 });
 
+describe('concurrency', function() {
+  var parallelApiPath = require.resolve('./lib/parallel-api');
+
+  afterEach(function() {
+    delete require.cache[parallelApiPath];
+    delete process.env.JOBS;
+    ParallelApi = require('./lib/parallel-api');
+  });
+
+  it('sets jobs automatically using detected cpus', function() {
+    expect(ParallelApi.jobs).to.equal(os.cpus().length);
+  });
+
+  it('sets jobs using environment variable', function() {
+    delete require.cache[parallelApiPath];
+    process.env.JOBS = '17';
+    ParallelApi = require('./lib/parallel-api');
+    expect(ParallelApi.jobs).to.equal(17);
+  });
+});
+
 describe('large operations', function() {
   var inputTreePath = path.join(os.tmpdir(), 'lots-of-files');
   var expectedContents;
