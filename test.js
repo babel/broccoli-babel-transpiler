@@ -386,7 +386,7 @@ describe('filters files to transform', function() {
       helperWhiteList: ['classCallCheck', 'possibleConstructorReturn'],
       plugins: ['transform-es2015-classes']
     }).catch(function(err) {
-      expect(err.message).to.equal('fixtures-classes.js was transformed and relies on `inherits`, which was not included in the helper whitelist. Either add this helper to the whitelist or refactor to not be dependent on this runtime helper.');
+      expect(err.message).to.match(/^[a-z-]+.js was transformed and relies on `inherits`, which was not included in the helper whitelist. Either add this helper to the whitelist or refactor to not be dependent on this runtime helper.$/);
     });
   });
 
@@ -395,7 +395,7 @@ describe('filters files to transform', function() {
       helperWhiteList: [],
       plugins: ['transform-es2015-classes']
     }).catch(function(err) {
-      expect(err.message).to.equal('fixtures-classes.js was transformed and relies on `classCallCheck`, `inherits`, & `possibleConstructorReturn`, which were not included in the helper whitelist. Either add these helpers to the whitelist or refactor to not be dependent on these runtime helper.');
+      expect(err.message).to.match(/^[a-z-]+.js was transformed and relies on `[a-zA-Z]+`, `[a-zA-Z]+`, & `[a-zA-z]+`, which were not included in the helper whitelist. Either add these helpers to the whitelist or refactor to not be dependent on these runtime helpers.$/);
     });
   });
 
