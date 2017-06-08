@@ -262,7 +262,7 @@ function validateHelpers(invalidHelpers, relativePath) {
         return item + '`, `';
       }).join('');
 
-      message = relativePath + ' was transformed and relies on `' + helpers + '`, which were not included in the helper whitelist. Either add these helpers to the whitelist or refactor to not be dependent on these runtime helper.';
+      message = relativePath + ' was transformed and relies on `' + helpers + '`, which were not included in the helper whitelist. Either add these helpers to the whitelist or refactor to not be dependent on these runtime helpers.';
     }
     throw new Error(message);
   }
