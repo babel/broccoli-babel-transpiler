@@ -1,6 +1,7 @@
 'use strict';
 
-var fs     = require('fs');
+var fs = require('fs');
+var os = require('os');
 var expect = require('chai').expect;
 var broccoli = require('broccoli');
 var path = require('path');
@@ -740,13 +741,34 @@ describe('on error', function() {
     );
   });
 
-  it.skip('retries job if worker process is terminated', function () {
-    // TODO
-    return babel('errors', {
+  it('retries if worker process is terminated once', function () {
+    var ripFilePath = path.join(os.tmpdir(), 'rip.js');
+    if (fs.existsSync(ripFilePath)) { fs.unlinkSync(ripFilePath); }
+
+    // only one file so that multiple processes are not trying to concurrently read/write/delete rip.js
+    return babel('file', {
       inputSourceMap: false,
       sourceMap: false,
       plugins: [
-        'transform-strict-mode',
+        ['transform-strict-mode', './fixtures/transform-strict-mode-die-once', { ripFile: ripFilePath }],
+        'transform-es2015-block-scoping'
+      ]
+    }).then(function(results) {
+      var outputPath = results.directory;
+
+      var output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
+      var input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
+
+      expect(output).to.eql(input);
+    });
+  });
+
+  it('fails if worker process is terminated more than once', function () {
+    return babel('files', {
+      inputSourceMap: false,
+      sourceMap: false,
+      plugins: [
+        ['transform-strict-mode', './fixtures/transform-strict-mode-die-always', {}],
         'transform-es2015-block-scoping'
       ]
     }).then(
@@ -754,7 +776,7 @@ describe('on error', function() {
         expect.fail('', '', 'babel should throw an error');
       },
       function onFailure(err) {
-        expect(err.message).to.eql('fixtures.js: Unexpected token (1:9)');
+        expect(err.message).to.eql('Worker terminated unexpectedly');
       }
     );
   });
