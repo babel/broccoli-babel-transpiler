@@ -31,7 +31,6 @@
   },
   "homepage": "https://github.com/babel/broccoli-babel-transpiler",
   "dependencies": {
-    "amd-name-resolver": "0.0.6",
     "babel-core": "^5.0.0",
     "broccoli-funnel": "^1.0.0",
     "broccoli-merge-trees": "^1.0.0",
@@ -43,6 +42,7 @@
     "workerpool": "^2.2.1"
   },
   "devDependencies": {
+    "amd-name-resolver": "0.0.6",
     "babel-plugin-example": "^1.0.0",
     "babel-plugin-unassert": "^1.2.0",
     "broccoli": "^0.16.3",
