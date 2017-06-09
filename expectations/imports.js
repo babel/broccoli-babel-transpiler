@@ -1,5 +1,9 @@
 'use strict';
 
-import Foo from 'fixtures-classes';
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
-export class FooTwo extends Foo {}
+var _fixturesClasses = require('fixtures-classes');
+
+var _fixturesClasses2 = _interopRequireDefault(_fixturesClasses);
+
+var ok = _fixturesClasses2['default'].bar();

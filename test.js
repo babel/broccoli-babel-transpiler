@@ -144,7 +144,7 @@ describe('transpile ES6 to ES5', function() {
       inputSourceMap: false,
       sourceMap: false,
       plugins: [
-        ['example-||', fixtureFullPath('example-parallel'), {}],
+        ['example-||', fixtureFullPath('plugin-example-parallel'), {}],
       ]
     }).then(function(results) {
       var outputPath = results.directory;
@@ -165,7 +165,7 @@ describe('transpile ES6 to ES5', function() {
       inputSourceMap: false,
       sourceMap: false,
       plugins: [
-        ['example-||', fixtureFullPath('example-parallel'), {}],
+        ['example-||', fixtureFullPath('plugin-example-parallel'), {}],
         pluginFunction,
       ]
     }).then(function(results) {
@@ -220,15 +220,10 @@ describe('transpile ES6 to ES5', function() {
     });
   });
 
-  it.skip('modules (in main process)', function () {
-    // TODO
+  it('modules (in main process)', function () {
     return babel('files', {
       inputSourceMap: false,
       sourceMap: false,
-      plugins: [
-        // 'transform-strict-mode',
-        // 'transform-es2015-block-scoping'
-      ],
       resolveModuleSource: moduleResolve
     }).then(function(results) {
       var outputPath = results.directory;
@@ -240,15 +235,10 @@ describe('transpile ES6 to ES5', function() {
     });
   });
 
-  it.skip('modules - parallel API', function () {
-    // TODO
+  it('modules - parallel API', function () {
     return babel('files', {
       inputSourceMap: false,
       sourceMap: false,
-      plugins: [
-        // 'transform-strict-mode',
-        // 'transform-es2015-block-scoping'
-      ],
       resolveModuleSource: ['amd-name-resolver-||', fixtureFullPath('amd-name-resolver-parallel'), {}]
     }).then(function(results) {
       var outputPath = results.directory;
@@ -735,18 +725,17 @@ describe('on error', function() {
     return cleanupBuilders();
   });
 
-  it.skip('returns error from the main process', function () {
-    // TODO
-    var pluginFunction = require('babel-plugin-transform-strict-mode');
+  it('returns error from the main process', function () {
+    var pluginFunction = require('babel-plugin-unassert');
     pluginFunction.baseDir = function() {
-      return path.join(__dirname, 'node_modules', 'babel-plugin-transform-strict-mode');
+      return path.join(__dirname, 'node_modules', 'babel-plugin-unassert');
     };
     return babel('errors', {
       inputSourceMap: false,
       sourceMap: false,
       plugins: [
+        'example',
         pluginFunction,
-        'transform-es2015-block-scoping'
       ]
     }).then(
       function onSuccess(results) {
@@ -758,14 +747,13 @@ describe('on error', function() {
     );
   });
 
-  it.skip('returns error from a worker process', function () {
-    // TODO
+  it('returns error from a worker process', function () {
     return babel('errors', {
       inputSourceMap: false,
       sourceMap: false,
       plugins: [
-        'transform-strict-mode',
-        'transform-es2015-block-scoping'
+        'example',
+        'unassert',
       ]
     }).then(
       function onSuccess(results) {
@@ -777,14 +765,12 @@ describe('on error', function() {
     );
   });
 
-  it.skip('fails if worker process is terminated', function () {
-    // TODO
+  it('fails if worker process is terminated', function () {
     return babel('files', {
       inputSourceMap: false,
       sourceMap: false,
       plugins: [
-        ['transform-strict-mode-||', fixtureFullPath('transform-strict-mode-process-exit'), {}],
-        'transform-es2015-block-scoping'
+        ['exit-in-||', fixtureFullPath('plugin-process-exit'), {}],
       ]
     }).then(
       function onSuccess(results) {
@@ -832,17 +818,16 @@ describe('transform options', function() {
     });
   });
 
-  it.skip('builds plugins using the parallel API', function () {
-    // TODO
+  it('builds plugins using the parallel API', function () {
     var options = {
       plugins: [
-        ['some plugins name', fixtureFullPath('transform-strict-mode-parallel'), { foo: 'bar' }],
+        ['some plugins name', fixtureFullPath('plugin-example-parallel'), { foo: 'bar' }],
         'transform-es2015-block-scoping'
       ]
     };
     expect(ParallelApi.transformOptions(options)).to.eql({
       plugins: [
-        'transform-strict-mode',
+        'babel-plugin-example',
         'transform-es2015-block-scoping'
       ]
     });
@@ -1051,11 +1036,6 @@ describe('large operations', function() {
     return babel(inputTreePath, {
       inputSourceMap:false,
       sourceMap: false,
-      plugins: [
-        // TODO
-        // ['transform-strict-mode-||', fixtureFullPath('transform-strict-mode-parallel'), {}],
-        // 'transform-es2015-block-scoping'
-      ]
     }).then(function(results) {
       var outputPath = results.directory;
 
