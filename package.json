@@ -33,7 +33,6 @@
   "dependencies": {
     "amd-name-resolver": "0.0.6",
     "babel-core": "^5.0.0",
-
     "broccoli-funnel": "^1.0.0",
     "broccoli-merge-trees": "^1.0.0",
     "broccoli-persistent-filter": "^1.0.1",
@@ -44,6 +43,8 @@
     "workerpool": "^2.2.1"
   },
   "devDependencies": {
+    "babel-plugin-example": "^1.0.0",
+    "babel-plugin-unassert": "^1.2.0",
     "broccoli": "^0.16.3",
     "broccoli-test-helpers": "0.0.8",
     "chai": "^3.5.0",

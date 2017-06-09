@@ -139,50 +139,52 @@ describe('transpile ES6 to ES5', function() {
     });
   });
 
-  it('basic - parallel API', function () {
+  it('using parallel API', function () {
     return babel('files', {
       inputSourceMap: false,
       sourceMap: false,
       plugins: [
-        ['transform-strict-mode-||', fixtureFullPath('transform-strict-mode-parallel'), {}],
-        ['transform-es2015-block-scoping-||', fixtureFullPath('transform-es2015-block-scoping-parallel'), {}]
+        ['example-||', fixtureFullPath('example-parallel'), {}],
       ]
     }).then(function(results) {
       var outputPath = results.directory;
 
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
+      var output = fs.readFileSync(path.join(outputPath, 'fixtures-functions.js'), 'utf8');
+      var input = fs.readFileSync(path.join(expectations, 'functions.js'), 'utf8');
 
       expect(output).to.eql(input);
     });
   });
 
-  it('basic - parallel API (in main process)', function () {
-    var pluginFunction = require('babel-plugin-transform-es2015-block-scoping');
+  it('using parallel API (in main process)', function () {
+    var pluginFunction = require('babel-plugin-unassert');
     pluginFunction.baseDir = function() {
-      return path.join(__dirname, 'node_modules', 'babel-plugin-transform-es2015-block-scoping');
+      return path.join(__dirname, 'node_modules', 'babel-plugin-unassert');
     };
     return babel('files', {
       inputSourceMap: false,
       sourceMap: false,
       plugins: [
-        ['some-plugin-||', fixtureFullPath('transform-strict-mode-parallel'), {}],
+        ['example-||', fixtureFullPath('example-parallel'), {}],
         pluginFunction,
       ]
     }).then(function(results) {
       var outputPath = results.directory;
 
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
+      var output1 = fs.readFileSync(path.join(outputPath, 'fixtures-functions.js'), 'utf8');
+      var input1 = fs.readFileSync(path.join(expectations, 'functions.js'), 'utf8');
+      expect(output1).to.eql(input1);
 
-      expect(output).to.eql(input);
+      var output2 = fs.readFileSync(path.join(outputPath, 'fixtures-assert.js'), 'utf8');
+      var input2 = fs.readFileSync(path.join(expectations, 'assert.js'), 'utf8');
+      expect(output2).to.eql(input2);
     });
   });
 
   it('basic (in main process)', function () {
-    var pluginFunction = require('babel-plugin-transform-strict-mode');
+    var pluginFunction = require('babel-plugin-unassert');
     pluginFunction.baseDir = function() {
-      return path.join(__dirname, 'node_modules', 'babel-plugin-transform-strict-mode');
+      return path.join(__dirname, 'node_modules', 'babel-plugin-unassert');
     };
     return babel('files', {
       inputSourceMap: false,
@@ -190,15 +192,18 @@ describe('transpile ES6 to ES5', function() {
       // cannot parallelize if any of the plugins are functions
       plugins: [
         pluginFunction,
-        'transform-es2015-block-scoping'
+        'babel-plugin-example',
       ]
     }).then(function(results) {
       var outputPath = results.directory;
 
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
+      var output1 = fs.readFileSync(path.join(outputPath, 'fixtures-functions.js'), 'utf8');
+      var input1 = fs.readFileSync(path.join(expectations, 'functions.js'), 'utf8');
+      expect(output1).to.eql(input1);
 
-      expect(output).to.eql(input);
+      var output2 = fs.readFileSync(path.join(outputPath, 'fixtures-assert.js'), 'utf8');
+      var input2 = fs.readFileSync(path.join(expectations, 'assert.js'), 'utf8');
+      expect(output2).to.eql(input2);
     });
   });
 
@@ -215,13 +220,14 @@ describe('transpile ES6 to ES5', function() {
     });
   });
 
-  it('modules (in main process)', function () {
+  it.skip('modules (in main process)', function () {
+    // TODO
     return babel('files', {
       inputSourceMap: false,
       sourceMap: false,
       plugins: [
-        'transform-strict-mode',
-        'transform-es2015-block-scoping'
+        // 'transform-strict-mode',
+        // 'transform-es2015-block-scoping'
       ],
       resolveModuleSource: moduleResolve
     }).then(function(results) {
@@ -234,13 +240,14 @@ describe('transpile ES6 to ES5', function() {
     });
   });
 
-  it('modules - parallel API', function () {
+  it.skip('modules - parallel API', function () {
+    // TODO
     return babel('files', {
       inputSourceMap: false,
       sourceMap: false,
       plugins: [
-        'transform-strict-mode',
-        'transform-es2015-block-scoping'
+        // 'transform-strict-mode',
+        // 'transform-es2015-block-scoping'
       ],
       resolveModuleSource: ['amd-name-resolver-||', fixtureFullPath('amd-name-resolver-parallel'), {}]
     }).then(function(results) {
@@ -360,7 +367,7 @@ describe('filters files to transform', function() {
     return babel('files', {
       helperWhiteList: ['class-call-check', 'get']
     }).catch(function(err) {
-      expect(err.message).to.match(/^[a-z-]+.js was transformed and relies on `inherits`, which was not included in the helper whitelist. Either add this helper to the whitelist or refactor to not be dependent on this runtime helper.$/);
+      expect(err.message).to.match(/^[a-z-]+.js was transformed and relies on `[a-z-]+`, which was not included in the helper whitelist. Either add this helper to the whitelist or refactor to not be dependent on this runtime helper.$/);
     });
   });
 
@@ -368,13 +375,13 @@ describe('filters files to transform', function() {
     return babel('files', {
       helperWhiteList: [],
     }).catch(function(err) {
-      expect(err.message).to.match(/^[a-z-]+.js was transformed and relies on `[a-zA-Z]+`, `[a-zA-Z]+`, & `[a-zA-z]+`, which were not included in the helper whitelist. Either add these helpers to the whitelist or refactor to not be dependent on these runtime helpers.$/);
+      expect(err.message).to.match(/^[a-z-]+.js was transformed and relies on `[a-z-]+`, `[a-z-]+`, & `[a-z-]+`, which were not included in the helper whitelist. Either add these helpers to the whitelist or refactor to not be dependent on these runtime helpers.$/);
     });
   });
 
   it('does not throw if helpers are specified', function() {
     return babel('files', {
-      helperWhiteList: ['class-call-check', 'get', 'inherits'],
+      helperWhiteList: ['class-call-check', 'get', 'inherits', 'interop-require-default'],
     }).then(function(results) {
       var outputPath = results.directory;
       var output = fs.readFileSync(path.join(outputPath, 'fixtures-classes.js'), 'utf8');
@@ -728,7 +735,8 @@ describe('on error', function() {
     return cleanupBuilders();
   });
 
-  it('returns error from the main process', function () {
+  it.skip('returns error from the main process', function () {
+    // TODO
     var pluginFunction = require('babel-plugin-transform-strict-mode');
     pluginFunction.baseDir = function() {
       return path.join(__dirname, 'node_modules', 'babel-plugin-transform-strict-mode');
@@ -750,7 +758,8 @@ describe('on error', function() {
     );
   });
 
-  it('returns error from a worker process', function () {
+  it.skip('returns error from a worker process', function () {
+    // TODO
     return babel('errors', {
       inputSourceMap: false,
       sourceMap: false,
@@ -768,7 +777,8 @@ describe('on error', function() {
     );
   });
 
-  it('fails if worker process is terminated', function () {
+  it.skip('fails if worker process is terminated', function () {
+    // TODO
     return babel('files', {
       inputSourceMap: false,
       sourceMap: false,
@@ -822,7 +832,8 @@ describe('transform options', function() {
     });
   });
 
-  it('builds plugins using the parallel API', function () {
+  it.skip('builds plugins using the parallel API', function () {
+    // TODO
     var options = {
       plugins: [
         ['some plugins name', fixtureFullPath('transform-strict-mode-parallel'), { foo: 'bar' }],
@@ -1041,8 +1052,9 @@ describe('large operations', function() {
       inputSourceMap:false,
       sourceMap: false,
       plugins: [
-        ['transform-strict-mode-||', fixtureFullPath('transform-strict-mode-parallel'), {}],
-        'transform-es2015-block-scoping'
+        // TODO
+        // ['transform-strict-mode-||', fixtureFullPath('transform-strict-mode-parallel'), {}],
+        // 'transform-es2015-block-scoping'
       ]
     }).then(function(results) {
       var outputPath = results.directory;

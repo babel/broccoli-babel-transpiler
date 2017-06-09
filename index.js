@@ -2,6 +2,7 @@
 
 var Filter     = require('broccoli-persistent-filter');
 var clone      = require('clone');
+var path       = require('path');
 var fs         = require('fs');
 var stringify  = require('json-stable-stringify');
 var mergeTrees = require('broccoli-merge-trees');
@@ -220,7 +221,7 @@ Babel.prototype.processString = function(string, relativePath) {
     }
 
     if (transpiled.metadata && transpiled.metadata.modules) {
-      this.moduleMetadata[byImportName(key)] = transpiled.metadata.modules;
+      plugin.moduleMetadata[byImportName(key)] = transpiled.metadata.modules;
     }
 
     return transpiled.code;
