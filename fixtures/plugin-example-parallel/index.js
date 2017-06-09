@@ -3,7 +3,7 @@
 module.exports = {
   name: 'plugin-example',
 
-  build(options) {
+  build: function(options) {
     return 'babel-plugin-example';
   }
 };
