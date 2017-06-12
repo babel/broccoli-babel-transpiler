@@ -798,7 +798,7 @@ describe('transform options', function() {
     });
   });
 
-  it('leaves plugin functions and strings alone', function () {
+  it('passes through plugins that do not use the parallel API', function () {
     var pluginFunction = function doSomething() {
       return 'something';
     };
@@ -806,14 +806,20 @@ describe('transform options', function() {
       plugins: [
         pluginFunction,
         'transform-strict-mode',
-        'transform-es2015-block-scoping'
+        'transform-es2015-block-scoping',
+        [ 'something' ],
+        [ 'something', 'else' ],
+        [ { objects: 'should' }, { be: 'passed'}, 'through'],
       ]
     };
     expect(ParallelApi.transformOptions(options)).to.eql({
       plugins: [
         pluginFunction,
         'transform-strict-mode',
-        'transform-es2015-block-scoping'
+        'transform-es2015-block-scoping',
+        [ 'something' ],
+        [ 'something', 'else' ],
+        [ { objects: 'should' }, { be: 'passed'}, 'through'],
       ]
     });
   });
@@ -852,7 +858,33 @@ describe('transform options', function() {
   });
 });
 
-describe('can plugin be parallelized', function() {
+describe('pluginUsesParallelAPI()', function() {
+  it('string - no', function () {
+    expect(ParallelApi.pluginUsesParallelAPI('transform-es2025')).to.eql(false);
+  });
+
+  it('function - no', function () {
+    expect(ParallelApi.pluginUsesParallelAPI(function() {})).to.eql(false);
+  });
+
+  it('[] - no', function () {
+    expect(ParallelApi.pluginUsesParallelAPI([])).to.eql(false);
+  });
+
+  it('["plugin-name", { options }] - no', function () {
+    expect(ParallelApi.pluginUsesParallelAPI(['plugin-name', {foo: 'bar'}])).to.eql(false);
+  });
+
+  it('[{ object }, { options }] - no', function () {
+    expect(ParallelApi.pluginUsesParallelAPI([{some: 'object'}, {foo: 'bar'}])).to.eql(false);
+  });
+
+  it('["plugin-name", "file/to/require", { options }] - yes', function () {
+    expect(ParallelApi.pluginUsesParallelAPI(['plugin-name', 'file/to/require', {foo: 'bar'}])).to.eql(true);
+  });
+});
+
+describe('pluginCanBeParallelized()', function() {
   it('string - yes', function () {
     expect(ParallelApi.pluginCanBeParallelized('transform-es2025')).to.eql(true);
   });
@@ -874,7 +906,7 @@ describe('can plugin be parallelized', function() {
   });
 });
 
-describe('can plugins be parallelized', function() {
+describe('pluginsAreParallelizable()', function() {
   it('undefined - yes', function () {
     expect(ParallelApi.pluginsAreParallelizable(undefined)).to.eql(true);
   });
@@ -904,7 +936,7 @@ describe('can plugins be parallelized', function() {
 });
 
 
-describe('can resolveModule be parallelized', function() {
+describe('resolveModuleIsParallelizable()', function() {
   it('undefined - yes', function () {
     expect(ParallelApi.resolveModuleIsParallelizable(undefined)).to.eql(true);
   });
@@ -926,7 +958,7 @@ describe('can resolveModule be parallelized', function() {
   });
 });
 
-describe('can transform be parallelized', function() {
+describe('transformIsParallelizable()', function() {
   it('no plugins or resolveModule - yes', function () {
     var options = {};
     expect(ParallelApi.transformIsParallelizable(options)).to.eql(true);
