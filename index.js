@@ -31,6 +31,18 @@ function Babel(inputTree, _options) {
   }
 
   var options = _options || {};
+
+  if (options.browserPolyfill) {
+    var babelPolyfillPath = require.resolve('babel-polyfill');
+    babelPolyfillPath = babelPolyfillPath.replace(/\/babel-polyfill\/.*$/, '/babel-polyfill');
+
+    var polyfill = funnel(babelPolyfillPath, { files: ['polyfill.js'], srcDir: 'dist' });
+    inputTree = mergeTrees([polyfill, inputTree]);
+  } else {
+    inputTree = inputTree;
+  }
+  delete options.browserPolyfill;
+
   options.persist = 'persist' in options ? options.persist : true;
   Filter.call(this, inputTree, options);
 
@@ -53,17 +65,6 @@ function Babel(inputTree, _options) {
   // Note, Babel does not support this option so we must save it then
   // delete it from the options hash
   delete this.options.helperWhiteList;
-
-  if (this.options.browserPolyfill) {
-    var babelCorePath = require.resolve('babel-core');
-    babelCorePath = babelCorePath.replace(/\/babel-core\/.*$/, '/babel-core');
-
-    var polyfill = funnel(babelCorePath, { files: ['browser-polyfill.js'] });
-    this.inputTree = mergeTrees([polyfill, inputTree]);
-  } else {
-    this.inputTree = inputTree;
-  }
-  delete this.options.browserPolyfill;
 }
 
 Babel.prototype = Object.create(Filter.prototype);
