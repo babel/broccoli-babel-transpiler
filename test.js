@@ -19,6 +19,8 @@ var ParallelApi = require('./lib/parallel-api');
 var inputPath = path.join(__dirname, 'fixtures');
 var expectations = path.join(__dirname, 'expectations');
 
+var moduleResolveParallel = { parallelAPI: [fixtureFullPath('amd-name-resolver-parallel'), {}] };
+
 var babel;
 
 function fixtureFullPath(filename) {
@@ -239,7 +241,7 @@ describe('transpile ES6 to ES5', function() {
     return babel('files', {
       inputSourceMap: false,
       sourceMap: false,
-      resolveModuleSource: ['amd-name-resolver-||', fixtureFullPath('amd-name-resolver-parallel'), {}]
+      resolveModuleSource: moduleResolveParallel
     }).then(function(results) {
       var outputPath = results.directory;
 
@@ -354,18 +356,18 @@ describe('filters files to transform', function() {
   });
 
   it('throws if a single helper is not whitelisted', function() {
-    return babel('files', {
+    return babel('file', {
       helperWhiteList: ['class-call-check', 'get']
     }).catch(function(err) {
-      expect(err.message).to.match(/^[a-z-]+.js was transformed and relies on `[a-z-]+`, which was not included in the helper whitelist. Either add this helper to the whitelist or refactor to not be dependent on this runtime helper.$/);
+      expect(err.message).to.match(/^fixtures.js was transformed and relies on `[a-z-]+`, which was not included in the helper whitelist. Either add this helper to the whitelist or refactor to not be dependent on this runtime helper.$/);
     });
   });
 
   it('throws if multiple helpers are not whitelisted', function() {
-    return babel('files', {
+    return babel('file', {
       helperWhiteList: [],
     }).catch(function(err) {
-      expect(err.message).to.match(/^[a-z-]+.js was transformed and relies on `[a-z-]+`, `[a-z-]+`, & `[a-z-]+`, which were not included in the helper whitelist. Either add these helpers to the whitelist or refactor to not be dependent on these runtime helpers.$/);
+      expect(err.message).to.match(/^fixtures.js was transformed and relies on `[a-z-]+`, `[a-z-]+`, & `[a-z-]+`, which were not included in the helper whitelist. Either add these helpers to the whitelist or refactor to not be dependent on these runtime helpers.$/);
     });
   });
 
@@ -850,7 +852,7 @@ describe('transform options', function() {
 
   it('builds resolveModuleSource using the parallel API', function () {
     var options = {
-      resolveModuleSource: ['amd-name-resolver-||', fixtureFullPath('amd-name-resolver-parallel'), {}]
+      resolveModuleSource: moduleResolveParallel
     };
     expect(ParallelApi.transformOptions(options)).to.eql({
       resolveModuleSource: moduleResolve
@@ -953,8 +955,19 @@ describe('resolveModuleIsParallelizable()', function() {
     expect(ParallelApi.resolveModuleIsParallelizable([])).to.eql(false);
   });
 
-  it('["module-name", "file/to/require", { options }] - yes', function () {
-    expect(ParallelApi.resolveModuleIsParallelizable(['module-name', 'file/to/require', {foo: 'bar'}])).to.eql(true);
+  it('parallelAPI set incorrectly - no', function () {
+    expect(ParallelApi.resolveModuleIsParallelizable({ parallelAPI: 'wrong' })).to.eql(false);
+  });
+
+  it('object with parallelAPI property - yes', function () {
+    var resolveObject = { parallelAPI: ['file/to/require', {}] };
+    expect(ParallelApi.resolveModuleIsParallelizable(resolveObject)).to.eql(true);
+  });
+
+  it('function with parallelAPI property - yes', function () {
+    var resolveFunc = function() {};
+    resolveFunc.parallelAPI = ['some/file', { some: 'object' }];
+    expect(ParallelApi.resolveModuleIsParallelizable(resolveFunc)).to.eql(true);
   });
 });
 
@@ -973,7 +986,7 @@ describe('transformIsParallelizable()', function() {
 
   it('resolveModule is parallelizable - yes', function () {
     var options = {
-      resolveModuleSource: [ 'some-module', 'file/to/require', {foo: 'bar'}],
+      resolveModuleSource: moduleResolveParallel
     };
     expect(ParallelApi.transformIsParallelizable(options)).to.eql(true);
   });
@@ -981,7 +994,7 @@ describe('transformIsParallelizable()', function() {
   it('both are parallelizable - yes', function () {
     var options = {
       plugins: [ 'some-plugin' ],
-      resolveModuleSource: [ 'some-module', 'file/to/require', {foo: 'bar'}],
+      resolveModuleSource: moduleResolveParallel
     };
     expect(ParallelApi.transformIsParallelizable(options)).to.eql(true);
   });
@@ -989,7 +1002,7 @@ describe('transformIsParallelizable()', function() {
   it('plugins not parallelizable - no', function () {
     var options = {
       plugins: [ function() {} ],
-      resolveModuleSource: [ 'some-module', 'file/to/require', {foo: 'bar'}],
+      resolveModuleSource: moduleResolveParallel
     };
     expect(ParallelApi.transformIsParallelizable(options)).to.eql(false);
   });
