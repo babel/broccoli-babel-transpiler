@@ -19,6 +19,8 @@ var inputPath = path.join(__dirname, 'fixtures');
 var expectations = path.join(__dirname, 'expectations');
 
 var moduleResolveParallel = { parallelAPI: [fixtureFullPath('amd-name-resolver-parallel'), {}] };
+var getModuleIdParallel = { parallelAPI: [fixtureFullPath('get-module-id-parallel'), { name: 'testModule' }] };
+var shouldPrintCommentParallel = { parallelAPI: [fixtureFullPath('print-comment-parallel'), { contents: 'comment 1' }] };
 
 var babel;
 
@@ -258,6 +260,62 @@ describe('transpile ES6 to ES5', function() {
       var output = fs.readFileSync(path.join(outputPath, 'fixtures-imports.js'), 'utf8');
       var input = fs.readFileSync(path.join(expectations, 'imports.js'), 'utf8');
 
+      expect(output).to.eql(input);
+    });
+  });
+
+  it('module IDs (in main process)', function () {
+    return babel('files', {
+      plugins: [
+        'transform-es2015-modules-amd'
+      ],
+      moduleIds: true,
+      getModuleId: function(moduleName) { return 'testModule'; },
+    }).then(function(results) {
+      var outputPath = results.directory;
+
+      var output = fs.readFileSync(path.join(outputPath, 'fixtures-imports.js'), 'utf8');
+      var input = fs.readFileSync(path.join(expectations, 'imports-getModuleId.js'), 'utf8');
+
+      expect(output).to.eql(input);
+    });
+  });
+
+  it('module IDs - parallel API', function () {
+    return babel('files', {
+      plugins: [
+        'transform-es2015-modules-amd'
+      ],
+      moduleIds: true,
+      getModuleId: getModuleIdParallel,
+    }).then(function(results) {
+      var outputPath = results.directory;
+
+      var output = fs.readFileSync(path.join(outputPath, 'fixtures-imports.js'), 'utf8');
+      var input = fs.readFileSync(path.join(expectations, 'imports-getModuleId.js'), 'utf8');
+
+      expect(output).to.eql(input);
+    });
+  });
+
+  it('shouldPrintComment (in main process)', function () {
+    return babel('files', {
+      shouldPrintComment: function(comment) { return comment === 'comment 1'; },
+    }).then(function(results) {
+      var outputPath = results.directory;
+      var output = fs.readFileSync(path.join(outputPath, 'fixtures-comments.js'), 'utf8');
+      var input = fs.readFileSync(path.join(expectations, 'comments.js'), 'utf8');
+      expect(output).to.eql(input);
+    });
+  });
+
+  it('shouldPrintComment - parallel API', function () {
+    return babel('files', {
+      shouldPrintComment: shouldPrintCommentParallel,
+    }).then(function(results) {
+      var outputPath = results.directory;
+      var output = fs.readFileSync(path.join(outputPath, 'fixtures-comments.js'), 'utf8');
+      var input = fs.readFileSync(path.join(expectations, 'comments.js'), 'utf8');
       expect(output).to.eql(input);
     });
   });
@@ -699,7 +757,7 @@ describe('on error', function() {
   });
 });
 
-describe('transform options', function() {
+describe('transformOptions()', function() {
 
   it('passes other options through', function () {
     var options = {
@@ -755,12 +813,19 @@ describe('transform options', function() {
     });
   });
 
-  it('leaves resolveModuleSource function alone', function () {
+  it('leaves callback functions alone', function () {
+    var moduleNameFunc = function(moduleName) {};
+    var commentFunc = function(comment) {};
     var options = {
-      resolveModuleSource: moduleResolve
+      resolveModuleSource: moduleResolve,
+      getModuleId: moduleNameFunc,
+      shouldPrintComment: commentFunc,
+      // TODO more callbacks
     };
     expect(ParallelApi.transformOptions(options)).to.eql({
-      resolveModuleSource: moduleResolve
+      resolveModuleSource: moduleResolve,
+      getModuleId: moduleNameFunc,
+      shouldPrintComment: commentFunc,
     });
   });
 
@@ -771,6 +836,33 @@ describe('transform options', function() {
     expect(ParallelApi.transformOptions(options)).to.eql({
       resolveModuleSource: moduleResolve
     });
+  });
+
+  it('builds getModuleId using the parallel API', function () {
+    var options = {
+      getModuleId: getModuleIdParallel
+    };
+    expect(ParallelApi.transformOptions(options).getModuleId).to.be.a('function');
+  });
+
+  it('builds shouldPrintComment using the parallel API', function () {
+    var options = {
+      shouldPrintComment: shouldPrintCommentParallel
+    };
+    expect(ParallelApi.transformOptions(options).shouldPrintComment).to.be.a('function');
+  });
+
+  it('throws error if parallel API is wrong format', function () {
+    var options = {
+      getModuleId: { parallelAPI: ['wrong'] },
+    };
+    try {
+      ParallelApi.transformOptions(options);
+      expect.fail('', '', 'transformOption should throw error');
+    }
+    catch (err) {
+      expect(err.message).to.eql('getModuleId: wrong format for parallelAPI');
+    }
   });
 });
 
@@ -852,36 +944,52 @@ describe('pluginsAreParallelizable()', function() {
 });
 
 
-describe('resolveModuleIsParallelizable()', function() {
-  it('undefined - yes', function () {
-    expect(ParallelApi.resolveModuleIsParallelizable(undefined)).to.eql(true);
-  });
-
-  it('string - no', function () {
-    expect(ParallelApi.resolveModuleIsParallelizable('some-module')).to.eql(false);
+describe('callbacksAreParallelizable()', function() {
+  it('no callback functions - yes', function () {
+    var options = {
+      inputSourceMap:false,
+      plugins: [
+        'some-plugin',
+      ],
+    };
+    expect(ParallelApi.callbacksAreParallelizable(options)).to.eql(true);
   });
 
   it('function - no', function () {
-    expect(ParallelApi.resolveModuleIsParallelizable(function() {})).to.eql(false);
-  });
-
-  it('[] - no', function () {
-    expect(ParallelApi.resolveModuleIsParallelizable([])).to.eql(false);
-  });
-
-  it('parallelAPI set incorrectly - no', function () {
-    expect(ParallelApi.resolveModuleIsParallelizable({ parallelAPI: 'wrong' })).to.eql(false);
-  });
-
-  it('object with parallelAPI property - yes', function () {
-    var resolveObject = { parallelAPI: ['file/to/require', {}] };
-    expect(ParallelApi.resolveModuleIsParallelizable(resolveObject)).to.eql(true);
+    var options = {
+      inputSourceMap:false,
+      plugins: [
+        'some-plugin'
+      ],
+      resolveModuleSource: moduleResolve,
+    };
+    expect(ParallelApi.callbacksAreParallelizable(options)).to.eql(false);
   });
 
   it('function with parallelAPI property - yes', function () {
-    var resolveFunc = function() {};
-    resolveFunc.parallelAPI = ['some/file', { some: 'object' }];
-    expect(ParallelApi.resolveModuleIsParallelizable(resolveFunc)).to.eql(true);
+    var someFunc = function() {};
+    someFunc.parallelAPI = ['some/file', { some: 'object' }];
+    var options = {
+      inputSourceMap:false,
+      plugins: [
+        'some-plugin'
+      ],
+      keyDontMatter: someFunc,
+    };
+    expect(ParallelApi.callbacksAreParallelizable(options)).to.eql(true);
+  });
+
+  it('parallelAPI set incorrectly - no', function () {
+    var someFunc = function() {};
+    someFunc.parallelAPI = ['wrong'];
+    var options = {
+      inputSourceMap:false,
+      plugins: [
+        'some-plugin'
+      ],
+      keyDontMatter: someFunc,
+    };
+    expect(ParallelApi.callbacksAreParallelizable(options)).to.eql(false);
   });
 });
 
