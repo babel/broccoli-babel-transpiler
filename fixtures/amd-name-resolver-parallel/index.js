@@ -2,8 +2,5 @@
 
 module.exports = {
   name: 'amd-name-resolver',
-
-  build: function(options) {
-    return require('amd-name-resolver').moduleResolve;
-  }
+  moduleResolve: require('amd-name-resolver').moduleResolve,
 };
