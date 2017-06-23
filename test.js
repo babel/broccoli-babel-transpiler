@@ -19,9 +19,12 @@ var ParallelApi = require('./lib/parallel-api');
 var inputPath = path.join(__dirname, 'fixtures');
 var expectations = path.join(__dirname, 'expectations');
 
-var moduleResolveParallel = { parallelAPI: [fixtureFullPath('amd-name-resolver-parallel'), {}] };
-var getModuleIdParallel = { parallelAPI: [fixtureFullPath('get-module-id-parallel'), { name: 'testModule' }] };
-var shouldPrintCommentParallel = { parallelAPI: [fixtureFullPath('print-comment-parallel'), { contents: 'comment 1' }] };
+var moduleResolveParallel = function() {};
+moduleResolveParallel.parallelAPI = [fixtureFullPath('amd-name-resolver-parallel'), {}];
+var getModuleIdParallel = function() {};
+getModuleIdParallel.parallelAPI = [fixtureFullPath('get-module-id-parallel'), { name: 'testModule' }];
+var shouldPrintCommentParallel = function() {};
+shouldPrintCommentParallel.parallelAPI = [fixtureFullPath('print-comment-parallel'), { contents: 'comment 1' }];
 
 var babel;
 
@@ -337,7 +340,6 @@ describe('filters files to transform', function() {
       expect(output).to.eql(input);
       // Verify that .es6 file was not transformed
       expect(fs.existsSync(path.join(outputPath, 'fixtures-es6.es6'))).to.be.ok;
-
     });
   });
 
@@ -355,7 +357,6 @@ describe('filters files to transform', function() {
       expect(output).to.eql(input);
       // Verify that .es6 file was not transformed
       expect(fs.existsSync(path.join(outputPath, 'fixtures-es6.es6'))).to.not.be.ok;
-
     });
   });
 
@@ -1119,6 +1120,34 @@ describe('transformIsParallelizable()', function() {
       resolveModuleSource: function() {},
     };
     expect(ParallelApi.transformIsParallelizable(options)).to.eql(false);
+  });
+});
+
+describe('objectifyCallbacks()', function() {
+  it('empty options', function() {
+    expect(ParallelApi.objectifyCallbacks({})).to.eql({});
+  });
+
+  it('passes through non-function options', function() {
+    var options = {
+      inputSourceMap: false,
+      plugins: [ 'some-plugin' ],
+    };
+    expect(ParallelApi.objectifyCallbacks(options)).to.eql(options);
+  });
+
+  it('transforms all functions', function() {
+    var options = {
+      moduleResolve: moduleResolveParallel,
+      getModuleId: getModuleIdParallel,
+      shouldPrintComment: shouldPrintCommentParallel,
+    };
+    var expected = {
+      moduleResolve: { parallelAPI: [fixtureFullPath('amd-name-resolver-parallel'), {}] },
+      getModuleId: { parallelAPI: [fixtureFullPath('get-module-id-parallel'), { name: 'testModule' }] },
+      shouldPrintComment: { parallelAPI: [fixtureFullPath('print-comment-parallel'), { contents: 'comment 1' }] },
+    };
+    expect(ParallelApi.objectifyCallbacks(options)).to.eql(expected);
   });
 });
 
