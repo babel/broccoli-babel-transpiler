@@ -19,11 +19,11 @@ var inputPath = path.join(__dirname, 'fixtures');
 var expectations = path.join(__dirname, 'expectations');
 
 var moduleResolveParallel = function() {};
-moduleResolveParallel.parallelAPI = [fixtureFullPath('amd-name-resolver-parallel'), {}];
+moduleResolveParallel._parallelAPI = [fixtureFullPath('amd-name-resolver-parallel'), { callback: 'moduleResolve' }];
 var getModuleIdParallel = function() {};
-getModuleIdParallel.parallelAPI = [fixtureFullPath('get-module-id-parallel'), { name: 'testModule' }];
+getModuleIdParallel._parallelAPI = [fixtureFullPath('get-module-id-parallel'), { build: { name: 'testModule' }}];
 var shouldPrintCommentParallel = function() {};
-shouldPrintCommentParallel.parallelAPI = [fixtureFullPath('print-comment-parallel'), { contents: 'comment 1' }];
+shouldPrintCommentParallel._parallelAPI = [fixtureFullPath('print-comment-parallel'), { build: { contents: 'comment 1' }}];
 
 var babel;
 
@@ -834,6 +834,7 @@ describe('transformOptions()', function() {
     var options = {
       resolveModuleSource: moduleResolveParallel
     };
+    expect(ParallelApi.transformOptions(options).resolveModuleSource).to.be.a('function');
     expect(ParallelApi.transformOptions(options)).to.eql({
       resolveModuleSource: moduleResolve
     });
@@ -855,14 +856,27 @@ describe('transformOptions()', function() {
 
   it('throws error if parallel API is wrong format', function () {
     var options = {
-      getModuleId: { parallelAPI: ['wrong'] },
+      getModuleId: { _parallelAPI: ['wrong'] },
     };
     try {
       ParallelApi.transformOptions(options);
       expect.fail('', '', 'transformOption should throw error');
     }
     catch (err) {
-      expect(err.message).to.eql('getModuleId: wrong format for parallelAPI');
+      expect(err.message).to.eql('getModuleId: wrong format for _parallelAPI');
+    }
+  });
+
+  it('throws error if parallel API is missing callback and build properties', function () {
+    var options = {
+      getModuleId: { _parallelAPI: ['some file', {}] },
+    };
+    try {
+      ParallelApi.transformOptions(options);
+      expect.fail('', '', 'transformOption should throw error');
+    }
+    catch (err) {
+      expect(err.message).to.eql("getModuleId: must specify either 'callback' or 'build' property to use the parallel API");
     }
   });
 });
@@ -967,9 +981,9 @@ describe('callbacksAreParallelizable()', function() {
     expect(ParallelApi.callbacksAreParallelizable(options)).to.eql(false);
   });
 
-  it('function with parallelAPI property - yes', function () {
+  it('function with _parallelAPI property - yes', function () {
     var someFunc = function() {};
-    someFunc.parallelAPI = ['some/file', { some: 'object' }];
+    someFunc._parallelAPI = ['some/file', { some: 'object' }];
     var options = {
       inputSourceMap: false,
       plugins: [
@@ -980,9 +994,9 @@ describe('callbacksAreParallelizable()', function() {
     expect(ParallelApi.callbacksAreParallelizable(options)).to.eql(true);
   });
 
-  it('parallelAPI set incorrectly - no', function () {
+  it('_parallelAPI set incorrectly - no', function () {
     var someFunc = function() {};
-    someFunc.parallelAPI = ['wrong'];
+    someFunc._parallelAPI = ['wrong'];
     var options = {
       inputSourceMap: false,
       plugins: [
@@ -1059,9 +1073,9 @@ describe('objectifyCallbacks()', function() {
       shouldPrintComment: shouldPrintCommentParallel,
     };
     var expected = {
-      moduleResolve: { parallelAPI: [fixtureFullPath('amd-name-resolver-parallel'), {}] },
-      getModuleId: { parallelAPI: [fixtureFullPath('get-module-id-parallel'), { name: 'testModule' }] },
-      shouldPrintComment: { parallelAPI: [fixtureFullPath('print-comment-parallel'), { contents: 'comment 1' }] },
+      moduleResolve: { _parallelAPI: moduleResolveParallel._parallelAPI },
+      getModuleId: { _parallelAPI: getModuleIdParallel._parallelAPI },
+      shouldPrintComment: { _parallelAPI: shouldPrintCommentParallel._parallelAPI },
     };
     expect(ParallelApi.objectifyCallbacks(options)).to.eql(expected);
   });
