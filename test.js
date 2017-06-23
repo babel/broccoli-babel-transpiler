@@ -947,7 +947,7 @@ describe('pluginsAreParallelizable()', function() {
 describe('callbacksAreParallelizable()', function() {
   it('no callback functions - yes', function () {
     var options = {
-      inputSourceMap:false,
+      inputSourceMap: false,
       plugins: [
         'some-plugin',
       ],
@@ -957,11 +957,11 @@ describe('callbacksAreParallelizable()', function() {
 
   it('function - no', function () {
     var options = {
-      inputSourceMap:false,
+      inputSourceMap: false,
       plugins: [
         'some-plugin'
       ],
-      resolveModuleSource: moduleResolve,
+      resolveModuleSource: function() {},
     };
     expect(ParallelApi.callbacksAreParallelizable(options)).to.eql(false);
   });
@@ -970,7 +970,7 @@ describe('callbacksAreParallelizable()', function() {
     var someFunc = function() {};
     someFunc.parallelAPI = ['some/file', { some: 'object' }];
     var options = {
-      inputSourceMap:false,
+      inputSourceMap: false,
       plugins: [
         'some-plugin'
       ],
@@ -983,7 +983,7 @@ describe('callbacksAreParallelizable()', function() {
     var someFunc = function() {};
     someFunc.parallelAPI = ['wrong'];
     var options = {
-      inputSourceMap:false,
+      inputSourceMap: false,
       plugins: [
         'some-plugin'
       ],
