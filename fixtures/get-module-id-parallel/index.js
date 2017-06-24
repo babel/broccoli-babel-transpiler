@@ -1,7 +1,7 @@
 "use strict";
 
 module.exports = {
-  build(options) {
-    return (moduleName) => options.name;
+  build: function(options) {
+    return function(moduleName) { return options.name; };
   }
 };
