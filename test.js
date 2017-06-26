@@ -758,7 +758,7 @@ describe('on error', function() {
   });
 });
 
-describe('transformOptions()', function() {
+describe('deserializeOptions()', function() {
 
   it('passes other options through', function () {
     var options = {
@@ -766,7 +766,7 @@ describe('transformOptions()', function() {
       sourceMap: false,
       somethingElse: 'foo',
     };
-    expect(ParallelApi.transformOptions(options)).to.eql({
+    expect(ParallelApi.deserializeOptions(options)).to.eql({
       inputSourceMap: false,
       sourceMap: false,
       somethingElse: 'foo',
@@ -787,7 +787,7 @@ describe('transformOptions()', function() {
         [ { objects: 'should' }, { be: 'passed'}, 'through'],
       ]
     };
-    expect(ParallelApi.transformOptions(options)).to.eql({
+    expect(ParallelApi.deserializeOptions(options)).to.eql({
       plugins: [
         pluginFunction,
         'transform-strict-mode',
@@ -806,7 +806,7 @@ describe('transformOptions()', function() {
         'transform-es2015-block-scoping'
       ]
     };
-    expect(ParallelApi.transformOptions(options)).to.eql({
+    expect(ParallelApi.deserializeOptions(options)).to.eql({
       plugins: [
         'transform-strict-mode',
         'transform-es2015-block-scoping'
@@ -823,7 +823,7 @@ describe('transformOptions()', function() {
       shouldPrintComment: commentFunc,
       // TODO more callbacks
     };
-    expect(ParallelApi.transformOptions(options)).to.eql({
+    expect(ParallelApi.deserializeOptions(options)).to.eql({
       resolveModuleSource: moduleResolve,
       getModuleId: moduleNameFunc,
       shouldPrintComment: commentFunc,
@@ -834,8 +834,8 @@ describe('transformOptions()', function() {
     var options = {
       resolveModuleSource: moduleResolveParallel
     };
-    expect(ParallelApi.transformOptions(options).resolveModuleSource).to.be.a('function');
-    expect(ParallelApi.transformOptions(options)).to.eql({
+    expect(ParallelApi.deserializeOptions(options).resolveModuleSource).to.be.a('function');
+    expect(ParallelApi.deserializeOptions(options)).to.eql({
       resolveModuleSource: moduleResolve
     });
   });
@@ -844,14 +844,14 @@ describe('transformOptions()', function() {
     var options = {
       getModuleId: getModuleIdParallel
     };
-    expect(ParallelApi.transformOptions(options).getModuleId).to.be.a('function');
+    expect(ParallelApi.deserializeOptions(options).getModuleId).to.be.a('function');
   });
 
   it('builds shouldPrintComment using the parallel API', function () {
     var options = {
       shouldPrintComment: shouldPrintCommentParallel
     };
-    expect(ParallelApi.transformOptions(options).shouldPrintComment).to.be.a('function');
+    expect(ParallelApi.deserializeOptions(options).shouldPrintComment).to.be.a('function');
   });
 
   it('throws error if parallel API is wrong format', function () {
@@ -859,7 +859,7 @@ describe('transformOptions()', function() {
       getModuleId: { _parallelAPI: ['wrong'] },
     };
     try {
-      ParallelApi.transformOptions(options);
+      ParallelApi.deserializeOptions(options);
       expect.fail('', '', 'transformOption should throw error');
     }
     catch (err) {
@@ -872,7 +872,7 @@ describe('transformOptions()', function() {
       getModuleId: { _parallelAPI: ['some file', {}] },
     };
     try {
-      ParallelApi.transformOptions(options);
+      ParallelApi.deserializeOptions(options);
       expect.fail('', '', 'transformOption should throw error');
     }
     catch (err) {
@@ -1053,9 +1053,9 @@ describe('transformIsParallelizable()', function() {
   });
 });
 
-describe('objectifyCallbacks()', function() {
+describe('serializeOptions()', function() {
   it('empty options', function() {
-    expect(ParallelApi.objectifyCallbacks({})).to.eql({});
+    expect(ParallelApi.serializeOptions({})).to.eql({});
   });
 
   it('passes through non-function options', function() {
@@ -1063,7 +1063,7 @@ describe('objectifyCallbacks()', function() {
       inputSourceMap: false,
       plugins: [ 'some-plugin' ],
     };
-    expect(ParallelApi.objectifyCallbacks(options)).to.eql(options);
+    expect(ParallelApi.serializeOptions(options)).to.eql(options);
   });
 
   it('transforms all functions', function() {
@@ -1077,7 +1077,7 @@ describe('objectifyCallbacks()', function() {
       getModuleId: { _parallelAPI: getModuleIdParallel._parallelAPI },
       shouldPrintComment: { _parallelAPI: shouldPrintCommentParallel._parallelAPI },
     };
-    expect(ParallelApi.objectifyCallbacks(options)).to.eql(expected);
+    expect(ParallelApi.serializeOptions(options)).to.eql(expected);
   });
 });
 
