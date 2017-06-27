@@ -19,11 +19,22 @@ var inputPath = path.join(__dirname, 'fixtures');
 var expectations = path.join(__dirname, 'expectations');
 
 var moduleResolveParallel = function() {};
-moduleResolveParallel._parallelAPI = [fixtureFullPath('amd-name-resolver-parallel'), { callback: 'moduleResolve' }];
+moduleResolveParallel._parallelBabel = {
+  requireFile: fixtureFullPath('amd-name-resolver-parallel'),
+  useMethod: 'moduleResolve',
+};
 var getModuleIdParallel = function() {};
-getModuleIdParallel._parallelAPI = [fixtureFullPath('get-module-id-parallel'), { build: { name: 'testModule' }}];
+getModuleIdParallel._parallelBabel = {
+  requireFile: fixtureFullPath('get-module-id-parallel'),
+  buildUsing: 'build',
+  params: { name: 'testModule' },
+};
 var shouldPrintCommentParallel = function() {};
-shouldPrintCommentParallel._parallelAPI = [fixtureFullPath('print-comment-parallel'), { build: { contents: 'comment 1' }}];
+shouldPrintCommentParallel._parallelBabel = {
+  requireFile: fixtureFullPath('print-comment-parallel'),
+  buildUsing: 'buildMe',
+  params: { contents: 'comment 1' },
+};
 
 var babel;
 
@@ -117,6 +128,7 @@ describe('options', function() {
 });
 
 describe('transpile ES6 to ES5', function() {
+  this.timeout(5*1000); // some of these are slow in CI
 
   before(function() {
     babel = makeTestHelper({
@@ -154,8 +166,17 @@ describe('transpile ES6 to ES5', function() {
       inputSourceMap: false,
       sourceMap: false,
       plugins: [
-        ['transform-strict-mode-||', fixtureFullPath('transform-strict-mode-parallel'), {}],
-        ['transform-es2015-block-scoping-||', fixtureFullPath('transform-es2015-block-scoping-parallel'), {}]
+        {
+          _parallelBabel: {
+            requireFile: fixtureFullPath('transform-strict-mode-parallel'),
+          }
+        },
+        {
+          _parallelBabel: {
+            requireFile: fixtureFullPath('transform-es2015-block-scoping-parallel'),
+            buildUsing: 'build',
+          }
+        }
       ]
     }).then(function(results) {
       var outputPath = results.directory;
@@ -176,7 +197,11 @@ describe('transpile ES6 to ES5', function() {
       inputSourceMap: false,
       sourceMap: false,
       plugins: [
-        ['some-plugin-||', fixtureFullPath('transform-strict-mode-parallel'), {}],
+        {
+          _parallelBabel: {
+            requireFile: fixtureFullPath('transform-strict-mode-parallel'),
+          }
+        },
         pluginFunction,
       ]
     }).then(function(results) {
@@ -744,7 +769,12 @@ describe('on error', function() {
       inputSourceMap: false,
       sourceMap: false,
       plugins: [
-        ['transform-strict-mode-||', fixtureFullPath('transform-strict-mode-process-exit'), {}],
+        {
+          _parallelBabel: {
+            requireFile: fixtureFullPath('transform-strict-mode-process-exit'),
+            buildUsing: 'buildMeAFunction',
+          }
+        },
         'transform-es2015-block-scoping'
       ]
     }).then(
@@ -802,7 +832,11 @@ describe('deserializeOptions()', function() {
   it('builds plugins using the parallel API', function () {
     var options = {
       plugins: [
-        ['some plugins name', fixtureFullPath('transform-strict-mode-parallel'), { foo: 'bar' }],
+        {
+          _parallelBabel: {
+            requireFile: fixtureFullPath('transform-strict-mode-parallel'),
+          }
+        },
         'transform-es2015-block-scoping'
       ]
     };
@@ -821,7 +855,6 @@ describe('deserializeOptions()', function() {
       resolveModuleSource: moduleResolve,
       getModuleId: moduleNameFunc,
       shouldPrintComment: commentFunc,
-      // TODO more callbacks
     };
     expect(ParallelApi.deserializeOptions(options)).to.eql({
       resolveModuleSource: moduleResolve,
@@ -853,57 +886,39 @@ describe('deserializeOptions()', function() {
     };
     expect(ParallelApi.deserializeOptions(options).shouldPrintComment).to.be.a('function');
   });
-
-  it('throws error if parallel API is wrong format', function () {
-    var options = {
-      getModuleId: { _parallelAPI: ['wrong'] },
-    };
-    try {
-      ParallelApi.deserializeOptions(options);
-      expect.fail('', '', 'transformOption should throw error');
-    }
-    catch (err) {
-      expect(err.message).to.eql('getModuleId: wrong format for _parallelAPI');
-    }
-  });
-
-  it('throws error if parallel API is missing callback and build properties', function () {
-    var options = {
-      getModuleId: { _parallelAPI: ['some file', {}] },
-    };
-    try {
-      ParallelApi.deserializeOptions(options);
-      expect.fail('', '', 'transformOption should throw error');
-    }
-    catch (err) {
-      expect(err.message).to.eql("getModuleId: must specify either 'callback' or 'build' property to use the parallel API");
-    }
-  });
 });
 
-describe('pluginUsesParallelAPI()', function() {
+describe('implementsParallelAPI()', function() {
   it('string - no', function () {
-    expect(ParallelApi.pluginUsesParallelAPI('transform-es2025')).to.eql(false);
+    expect(ParallelApi.implementsParallelAPI('transform-es2025')).to.eql(false);
   });
 
   it('function - no', function () {
-    expect(ParallelApi.pluginUsesParallelAPI(function() {})).to.eql(false);
+    expect(ParallelApi.implementsParallelAPI(function() {})).to.eql(false);
   });
 
   it('[] - no', function () {
-    expect(ParallelApi.pluginUsesParallelAPI([])).to.eql(false);
+    expect(ParallelApi.implementsParallelAPI([])).to.eql(false);
   });
 
   it('["plugin-name", { options }] - no', function () {
-    expect(ParallelApi.pluginUsesParallelAPI(['plugin-name', {foo: 'bar'}])).to.eql(false);
+    expect(ParallelApi.implementsParallelAPI(['plugin-name', {foo: 'bar'}])).to.eql(false);
   });
 
   it('[{ object }, { options }] - no', function () {
-    expect(ParallelApi.pluginUsesParallelAPI([{some: 'object'}, {foo: 'bar'}])).to.eql(false);
+    expect(ParallelApi.implementsParallelAPI([{some: 'object'}, {foo: 'bar'}])).to.eql(false);
   });
 
-  it('["plugin-name", "file/to/require", { options }] - yes', function () {
-    expect(ParallelApi.pluginUsesParallelAPI(['plugin-name', 'file/to/require', {foo: 'bar'}])).to.eql(true);
+  it('{ requireFile: "some/file" } - no', function () {
+    expect(ParallelApi.implementsParallelAPI({ requireFile: 'some/file' })).to.eql(false);
+  });
+
+  it('{ _parallelBabel: { some: "stuff" } } - no', function () {
+    expect(ParallelApi.implementsParallelAPI({ _parallelBabel: { some: 'stuff' } })).to.eql(false);
+  });
+
+  it('{ _parallelBabel: { requireFile: "a/file" } } - yes', function () {
+    expect(ParallelApi.implementsParallelAPI({ _parallelBabel: { requireFile: 'a/file' } })).to.eql(true);
   });
 });
 
@@ -924,8 +939,8 @@ describe('pluginCanBeParallelized()', function() {
     expect(ParallelApi.pluginCanBeParallelized(['plugin-name', {foo: 'bar'}])).to.eql(false);
   });
 
-  it('["plugin-name", "file/to/require", { options }] - yes', function () {
-    expect(ParallelApi.pluginCanBeParallelized(['plugin-name', 'file/to/require', {foo: 'bar'}])).to.eql(true);
+  it('{ _parallelBabel: { requireFile: "a/file" } } - yes', function () {
+    expect(ParallelApi.pluginCanBeParallelized({ _parallelBabel: { requireFile: 'a/file' } })).to.eql(true);
   });
 });
 
@@ -942,7 +957,7 @@ describe('pluginsAreParallelizable()', function() {
     var plugins = [
       'some-plugin',
       'some-other-plugin',
-      ['plugin-name', 'file/to/require', {foo: 'bar'}],
+      { _parallelBabel: { requireFile: "a/file" } },
     ];
     expect(ParallelApi.pluginsAreParallelizable(plugins)).to.eql(true);
   });
@@ -951,13 +966,12 @@ describe('pluginsAreParallelizable()', function() {
     var plugins = [
       'some-plugin',
       'some-other-plugin',
-      ['plugin-name', 'file/to/require', {foo: 'bar'}],
+      { requireFile: "another/file", options: {} },
       function() {},
     ];
     expect(ParallelApi.pluginsAreParallelizable(plugins)).to.eql(false);
   });
 });
-
 
 describe('callbacksAreParallelizable()', function() {
   it('no callback functions - yes', function () {
@@ -981,9 +995,9 @@ describe('callbacksAreParallelizable()', function() {
     expect(ParallelApi.callbacksAreParallelizable(options)).to.eql(false);
   });
 
-  it('function with _parallelAPI property - yes', function () {
+  it('function with correct _parallelBabel property - yes', function () {
     var someFunc = function() {};
-    someFunc._parallelAPI = ['some/file', { some: 'object' }];
+    someFunc._parallelBabel = { requireFile: 'a/file' };
     var options = {
       inputSourceMap: false,
       plugins: [
@@ -994,9 +1008,9 @@ describe('callbacksAreParallelizable()', function() {
     expect(ParallelApi.callbacksAreParallelizable(options)).to.eql(true);
   });
 
-  it('_parallelAPI set incorrectly - no', function () {
+  it('_parallelBabel set incorrectly - no', function () {
     var someFunc = function() {};
-    someFunc._parallelAPI = ['wrong'];
+    someFunc._parallelBabel = { no: 'wrong' };
     var options = {
       inputSourceMap: false,
       plugins: [
@@ -1073,11 +1087,76 @@ describe('serializeOptions()', function() {
       shouldPrintComment: shouldPrintCommentParallel,
     };
     var expected = {
-      moduleResolve: { _parallelAPI: moduleResolveParallel._parallelAPI },
-      getModuleId: { _parallelAPI: getModuleIdParallel._parallelAPI },
-      shouldPrintComment: { _parallelAPI: shouldPrintCommentParallel._parallelAPI },
+      moduleResolve: { _parallelBabel: moduleResolveParallel._parallelBabel },
+      getModuleId: { _parallelBabel: getModuleIdParallel._parallelBabel },
+      shouldPrintComment: { _parallelBabel: shouldPrintCommentParallel._parallelBabel },
     };
     expect(ParallelApi.serializeOptions(options)).to.eql(expected);
+  });
+});
+
+describe('buildFromParallelApiInfo()', function() {
+  it('requireFile only', function() {
+    var filePath = fixtureFullPath('transform-strict-mode-parallel');
+    var builtPlugin = ParallelApi.buildFromParallelApiInfo({ requireFile: filePath });
+    expect(builtPlugin).to.eql(require(filePath));
+  });
+
+  it('throws error if requireFile path does not exist', function() {
+    var filePath = 'some/file/that/does/not/exist';
+    try {
+      ParallelApi.buildFromParallelApiInfo({ requireFile: filePath });
+      expect.fail('', '', 'should have thrown an error');
+    }
+    catch (err) {
+      expect(err.message).to.eql("Cannot find module 'some/file/that/does/not/exist'");
+    }
+  });
+
+  it('useMethod', function() {
+    var filePath = fixtureFullPath('transform-es2015-block-scoping-parallel');
+    var builtPlugin = ParallelApi.buildFromParallelApiInfo({ requireFile: filePath, useMethod: 'pluginFunction' });
+    expect(builtPlugin).to.eql(require('babel-plugin-transform-es2015-block-scoping'));
+  });
+
+  it('throws error if useMethod does not exist', function() {
+    var filePath = fixtureFullPath('transform-es2015-block-scoping-parallel');
+    try {
+      ParallelApi.buildFromParallelApiInfo({ requireFile: filePath, useMethod: 'doesNotExist' });
+      expect.fail('', '', 'should have thrown an error');
+    }
+    catch (err) {
+      expect(err.message).to.eql("method 'doesNotExist' does not exist in file " + filePath);
+    }
+  });
+
+  it('buildUsing, no params', function() {
+    var filePath = fixtureFullPath('transform-es2015-block-scoping-parallel');
+    var builtPlugin = ParallelApi.buildFromParallelApiInfo({ requireFile: filePath, buildUsing: 'build' });
+    expect(builtPlugin).to.eql(require(filePath).build());
+  });
+
+  it('buildUsing, with params', function() {
+    var filePath = fixtureFullPath('transform-es2015-block-scoping-parallel');
+    var builtPlugin = ParallelApi.buildFromParallelApiInfo({ requireFile: filePath, buildUsing: 'buildTwo', params: { text: 'OK' } });
+    expect(builtPlugin).to.eql('for-testingOK');
+  });
+
+  it('throws error if buildUsing method does not exist', function() {
+    var filePath = fixtureFullPath('transform-es2015-block-scoping-parallel');
+    try {
+      ParallelApi.buildFromParallelApiInfo({ requireFile: filePath, buildUsing: 'doesNotExist' });
+      expect.fail('', '', 'should have thrown an error');
+    }
+    catch (err) {
+      expect(err.message).to.eql("'doesNotExist' is not a function in file " + filePath);
+    }
+  });
+
+  it('useMethod and buildUsing', function() {
+    var filePath = fixtureFullPath('transform-es2015-block-scoping-parallel');
+    var builtPlugin = ParallelApi.buildFromParallelApiInfo({ requireFile: filePath, useMethod: 'pluginFunction', buildUsing: 'buildTwo', params: { text: 'OK' } });
+    expect(builtPlugin).to.eql(require('babel-plugin-transform-es2015-block-scoping'));
   });
 });
 
@@ -1147,7 +1226,11 @@ describe('large operations', function() {
       inputSourceMap:false,
       sourceMap: false,
       plugins: [
-        ['transform-strict-mode-||', fixtureFullPath('transform-strict-mode-parallel'), {}],
+        {
+          _parallelBabel: {
+            requireFile: fixtureFullPath('transform-strict-mode-parallel'),
+          }
+        },
         'transform-es2015-block-scoping'
       ]
     }).then(function(results) {

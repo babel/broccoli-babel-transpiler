@@ -1,7 +1,7 @@
 "use strict";
 
 module.exports = {
-  build(options) {
+  buildMe(options) {
     return (comment) => comment === options.contents;
   }
 };

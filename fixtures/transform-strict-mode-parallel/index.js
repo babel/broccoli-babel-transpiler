@@ -1,9 +1,3 @@
 "use strict";
 
-module.exports = {
-  name: 'transform-strict-mode',
-
-  build(options) {
-    return 'transform-strict-mode';
-  }
-};
+module.exports = 'transform-strict-mode';
