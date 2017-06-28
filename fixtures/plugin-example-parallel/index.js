@@ -1,9 +1,3 @@
 "use strict";
 
-module.exports = {
-  name: 'plugin-example',
-
-  build: function(options) {
-    return 'babel-plugin-example';
-  }
-};
+module.exports = 'babel-plugin-example';
