@@ -223,3 +223,13 @@ var scriptTree = esTranspiler(inputTree, {
 ```
 
 Note: If both `useMethod` and `buildUsing` are specified, `useMethod` takes precedence.
+
+### Number of jobs
+
+The number of parallel jobs defaults to the number of detected CPUs - 1.
+
+This can be changed with the `JOBS` environment variable:
+
+```
+JOBS=4 ember build
+```
