@@ -1,6 +1,6 @@
 {
   "name": "broccoli-babel-transpiler",
-  "version": "6.0.0",
+  "version": "6.1.0",
   "description": "A Broccoli plugin which transpile ES6 to readable ES5 by using babel.",
   "main": "index.js",
   "files": [
