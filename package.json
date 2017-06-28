@@ -8,7 +8,8 @@
   ],
   "scripts": {
     "test": "mocha test.js",
-    "test:debug": "mocha debug test.js"
+    "test:debug": "mocha debug test.js",
+    "test:slow": "mocha test_slow.js"
   },
   "repository": {
     "type": "git",
