@@ -57,8 +57,5 @@
   },
   "engines": {
     "node": ">= 4"
-  },
-  "publishConfig": {
-    "tag": "next"
   }
 }
