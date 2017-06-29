@@ -7,6 +7,28 @@ node_js:
 sudo: false
 dist: trusty
 
+cache:
+  yarn: true
+
 before_install:
-  - "npm config set spin false"
-  - "npm install -g npm@latest"
+  - curl -o- -L https://yarnpkg.com/install.sh | bash
+  - export PATH=$HOME/.yarn/bin:$PATH
+
+install:
+  - yarn install --no-lockfile
+
+script:
+  - yarn test
+
+before_deploy:
+  - yarn global add auto-dist-tag
+  - auto-dist-tag --write
+
+deploy:
+  provider: npm
+  email: stefan.penner+ember-cli@gmail.com
+  api_key:
+    secure: MGME3tiODyEWOdBlWDXJW8pYbN8Ltz8rgnWSqthv5nCY/oN1SVm0mUOvGydCgoHxtszqUpvfExoBmnD/tcaXXVSzajfAWsa+DDx3zKvAcAbsNRsmPgBuWV8/Ptpq6bglx8kwGHeCatqQgghv0Mm7UrpMEZwbq3u7pzAVjNnUeSo=
+  on:
+    tags: true
+    repo: babel/broccoli-babel-transpiler
