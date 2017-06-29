@@ -7,6 +7,15 @@ node_js:
 sudo: false
 dist: trusty
 
+cache:
+  yarn: true
+
 before_install:
-  - "npm config set spin false"
-  - "npm install -g npm@latest"
+  - curl -o- -L https://yarnpkg.com/install.sh | bash
+  - export PATH=$HOME/.yarn/bin:$PATH
+
+install:
+  - yarn install --no-lockfile
+
+script:
+  - yarn test
