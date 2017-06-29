@@ -10,7 +10,8 @@
   "scripts": {
     "test": "mocha test.js",
     "test:debug": "mocha debug test.js",
-    "test:slow": "mocha test_slow.js"
+    "test:slow": "mocha test_slow.js",
+    "test:all": "mocha test.js test_slow.js"
   },
   "repository": {
     "type": "git",

@@ -3,7 +3,7 @@ node_js:
   - "lts/argon"
   - "lts/boron"
   - "7"
-  
+
 sudo: false
 dist: trusty
 
@@ -18,7 +18,7 @@ install:
   - yarn install --no-lockfile
 
 script:
-  - yarn test
+  - yarn test:all
 
 before_deploy:
   - yarn global add auto-dist-tag
