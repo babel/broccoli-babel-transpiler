@@ -101,3 +101,137 @@ In order to aid plugin developers in this process, broccoli-babel-transpiler wil
   `babel-plugin-htmlbars-inline-precompile` (uses `ember-template-compiler.js` to compile inlined templates).
 * `baseDir` - This method is expected to return the plugins base dir. The provided `baseDir` is used to ensure the cache is invalidated if any of the
   plugin's files change (including its deps). Each plugin should implement `baseDir` as: `Plugin.prototype.baseDir = function() { return \_\_dirname; };`.
+
+## Parallel Transpilation
+
+broccoli-babel-transpiler can run multiple babel transpiles in parallel using a pool of workers, to take advantage of multi-core systems.
+Because these workers are separate processes, the plugins and callback functions that are normally passed as options to babel must be specified in a serializable form.
+To enable this parallelization there is an API to tell the worker how to construct the plugin or callback in its process.
+
+Plugins are specified as an object with a `_parallelBabel` property:
+
+```js
+var plugin = {
+  _parallelBabel: {
+    requireFile: '/full/path/to/the/file',
+    useMethod: 'methodName',
+    buildUsing: 'buildFunction',
+    params: { ok: 'this object will be passed to buildFunction()' }
+  }
+};
+```
+
+Callbacks can be specified like plugins, or as functions with a `_parallelBabel` property:
+
+```js
+var callback = function() { /* do something */ };
+callback._parallelBabel = {
+  requireFile: '/full/path/to/the/file',
+  useMethod: 'methodName',
+  buildUsing: 'buildFunction',
+  params: { ok: 'this object will be passed to buildFunction()' }
+};
+```
+
+### requireFile (required)
+
+This property specifies the file to require in the worker process to create the plugin or callback.
+This must be given as an absolute path.
+
+```js
+var esTranspiler = require('broccoli-babel-transpiler');
+
+var somePlugin = {
+  _parallelBabel: {
+    requireFile: '/full/path/to/the/file'
+  }
+});
+
+var scriptTree = esTranspiler(inputTree, {
+  plugins: [
+    'transform-strict-mode', // plugins that are given as strings will automatically be parallelized
+    somePlugin
+  ]
+});
+```
+
+### useMethod (optional)
+
+This property specifies the method to use from the file that is required.
+
+If you have a plugin defined like this:
+
+```js
+// some_plugin.js
+
+module.exports = {
+  pluginFunction(babel) {
+    // do plugin things
+  }
+};
+```
+
+You can tell broccoli-babel-transpiler to use that function in the worker processes like so:
+
+```js
+var esTranspiler = require('broccoli-babel-transpiler');
+
+var somePlugin = {
+  _parallelBabel: {
+    requireFile: '/path/to/some_plugin',
+    useMethod: 'pluginFunction'
+  }
+});
+
+var scriptTree = esTranspiler(inputTree, {
+  plugins: [ somePlugin ]
+});
+```
+
+### buildUsing and params (optional)
+
+These properties specify a function to run to build the plugin (or callback), and any parameters
+to pass to that function.
+
+If the plugin needs to be built dynamically, you can do that like so:
+
+```js
+// some_plugin.js
+
+module.exports = {
+  buildPlugin(params) {
+    var pluginInstance = doSomethingWith(params.text);
+    return pluginInstance;
+  }
+};
+```
+
+This will tell the worker process to require the plugin and call the `buildPlugin` function with the `params` object as an argument:
+
+```js
+var esTranspiler = require('broccoli-babel-transpiler');
+
+var somePlugin = {
+  _parallelBabel: {
+    requireFile: '/path/to/some_plugin',
+    buildUsing: 'buildPlugin',
+    params: { text: 'some text' }
+  }
+});
+
+var scriptTree = esTranspiler(inputTree, {
+  plugins: [ somePlugin ]
+});
+```
+
+Note: If both `useMethod` and `buildUsing` are specified, `useMethod` takes precedence.
+
+### Number of jobs
+
+The number of parallel jobs defaults to the number of detected CPUs - 1.
+
+This can be changed with the `JOBS` environment variable:
+
+```
+JOBS=4 ember build
+```

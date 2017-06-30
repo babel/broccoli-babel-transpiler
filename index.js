@@ -1,6 +1,5 @@
 'use strict';
 
-var transpiler = require('babel-core');
 var Filter     = require('broccoli-persistent-filter');
 var clone      = require('clone');
 var path       = require('path');
@@ -10,6 +9,8 @@ var mergeTrees = require('broccoli-merge-trees');
 var funnel     = require('broccoli-funnel');
 var crypto     = require('crypto');
 var hashForDep = require('hash-for-dep');
+var ParallelApi = require('./lib/parallel-api');
+
 
 function getExtensionsRegex(extensions) {
   return extensions.map(function(extension) {
@@ -32,9 +33,11 @@ function Babel(inputTree, _options) {
 
   var options = _options || {};
   options.persist = !options.exportModuleMetadata; // TODO: make this also work in cache
+  options.async = true;
   Filter.call(this, inputTree, options);
 
   delete options.persist;
+  delete options.async;
   delete options.annotation;
   delete options.description;
 
@@ -104,14 +107,14 @@ Babel.prototype._generateDepGraph = function() {
 };
 
 Babel.prototype.transform = function(string, options) {
-  return transpiler.transform(string, options);
+  return ParallelApi.transformString(string, options);
 };
 
 /*
  * @private
  *
  * @method optionsString
- * @returns a stringifeid version of the input options
+ * @returns a stringified version of the input options
  */
 Babel.prototype.optionsHash = function() {
   var options = this.options;
@@ -169,7 +172,7 @@ Babel.prototype.optionsHash = function() {
           hash.plugins.push(item);
           continue;
         } else if (type === 'object') {
-          // itereate all keys in the item and push them into the cache
+          // iterate all keys in the item and push them into the cache
           var keys = Object.keys(item);
           keys.forEach(function(key) {
             cacheableItems.push(key);
@@ -203,22 +206,26 @@ Babel.prototype.processString = function(string, relativePath) {
     options.moduleId = replaceExtensions(this.extensionsRegex, options.filename);
   }
 
-  var transpiled = this.transform(string, options);
-  var key = options.moduleId ? options.moduleId : relativePath;
+  var plugin = this;
+  return this.transform(string, options)
+  .then(function (transpiled) {
 
-  if (this.helperWhiteList) {
-    var invalidHelpers = transpiled.metadata.usedHelpers.filter(function(helper) {
-      return this.helperWhiteList.indexOf(helper) === -1;
-    }, this);
+    var key = options.moduleId ? options.moduleId : relativePath;
 
-    validateHelpers(invalidHelpers, relativePath);
-  }
+    if (plugin.helperWhiteList) {
+      var invalidHelpers = transpiled.metadata.usedHelpers.filter(function(helper) {
+        return plugin.helperWhiteList.indexOf(helper) === -1;
+      }, plugin);
 
-  if (transpiled.metadata && transpiled.metadata.modules) {
-    this.moduleMetadata[byImportName(key)] = transpiled.metadata.modules;
-  }
+      validateHelpers(invalidHelpers, relativePath);
+    }
 
-  return transpiled.code;
+    if (transpiled.metadata && transpiled.metadata.modules) {
+      plugin.moduleMetadata[byImportName(key)] = transpiled.metadata.modules;
+    }
+
+    return transpiled.code;
+  });
 };
 
 Babel.prototype.copyOptions = function() {
@@ -256,7 +263,7 @@ function validateHelpers(invalidHelpers, relativePath) {
         return item + '`, `';
       }).join('');
 
-      message = relativePath + ' was transformed and relies on `' + helpers + '`, which were not included in the helper whitelist. Either add these helpers to the whitelist or refactor to not be dependent on these runtime helper.';
+      message = relativePath + ' was transformed and relies on `' + helpers + '`, which were not included in the helper whitelist. Either add these helpers to the whitelist or refactor to not be dependent on these runtime helpers.';
     }
     throw new Error(message);
   }
