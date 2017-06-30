@@ -35,7 +35,7 @@
     "babel-core": "^5.0.0",
     "broccoli-funnel": "^1.0.0",
     "broccoli-merge-trees": "^1.0.0",
-    "broccoli-persistent-filter": "^1.4.0",
+    "broccoli-persistent-filter": "^1.4.2",
     "clone": "^0.2.0",
     "hash-for-dep": "^1.0.2",
     "heimdalljs-logger": "^0.1.7",
