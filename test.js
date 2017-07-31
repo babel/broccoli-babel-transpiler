@@ -646,6 +646,56 @@ describe('when options change', function() {
     expect(firstOptions).to.not.eql(thirdOptions);
   });
 
+  it('plugins can be objects with `baseDir`', function() {
+    var dir = path.join(inputPath, 'plugin-a');
+    var pluginObject = { foo: 'foo' };
+    pluginObject.baseDir = function() { return dir; };
+    options.plugins = [ pluginObject ];
+
+    options.console = fakeConsole;
+    var first = new Babel('foo', options);
+    var firstOptions = first.optionsHash();
+
+    options.console = fakeConsole;
+    var second = new Babel('foo', options);
+    var secondOptions = second.optionsHash();
+
+    expect(firstOptions).to.eql(secondOptions);
+
+    dir = path.join(inputPath, 'plugin-b');
+    options.console = fakeConsole;
+    var third = new Babel('foo', options);
+    var thirdOptions = third.optionsHash();
+
+    expect(firstOptions).to.not.eql(thirdOptions);
+  });
+
+  it('plugins can be objects with `cacheKey`', function() {
+    var dir = path.join(inputPath, 'plugin-a');
+    var key = 'cacheKey1';
+    var pluginObject = { foo: 'foo' };
+    pluginObject.baseDir = function() { return dir; };
+    pluginObject.cacheKey = function() { return key; };
+    options.plugins = [ pluginObject ];
+
+    options.console = fakeConsole;
+    var first = new Babel('foo', options);
+    var firstOptions = first.optionsHash();
+
+    options.console = fakeConsole;
+    var second = new Babel('foo', options);
+    var secondOptions = second.optionsHash();
+
+    expect(firstOptions).to.eql(secondOptions);
+
+    options.console = fakeConsole;
+    key = 'cacheKey3';
+    var third = new Babel('foo', options);
+    var thirdOptions = third.optionsHash();
+
+    expect(firstOptions).to.not.eql(thirdOptions);
+  });
+
   it('a plugins `baseDir` method is used for hash generation', function() {
     var dir = path.join(inputPath, 'plugin-a');
 

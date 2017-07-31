@@ -141,6 +141,12 @@ Babel.prototype.optionsHash = function() {
           // handle native strings, numbers, or null (which can JSON.stringify properly)
           hash.plugins.push(item);
           continue;
+        } else if (type === 'object' && (typeof item.baseDir === 'function')) {
+          hash.plugins.push(hashForDep(item.baseDir()));
+
+          if (typeof item.cacheKey === 'function') {
+            hash.plugins.push(item.cacheKey());
+          }
         } else if (type === 'object') {
           // iterate all keys in the item and push them into the cache
           var keys = Object.keys(item);
