@@ -4,8 +4,7 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/a0nbd84m1x4y5fp5?svg=true)](https://ci.appveyor.com/project/embercli/broccoli-babel-transpiler)
 
 
-A [Broccoli](https://github.com/broccolijs/broccoli) plugin which
-transpiles ES6 to readable ES5 by using [babel](https://github.com/babel/babel).
+A [Broccoli](https://github.com/broccolijs/broccoli) plugin which transpiles ES6 to readable ES5 (and much more) by using [Babel](https://github.com/babel/babel).
 
 ## How to install?
 
@@ -19,11 +18,33 @@ In your `Brocfile.js`:
 
 ```js
 var esTranspiler = require('broccoli-babel-transpiler');
-var scriptTree = esTranspiler(inputTree, options);
+var scriptTree = esTranspiler(inputTree, babelOptions);
 ```
 
-You can find [options](https://babeljs.io/docs/usage/options) at babel's
-github repo.
+Note that, since Babel 6 (and v6 of this plugin), you need to be specific as to what your transpilation target is. Running `esTranspiler` with empty options will not transpile anything. You will need:
+
+  * Explicit options, such as `presets`. See available [options](https://babeljs.io/docs/usage/options) at Babel's GitHub repo.
+  * Babel plugins that implement the transforms you require.
+
+For a quick running example, install this plugin:
+
+```sh
+$ npm install babel-preset-env
+```
+
+And then run the transform like this:
+
+```js
+var scriptTree = babel(inputTree, {
+  presets: [
+    ['env', {
+      'targets': {
+        'browsers': ["last 2 versions"]
+      }
+    }]
+  ]
+});
+```
 
 ### Examples
 
