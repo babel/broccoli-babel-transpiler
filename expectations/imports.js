@@ -1,5 +1,4 @@
-'use strict';
+"use strict";
 
-import Foo from 'fixtures-classes';
-
+import Foo from "fixtures-classes";
 export class FooTwo extends Foo {}
