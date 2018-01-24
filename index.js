@@ -187,7 +187,8 @@ Babel.prototype.processString = function(string, relativePath) {
   .then(function (transpiled) {
 
     if (plugin.helperWhiteList) {
-      var invalidHelpers = transpiled.metadata.usedHelpers.filter(function(helper) {
+      var usedHelpers = transpiled.metadata.usedHelpers || [];
+      var invalidHelpers = usedHelpers.filter(function(helper) {
         return plugin.helperWhiteList.indexOf(helper) === -1;
       }, plugin);
 
