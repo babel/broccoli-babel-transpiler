@@ -260,9 +260,9 @@ describe('transpile ES6 to ES5', function() {
       sourceMap: false,
       plugins: [
         'transform-strict-mode',
-        'transform-es2015-block-scoping'
+        'transform-es2015-block-scoping',
+        ['module-resolver', { resolvePath: moduleResolve }],
       ],
-      resolveModuleSource: moduleResolve
     }).then(function(results) {
       var outputPath = results.directory;
 
@@ -279,9 +279,9 @@ describe('transpile ES6 to ES5', function() {
       sourceMap: false,
       plugins: [
         'transform-strict-mode',
-        'transform-es2015-block-scoping'
+        'transform-es2015-block-scoping',
+        ['module-resolver', { resolvePath: moduleResolve }],
       ],
-      resolveModuleSource: moduleResolveParallel
     }).then(function(results) {
       var outputPath = results.directory;
 
@@ -791,7 +791,7 @@ describe('on error', function() {
         expect.fail('', '', 'babel should throw an error');
       },
       function onFailure(err) {
-        expect(err.message).to.eql('fixtures.js: Unexpected token (1:9)');
+        expect(err.message).to.eql("fixtures.js: Unexpected token (1:9)\n\n> 1 | const foo;\n    |          ^\n  2 | ");
       }
     );
   });
@@ -809,7 +809,7 @@ describe('on error', function() {
         expect.fail('', '', 'babel should throw an error');
       },
       function onFailure(err) {
-        expect(err.message).to.eql('fixtures.js: Unexpected token (1:9)');
+        expect(err.message).to.eql("fixtures.js: Unexpected token (1:9)\n\n> 1 | const foo;\n    |          ^\n  2 | ");
       }
     );
   });
