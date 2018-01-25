@@ -5,6 +5,7 @@ var os = require('os');
 var expect = require('chai').expect;
 var broccoli = require('broccoli');
 var path = require('path');
+var ps = require('ps-node');
 var Babel = require('./index');
 var helpers = require('broccoli-test-helpers');
 var stringify = require('json-stable-stringify');
@@ -1229,4 +1230,71 @@ describe('concurrency', function() {
     ParallelApi = require('./lib/parallel-api');
     expect(ParallelApi.jobs).to.equal(17);
   });
+});
+
+describe('getBabelVersion()', function() {
+  it ('returns the correct version', function() {
+    var babelCorePath = path.join(__dirname, 'node_modules', 'babel-core', 'index.js');
+    var babelCorePackageJson = path.join(path.dirname(babelCorePath), 'package.json');
+    var packageJson = fs.readFileSync(babelCorePackageJson);
+    var expectedVersion = JSON.parse(packageJson).version;
+    expect(ParallelApi.getBabelVersion()).to.equal(expectedVersion);
+  });
+});
+
+describe('workerpool', function() {
+  var parallelApiPath = require.resolve('./lib/parallel-api');
+
+  var stringToTransform = "const x = 0;";
+
+  var options = {
+    inputSourceMap: false,
+    sourceMap: false,
+    plugins: [
+      'transform-strict-mode',
+      'transform-es2015-block-scoping'
+    ]
+  };
+
+  before(function() {
+    // shut down any workerpool that is running at this point
+    var babelCoreVersion = ParallelApi.getBabelVersion();
+    var something = 'v1/broccoli-babel-transpiler/workerpool/babel-core-' + babelCoreVersion;
+    var runningPool = process[something];
+    if (runningPool) {
+      return runningPool.terminate()
+        .then(function() {
+          delete process[something];
+        });
+    }
+  });
+
+  it('should limit to one pool per babel version', function() {
+    this.timeout(5*1000);
+    delete require.cache[parallelApiPath];
+    process.env.JOBS = '2';
+    var ParallelApiOne = require('./lib/parallel-api');
+    delete require.cache[parallelApiPath];
+    var ParallelApiTwo = require('./lib/parallel-api');
+
+    return Promise.all([
+      ParallelApiOne.transformString(stringToTransform, options),
+      ParallelApiOne.transformString(stringToTransform, options),
+      ParallelApiTwo.transformString(stringToTransform, options),
+      ParallelApiTwo.transformString(stringToTransform, options),
+    ]).then(function() {
+      return new Promise(function(resolve, reject) {
+        // find all worker processes
+        ps.lookup({
+          command: 'node',
+          arguments: 'broccoli-babel-transpiler/lib/worker.js',
+        }, function(err, resultList ) {
+          expect(err).to.eql(null);
+          expect(resultList.length).to.eql(2);
+          resolve();
+        });
+      });
+    });
+  });
+
 });
