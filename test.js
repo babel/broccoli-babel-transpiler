@@ -1287,7 +1287,7 @@ describe('workerpool', function() {
         // find all worker processes
         ps.lookup({
           command: 'node',
-          arguments: 'broccoli-babel-transpiler/lib/worker.js',
+          arguments: path.join('broccoli-babel-transpiler', 'lib', 'worker.js'),
         }, function(err, resultList ) {
           expect(err).to.eql(null);
           expect(resultList.length).to.eql(2);
