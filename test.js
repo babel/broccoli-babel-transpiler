@@ -12,7 +12,8 @@ var stringify = require('json-stable-stringify');
 var mkdirp = require('mkdirp').sync;
 var makeTestHelper = helpers.makeTestHelper;
 var cleanupBuilders = helpers.cleanupBuilders;
-var Promise = require('rsvp').Promise;
+var RSVP = require('rsvp');
+var Promise = RSVP.Promise;
 var moduleResolve = require('amd-name-resolver').moduleResolve;
 var ParallelApi = require('./lib/parallel-api');
 
@@ -41,6 +42,19 @@ var babel;
 
 function fixtureFullPath(filename) {
   return path.join(__dirname, 'fixtures', filename);
+}
+
+function terminateWorkerPool() {
+  // shut down any workerpool that is running at this point
+  var babelCoreVersion = ParallelApi.getBabelVersion();
+  var workerPoolId = 'v1/broccoli-babel-transpiler/workerpool/babel-core-' + babelCoreVersion;
+  var runningPool = process[workerPoolId];
+  if (runningPool) {
+    return runningPool.terminate()
+    .then(function() {
+      delete process[workerPoolId];
+    });
+  }
 }
 
 describe('options', function() {
@@ -142,6 +156,10 @@ describe('transpile ES6 to ES5', function() {
 
   afterEach(function () {
     return cleanupBuilders();
+  });
+
+  after(function() {
+    return terminateWorkerPool();
   });
 
   it('basic', function () {
@@ -775,6 +793,10 @@ describe('on error', function() {
     return cleanupBuilders();
   });
 
+  after(function() {
+    return terminateWorkerPool();
+  });
+
   it('returns error from the main process', function () {
     var pluginFunction = require('babel-plugin-transform-strict-mode');
     pluginFunction.baseDir = function() {
@@ -840,6 +862,10 @@ describe('on error', function() {
 });
 
 describe('deserializeOptions()', function() {
+
+  after(function() {
+    return terminateWorkerPool();
+  });
 
   it('passes other options through', function () {
     var options = {
@@ -1220,6 +1246,10 @@ describe('concurrency', function() {
     ParallelApi = require('./lib/parallel-api');
   });
 
+  after(function() {
+    return terminateWorkerPool();
+  });
+
   it('sets jobs automatically using detected cpus', function() {
     expect(ParallelApi.jobs).to.equal(os.cpus().length);
   });
@@ -1234,10 +1264,7 @@ describe('concurrency', function() {
 
 describe('getBabelVersion()', function() {
   it ('returns the correct version', function() {
-    var babelCorePath = path.join(__dirname, 'node_modules', 'babel-core', 'index.js');
-    var babelCorePackageJson = path.join(path.dirname(babelCorePath), 'package.json');
-    var packageJson = fs.readFileSync(babelCorePackageJson);
-    var expectedVersion = JSON.parse(packageJson).version;
+    var expectedVersion = require(path.join(__dirname, 'node_modules/babel-core/package.json')).version;
     expect(ParallelApi.getBabelVersion()).to.equal(expectedVersion);
   });
 });
@@ -1256,17 +1283,8 @@ describe('workerpool', function() {
     ]
   };
 
-  before(function() {
-    // shut down any workerpool that is running at this point
-    var babelCoreVersion = ParallelApi.getBabelVersion();
-    var something = 'v1/broccoli-babel-transpiler/workerpool/babel-core-' + babelCoreVersion;
-    var runningPool = process[something];
-    if (runningPool) {
-      return runningPool.terminate()
-        .then(function() {
-          delete process[something];
-        });
-    }
+  after(function() {
+    return terminateWorkerPool();
   });
 
   it('should limit to one pool per babel version', function() {
@@ -1277,23 +1295,20 @@ describe('workerpool', function() {
     delete require.cache[parallelApiPath];
     var ParallelApiTwo = require('./lib/parallel-api');
 
+    let lookup = RSVP.denodeify(ps.lookup);
+
     return Promise.all([
       ParallelApiOne.transformString(stringToTransform, options),
       ParallelApiOne.transformString(stringToTransform, options),
       ParallelApiTwo.transformString(stringToTransform, options),
       ParallelApiTwo.transformString(stringToTransform, options),
-    ]).then(function() {
-      return new Promise(function(resolve, reject) {
-        // find all worker processes
-        ps.lookup({
-          command: 'node',
-          arguments: path.join('broccoli-babel-transpiler', 'lib', 'worker.js'),
-        }, function(err, resultList ) {
-          expect(err).to.eql(null);
-          expect(resultList.length).to.eql(2);
-          resolve();
-        });
+    ]).then(() => {
+      return lookup({
+        command: 'node',
+        arguments: path.join('broccoli-babel-transpiler', 'lib', 'worker.js'),
       });
+    }).then((resultList) => {
+      expect(resultList.length).to.eql(2);
     });
   });
 
