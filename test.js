@@ -1303,9 +1303,15 @@ describe('workerpool', function() {
       ParallelApiTwo.transformString(stringToTransform, options),
       ParallelApiTwo.transformString(stringToTransform, options),
     ]).then(() => {
+      // for ps-node,
+      // unix paths look like 'broccoli-babel-transpiler/lib/worker.js'
+      // windows paths look like 'broccoli-babel-transpiler\\lib\\worker.js' (2 path separators)
+      const processMatch = (os.platform() === 'win32')
+        ? 'broccoli-babel-transpiler\\\\lib\\\\worker.js'
+        : path.join('broccoli-babel-transpiler', 'lib', 'worker.js');
       return lookup({
         command: 'node',
-        arguments: path.join('broccoli-babel-transpiler', 'lib', 'worker.js'),
+        arguments: processMatch,
       });
     }).then((resultList) => {
       expect(resultList.length).to.eql(2);
