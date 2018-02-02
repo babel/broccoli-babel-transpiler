@@ -155,11 +155,8 @@ describe('transpile ES6 to ES5', function() {
   });
 
   afterEach(function () {
-    return cleanupBuilders();
-  });
-
-  after(function() {
-    return terminateWorkerPool();
+    return cleanupBuilders()
+      .then(() => terminateWorkerPool);
   });
 
   it('basic', function () {
@@ -791,11 +788,8 @@ describe('on error', function() {
   });
 
   afterEach(function () {
-    return cleanupBuilders();
-  });
-
-  after(function() {
-    return terminateWorkerPool();
+    return cleanupBuilders()
+      .then(() => terminateWorkerPool);
   });
 
   it('returns error from the main process', function () {
@@ -864,7 +858,7 @@ describe('on error', function() {
 
 describe('deserializeOptions()', function() {
 
-  after(function() {
+  afterEach(function() {
     return terminateWorkerPool();
   });
 
@@ -1245,9 +1239,6 @@ describe('concurrency', function() {
     delete require.cache[parallelApiPath];
     delete process.env.JOBS;
     ParallelApi = require('./lib/parallel-api');
-  });
-
-  after(function() {
     return terminateWorkerPool();
   });
 
@@ -1284,7 +1275,8 @@ describe('workerpool', function() {
     ]
   };
 
-  after(function() {
+  afterEach(function() {
+    delete process.env.JOBS;
     return terminateWorkerPool();
   });
 
