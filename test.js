@@ -369,6 +369,7 @@ describe('transpile ES6 to ES5', function() {
 });
 
 describe('filters files to transform', function() {
+  this.timeout(5*1000); // some of these are slow in CI
 
   before(function() {
     babel = makeTestHelper({
