@@ -5,6 +5,7 @@ var os = require('os');
 var expect = require('chai').expect;
 var broccoli = require('broccoli');
 var path = require('path');
+var ps = require('ps-node');
 var Babel = require('./index');
 var helpers = require('broccoli-test-helpers');
 var stringify = require('json-stable-stringify');
@@ -12,7 +13,8 @@ var mkdirp = require('mkdirp').sync;
 var rm = require('rimraf').sync;
 var makeTestHelper = helpers.makeTestHelper;
 var cleanupBuilders = helpers.cleanupBuilders;
-var Promise = require('rsvp').Promise;
+var RSVP = require('rsvp');
+var Promise = RSVP.Promise;
 var moduleResolve = require('amd-name-resolver').moduleResolve;
 var ParallelApi = require('./lib/parallel-api');
 
@@ -41,6 +43,19 @@ var babel;
 
 function fixtureFullPath(filename) {
   return path.join(__dirname, 'fixtures', filename);
+}
+
+function terminateWorkerPool() {
+  // shut down any workerpool that is running at this point
+  var babelCoreVersion = ParallelApi.getBabelVersion();
+  var workerPoolId = 'v1/broccoli-babel-transpiler/workerpool/babel-core-' + babelCoreVersion;
+  var runningPool = process[workerPoolId];
+  if (runningPool) {
+    return runningPool.terminate()
+    .then(function() {
+      delete process[workerPoolId];
+    });
+  }
 }
 
 describe('options', function() {
@@ -129,7 +144,7 @@ describe('options', function() {
 });
 
 describe('transpile ES6 to ES5', function() {
-  this.timeout(5*1000); // some of these are slow in CI
+  this.timeout(10*1000); // some of these are slow in CI
 
   before(function() {
     babel = makeTestHelper({
@@ -141,7 +156,10 @@ describe('transpile ES6 to ES5', function() {
   });
 
   afterEach(function () {
-    return cleanupBuilders();
+    return cleanupBuilders()
+      .then(function() {
+        return terminateWorkerPool();
+      });
   });
 
   it('basic', function () {
@@ -333,6 +351,7 @@ describe('transpile ES6 to ES5', function() {
 });
 
 describe('filters files to transform', function() {
+  this.timeout(10*1000); // some of these are slow in CI
 
   before(function() {
     babel = makeTestHelper({
@@ -852,7 +871,10 @@ describe('on error', function() {
   });
 
   afterEach(function () {
-    return cleanupBuilders();
+    return cleanupBuilders()
+      .then(function() {
+        return terminateWorkerPool();
+      });
   });
 
   it('returns error from the main process', function () {
@@ -896,6 +918,7 @@ describe('on error', function() {
   });
 
   it('fails if worker process is terminated', function () {
+    this.timeout(10*1000);
     return babel('files', {
       inputSourceMap: false,
       sourceMap: false,
@@ -919,6 +942,10 @@ describe('on error', function() {
 });
 
 describe('deserializeOptions()', function() {
+
+  afterEach(function() {
+    return terminateWorkerPool();
+  });
 
   it('passes other options through', function () {
     var options = {
@@ -1297,6 +1324,7 @@ describe('concurrency', function() {
     delete require.cache[parallelApiPath];
     delete process.env.JOBS;
     ParallelApi = require('./lib/parallel-api');
+    return terminateWorkerPool();
   });
 
   it('sets jobs automatically using detected cpus', function() {
@@ -1309,4 +1337,60 @@ describe('concurrency', function() {
     ParallelApi = require('./lib/parallel-api');
     expect(ParallelApi.jobs).to.equal(17);
   });
+});
+
+
+describe('getBabelVersion()', function() {
+  it ('returns the correct version', function() {
+    var expectedVersion = require(path.join(__dirname, 'node_modules/babel-core/package.json')).version;
+    expect(ParallelApi.getBabelVersion()).to.equal(expectedVersion);
+  });
+});
+
+describe('workerpool', function() {
+  var parallelApiPath = require.resolve('./lib/parallel-api');
+
+  var stringToTransform = "const x = 0;";
+
+  var options = {
+    inputSourceMap: false,
+    sourceMap: false,
+  };
+
+  afterEach(function() {
+    delete process.env.JOBS;
+    return terminateWorkerPool();
+  });
+
+  it('should limit to one pool per babel version', function() {
+    this.timeout(10*1000);
+    delete require.cache[parallelApiPath];
+    process.env.JOBS = '2';
+    var ParallelApiOne = require('./lib/parallel-api');
+    delete require.cache[parallelApiPath];
+    var ParallelApiTwo = require('./lib/parallel-api');
+
+    var lookup = RSVP.denodeify(ps.lookup);
+
+    return Promise.all([
+      ParallelApiOne.transformString(stringToTransform, options),
+      ParallelApiOne.transformString(stringToTransform, options),
+      ParallelApiTwo.transformString(stringToTransform, options),
+      ParallelApiTwo.transformString(stringToTransform, options),
+    ]).then(function() {
+      // for ps-node,
+      // unix paths look like 'broccoli-babel-transpiler/lib/worker.js'
+      // windows paths look like 'broccoli-babel-transpiler\\lib\\worker.js' (2 path separators)
+      var processMatch = (os.platform() === 'win32')
+        ? 'broccoli-babel-transpiler\\\\lib\\\\worker.js'
+        : path.join('broccoli-babel-transpiler', 'lib', 'worker.js');
+      return lookup({
+        command: 'node',
+        arguments: processMatch,
+      });
+    }).then(function(resultList) {
+      expect(resultList.length).to.eql(2);
+    });
+  });
+
 });

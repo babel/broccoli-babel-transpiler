@@ -43,7 +43,7 @@
     "heimdalljs-logger": "^0.1.7",
     "json-stable-stringify": "^1.0.0",
     "rsvp": "^3.5.0",
-    "workerpool": "^2.2.1"
+    "workerpool": "^2.3.0"
   },
   "devDependencies": {
     "amd-name-resolver": "0.0.6",
@@ -54,6 +54,7 @@
     "chai": "^3.5.0",
     "mkdirp": "^0.5.1",
     "mocha": "^2.4.5",
+    "ps-node": "^0.1.6",
     "rimraf": "^2.4.2"
   }
 }
