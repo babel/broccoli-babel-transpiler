@@ -70,7 +70,7 @@ function Babel(inputTree, _options) {
 
 Babel.prototype = Object.create(Filter.prototype);
 Babel.prototype.constructor = Babel;
-Babel.prototype.targetExtension = ['js'];
+Babel.prototype.targetExtension = 'js';
 
 Babel.prototype.baseDir = function() {
   return __dirname;
@@ -202,6 +202,9 @@ Babel.prototype.copyOptions = function() {
   var cloned = clone(this.options);
   if (cloned.filterExtensions) {
     delete cloned.filterExtensions;
+  }
+  if (cloned.targetExtension) {
+    delete cloned.targetExtension;
   }
   return cloned;
 };
