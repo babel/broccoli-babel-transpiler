@@ -254,3 +254,10 @@ This can be changed with the `JOBS` environment variable:
 ```
 JOBS=4 ember build
 ```
+
+To disable parallelization:
+
+```
+JOBS=0 ember build
+JOBS=1 ember build
+```
