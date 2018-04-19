@@ -1255,7 +1255,7 @@ describe('concurrency', function() {
 
 describe('getBabelVersion()', function() {
   it ('returns the correct version', function() {
-    var expectedVersion = require(path.join(__dirname, 'node_modules/babel-core/package.json')).version;
+    var expectedVersion = require(path.join(__dirname, 'node_modules/@babel/core/package.json')).version;
     expect(ParallelApi.getBabelVersion()).to.equal(expectedVersion);
   });
 });
