@@ -93,7 +93,7 @@ describe('options', function() {
     expect(transpilerOptions.bar.baz).to.eql(1);
   });
 
-  it('correct fileName, sourceMapTarget, sourceFileName', function() {
+  it('correct fileName, sourceFileName', function() {
     var transpilerOptions;
 
     babel.transform = function(string, options) {
@@ -106,7 +106,6 @@ describe('options', function() {
 
     expect(transpilerOptions.moduleId).to.eql(undefined);
     expect(transpilerOptions.filename).to.eql('relativePath');
-    expect(transpilerOptions.sourceMapTarget).to.eql('relativePath');
     expect(transpilerOptions.sourceFileName).to.eql('relativePath');
   });
 
