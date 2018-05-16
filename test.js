@@ -1003,12 +1003,17 @@ describe('pluginCanBeParallelized()', function() {
     expect(ParallelApi.pluginCanBeParallelized(function() {})).to.eql(false);
   });
 
-  it('[] - no', function () {
-    expect(ParallelApi.pluginCanBeParallelized([])).to.eql(false);
+  it('[] - yes', function () {
+    expect(ParallelApi.pluginCanBeParallelized([])).to.eql(true);
   });
 
-  it('["plugin-name", { options }] - no', function () {
-    expect(ParallelApi.pluginCanBeParallelized(['plugin-name', {foo: 'bar'}])).to.eql(false);
+  it('[null, "plugin-name", 12, {foo: "bar"}, ["one",2], true, false] - yes', function () {
+    let plugin = [null, "plugin-name", 12, {foo: "bar"}, ["one",2], true, false];
+    expect(ParallelApi.pluginCanBeParallelized(plugin)).to.eql(true);
+  });
+
+  it('["plugin-name", x => x + 1] - no', function () {
+    expect(ParallelApi.pluginCanBeParallelized(['plugin-name', x => x + 1])).to.eql(false);
   });
 
   it('{ _parallelBabel: { requireFile: "a/file" } } - yes', function () {
