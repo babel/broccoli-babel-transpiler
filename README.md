@@ -161,6 +161,15 @@ passed as options to babel must be specified in a serializable form.
 To enable this parallelization there is an API to tell the worker how to
 construct the plugin or callback in its process.
 
+To ensure a build remains parallel safe, one can set the
+`throwUnlessParallelizable` option to true (defaults to false). This will cause
+an error to be thrown, if parallelization is not possible due to an
+incompatible babel plugin.
+
+```js
+new Babel(input, { throwUnlessParallelizable: true | false });
+```
+
 Plugins are specified as an object with a `_parallelBabel` property:
 
 ```js
