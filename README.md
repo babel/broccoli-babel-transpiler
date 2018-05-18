@@ -83,8 +83,8 @@ let scriptTree = esTranspiler(inputTree, {
 The default `targetExtension` is `js`
 
 ```js
-var esTranspiler = require('broccoli-babel-transpiler');
-var scriptTree = esTranspiler(inputTree, {
+const esTranspiler = require('broccoli-babel-transpiler');
+let scriptTree = esTranspiler(inputTree, {
     targetExtension: 'module.js' // create output files with module.js extension
 });
 ```
