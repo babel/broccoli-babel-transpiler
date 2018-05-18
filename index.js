@@ -8,7 +8,7 @@ const mergeTrees = require('broccoli-merge-trees');
 const funnel     = require('broccoli-funnel');
 const crypto     = require('crypto');
 const hashForDep = require('hash-for-dep');
-const ParallelApi = require('./lib/parallel-api');
+const transformString = require('./lib/parallel-api').transformString;
 
 
 function getExtensionsRegex(extensions) {
@@ -78,7 +78,7 @@ Babel.prototype.baseDir = function() {
 };
 
 Babel.prototype.transform = function(string, options) {
-  return ParallelApi.transformString(string, options);
+  return transformString(string, options);
 };
 
 /*
