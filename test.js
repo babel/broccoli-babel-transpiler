@@ -73,7 +73,8 @@ describe('options', function() {
       bar: {
         baz: 1
       },
-      filterExtensions: ['es6']
+      filterExtensions: ['es6'],
+      targetExtension: 'js'
     };
 
     babel = new Babel('foo', options);
@@ -134,7 +135,7 @@ describe('options', function() {
     expect(transpilerOptions.moduleId).to.eql('relativePath');
   });
 
-  it('does not propagate validExtensions', function () {
+  it('does not propagate filterExtensions', function () {
     let transpilerOptions;
 
     babel.transform = function(string, options) {
@@ -146,6 +147,20 @@ describe('options', function() {
     babel.processString('path', 'relativePath');
 
     expect(transpilerOptions.filterExtensions).to.eql(undefined);
+  });
+
+  it('does not propagate targetExtension', function () {
+    var transpilerOptions;
+
+    babel.transform = function(string, options) {
+      transpilerOptions = options;
+      return Promise.resolve({ code: {} });
+    };
+
+    expect(transpilerOptions).to.eql(undefined);
+    babel.processString('path', 'relativePath');
+
+    expect(transpilerOptions.targetExtension).to.eql(undefined);
   });
 });
 

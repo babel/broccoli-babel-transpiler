@@ -78,6 +78,17 @@ let scriptTree = esTranspiler(inputTree, {
 });
 ```
 
+`targetExtension` is an option to specify the extension of the output files
+
+The default `targetExtension` is `js`
+
+```js
+var esTranspiler = require('broccoli-babel-transpiler');
+var scriptTree = esTranspiler(inputTree, {
+    targetExtension: 'module.js' // create output files with module.js extension
+});
+```
+
 ## Polyfill
 
 In order to use some of the ES6 features you must include the Babel
