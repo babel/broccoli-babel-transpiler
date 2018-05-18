@@ -1,44 +1,50 @@
 'use strict';
 
-var fs = require('fs');
-var os = require('os');
-var expect = require('chai').expect;
-var broccoli = require('broccoli');
-var path = require('path');
-var ps = require('ps-node');
-var Babel = require('./index');
-var helpers = require('broccoli-test-helpers');
-var stringify = require('json-stable-stringify');
-var mkdirp = require('mkdirp').sync;
-var makeTestHelper = helpers.makeTestHelper;
-var cleanupBuilders = helpers.cleanupBuilders;
-var RSVP = require('rsvp');
-var Promise = RSVP.Promise;
-var moduleResolve = require('amd-name-resolver').moduleResolve;
-var ParallelApi = require('./lib/parallel-api');
+const fs = require('fs');
+const os = require('os');
+const expect = require('chai').expect;
+const broccoli = require('broccoli');
+const path = require('path');
+const ps = require('ps-node');
+const Babel = require('./index');
+const helpers = require('broccoli-test-helpers');
+const stringify = require('json-stable-stringify');
+const mkdirp = require('mkdirp').sync;
+const makeTestHelper = helpers.makeTestHelper;
+const cleanupBuilders = helpers.cleanupBuilders;
+const RSVP = require('rsvp');
+const Promise = RSVP.Promise;
+const moduleResolve = require('amd-name-resolver').moduleResolve;
 
-var inputPath = path.join(__dirname, 'fixtures');
-var expectations = path.join(__dirname, 'expectations');
+const inputPath = path.join(__dirname, 'fixtures');
+const expectations = path.join(__dirname, 'expectations');
 
-var moduleResolveParallel = function() {};
+let ParallelApi = require('./lib/parallel-api');
+
+function moduleResolveParallel() { }
+
 moduleResolveParallel._parallelBabel = {
   requireFile: fixtureFullPath('amd-name-resolver-parallel'),
   useMethod: 'moduleResolve',
 };
-var getModuleIdParallel = function() {};
+
+function getModuleIdParallel () { }
+
 getModuleIdParallel._parallelBabel = {
   requireFile: fixtureFullPath('get-module-id-parallel'),
   buildUsing: 'build',
   params: { name: 'testModule' },
 };
-var shouldPrintCommentParallel = function() {};
+
+function shouldPrintCommentParallel () { }
+
 shouldPrintCommentParallel._parallelBabel = {
   requireFile: fixtureFullPath('print-comment-parallel'),
   buildUsing: 'buildMe',
   params: { contents: 'comment 1' },
 };
 
-var babel;
+let babel;
 
 function fixtureFullPath(filename) {
   return path.join(__dirname, 'fixtures', filename);
@@ -46,19 +52,20 @@ function fixtureFullPath(filename) {
 
 function terminateWorkerPool() {
   // shut down any workerpool that is running at this point
-  var babelCoreVersion = ParallelApi.getBabelVersion();
-  var workerPoolId = 'v1/broccoli-babel-transpiler/workerpool/babel-core-' + babelCoreVersion;
-  var runningPool = process[workerPoolId];
+  let babelCoreVersion = ParallelApi.getBabelVersion();
+  let workerPoolId = 'v1/broccoli-babel-transpiler/workerpool/babel-core-' + babelCoreVersion;
+  let runningPool = process[workerPoolId];
+
   if (runningPool) {
     return runningPool.terminate()
-    .then(function() {
-      delete process[workerPoolId];
-    });
+      .then(() => {
+        delete process[workerPoolId];
+      });
   }
 }
 
 describe('options', function() {
-  var options;
+  let options;
 
   before(function() {
     options = {
@@ -73,7 +80,7 @@ describe('options', function() {
   });
 
   it('are cloned', function() {
-    var transpilerOptions;
+    let transpilerOptions;
 
     babel.transform = function(string, options) {
       transpilerOptions = options;
@@ -94,7 +101,7 @@ describe('options', function() {
   });
 
   it('correct fileName, sourceMapTarget, sourceFileName', function() {
-    var transpilerOptions;
+    let transpilerOptions;
 
     babel.transform = function(string, options) {
       transpilerOptions = options;
@@ -114,7 +121,7 @@ describe('options', function() {
     babel.options.moduleId = true;
     babel.options.filename = 'relativePath.es6';
 
-    var transpilerOptions;
+    let transpilerOptions;
 
     babel.transform = function(string, options) {
       transpilerOptions = options;
@@ -128,7 +135,7 @@ describe('options', function() {
   });
 
   it('does not propagate validExtensions', function () {
-    var transpilerOptions;
+    let transpilerOptions;
 
     babel.transform = function(string, options) {
       transpilerOptions = options;
@@ -147,7 +154,7 @@ describe('transpile ES6 to ES5', function() {
 
   before(function() {
     babel = makeTestHelper({
-      subject: function() {
+      subject() {
         return new Babel(arguments[0], arguments[1]);
       },
       fixturePath: inputPath
@@ -167,11 +174,11 @@ describe('transpile ES6 to ES5', function() {
         'transform-strict-mode',
         'transform-es2015-block-scoping'
       ]
-    }).then(function(results) {
-      var outputPath = results.directory;
+    }).then(results => {
+      let outputPath = results.directory;
 
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
+      let output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
+      let input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
 
       expect(output).to.eql(input);
     });
@@ -194,18 +201,18 @@ describe('transpile ES6 to ES5', function() {
           }
         }
       ]
-    }).then(function(results) {
-      var outputPath = results.directory;
+    }).then(results => {
+      let outputPath = results.directory;
 
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
+      let output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
+      let input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
 
       expect(output).to.eql(input);
     });
   });
 
   it('basic - parallel API (in main process)', function () {
-    var pluginFunction = require('babel-plugin-transform-es2015-block-scoping');
+    let pluginFunction = require('babel-plugin-transform-es2015-block-scoping');
     pluginFunction.baseDir = function() {
       return path.join(__dirname, 'node_modules', 'babel-plugin-transform-es2015-block-scoping');
     };
@@ -220,18 +227,18 @@ describe('transpile ES6 to ES5', function() {
         },
         pluginFunction,
       ]
-    }).then(function(results) {
-      var outputPath = results.directory;
+    }).then(results => {
+      let outputPath = results.directory;
 
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
+      let output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
+      let input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
 
       expect(output).to.eql(input);
     });
   });
 
   it('basic (in main process)', function () {
-    var pluginFunction = require('babel-plugin-transform-strict-mode');
+    let pluginFunction = require('babel-plugin-transform-strict-mode');
     pluginFunction.baseDir = function() {
       return path.join(__dirname, 'node_modules', 'babel-plugin-transform-strict-mode');
     };
@@ -243,11 +250,11 @@ describe('transpile ES6 to ES5', function() {
         pluginFunction,
         'transform-es2015-block-scoping'
       ]
-    }).then(function(results) {
-      var outputPath = results.directory;
+    }).then(results => {
+      let outputPath = results.directory;
 
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
+      let output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
+      let input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
 
       expect(output).to.eql(input);
     });
@@ -260,11 +267,11 @@ describe('transpile ES6 to ES5', function() {
         'transform-strict-mode',
         'transform-es2015-block-scoping'
       ]
-    }).then(function(results) {
-      var outputPath = results.directory;
+    }).then(results => {
+      let outputPath = results.directory;
 
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'expected-inline-source-maps.js'), 'utf8');
+      let output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
+      let input = fs.readFileSync(path.join(expectations, 'expected-inline-source-maps.js'), 'utf8');
 
       expect(output).to.eql(input);
     });
@@ -279,11 +286,11 @@ describe('transpile ES6 to ES5', function() {
         'transform-es2015-block-scoping'
       ],
       resolveModuleSource: moduleResolve
-    }).then(function(results) {
-      var outputPath = results.directory;
+    }).then(results => {
+      let outputPath = results.directory;
 
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures-imports.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'imports.js'), 'utf8');
+      let output = fs.readFileSync(path.join(outputPath, 'fixtures-imports.js'), 'utf8');
+      let input = fs.readFileSync(path.join(expectations, 'imports.js'), 'utf8');
 
       expect(output).to.eql(input);
     });
@@ -298,11 +305,11 @@ describe('transpile ES6 to ES5', function() {
         'transform-es2015-block-scoping'
       ],
       resolveModuleSource: moduleResolveParallel
-    }).then(function(results) {
-      var outputPath = results.directory;
+    }).then(results => {
+      let outputPath = results.directory;
 
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures-imports.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'imports.js'), 'utf8');
+      let output = fs.readFileSync(path.join(outputPath, 'fixtures-imports.js'), 'utf8');
+      let input = fs.readFileSync(path.join(expectations, 'imports.js'), 'utf8');
 
       expect(output).to.eql(input);
     });
@@ -314,12 +321,12 @@ describe('transpile ES6 to ES5', function() {
         'transform-es2015-modules-amd'
       ],
       moduleIds: true,
-      getModuleId: function(moduleName) { return 'testModule'; },
-    }).then(function(results) {
-      var outputPath = results.directory;
+      getModuleId(moduleName) { return 'testModule'; },
+    }).then(results => {
+      let outputPath = results.directory;
 
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures-imports.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'imports-getModuleId.js'), 'utf8');
+      let output = fs.readFileSync(path.join(outputPath, 'fixtures-imports.js'), 'utf8');
+      let input = fs.readFileSync(path.join(expectations, 'imports-getModuleId.js'), 'utf8');
 
       expect(output).to.eql(input);
     });
@@ -332,11 +339,11 @@ describe('transpile ES6 to ES5', function() {
       ],
       moduleIds: true,
       getModuleId: getModuleIdParallel,
-    }).then(function(results) {
-      var outputPath = results.directory;
+    }).then(results => {
+      let outputPath = results.directory;
 
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures-imports.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'imports-getModuleId.js'), 'utf8');
+      let output = fs.readFileSync(path.join(outputPath, 'fixtures-imports.js'), 'utf8');
+      let input = fs.readFileSync(path.join(expectations, 'imports-getModuleId.js'), 'utf8');
 
       expect(output).to.eql(input);
     });
@@ -344,11 +351,12 @@ describe('transpile ES6 to ES5', function() {
 
   it('shouldPrintComment (in main process)', function () {
     return babel('files', {
-      shouldPrintComment: function(comment) { return comment === 'comment 1'; },
-    }).then(function(results) {
-      var outputPath = results.directory;
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures-comments.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'comments.js'), 'utf8');
+      shouldPrintComment(comment) { return comment === 'comment 1'; },
+    }).then(results => {
+      let outputPath = results.directory;
+      let output = fs.readFileSync(path.join(outputPath, 'fixtures-comments.js'), 'utf8');
+      let input = fs.readFileSync(path.join(expectations, 'comments.js'), 'utf8');
+
       expect(output).to.eql(input);
     });
   });
@@ -356,21 +364,22 @@ describe('transpile ES6 to ES5', function() {
   it('shouldPrintComment - parallel API', function () {
     return babel('files', {
       shouldPrintComment: shouldPrintCommentParallel,
-    }).then(function(results) {
-      var outputPath = results.directory;
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures-comments.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'comments.js'), 'utf8');
+    }).then(results => {
+      let outputPath = results.directory;
+      let output = fs.readFileSync(path.join(outputPath, 'fixtures-comments.js'), 'utf8');
+      let input = fs.readFileSync(path.join(expectations, 'comments.js'), 'utf8');
+
       expect(output).to.eql(input);
     });
   });
 });
 
 describe('filters files to transform', function() {
-  this.timeout(5*1000); // some of these are slow in CI
+  this.timeout(5 * 1000); // some of these are slow in CI
 
   before(function() {
     babel = makeTestHelper({
-      subject: function() {
+      subject() {
         return new Babel(arguments[0], arguments[1]);
       },
       fixturePath: inputPath
@@ -389,11 +398,11 @@ describe('filters files to transform', function() {
         'transform-strict-mode',
         'transform-es2015-block-scoping'
       ]
-    }).then(function(results) {
-      var outputPath = results.directory;
+    }).then(results => {
+      let outputPath = results.directory;
 
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
+      let output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
+      let input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
 
       expect(output).to.eql(input);
       // Verify that .es6 file was not transformed
@@ -410,11 +419,11 @@ describe('filters files to transform', function() {
         'transform-strict-mode',
         'transform-es2015-block-scoping'
       ]
-    }).then(function(results) {
-      var outputPath = results.directory;
+    }).then(results => {
+      let outputPath = results.directory;
 
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures-es6.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
+      let output = fs.readFileSync(path.join(outputPath, 'fixtures-es6.js'), 'utf8');
+      let input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
 
       expect(output).to.eql(input);
       // Verify that .es6 file was not transformed
@@ -431,12 +440,12 @@ describe('filters files to transform', function() {
         'transform-strict-mode',
         'transform-es2015-block-scoping'
       ]
-    }).then(function(results) {
-      var outputPath = results.directory;
+    }).then(results => {
+      let outputPath = results.directory;
 
-      var es6ExtOutput = fs.readFileSync(path.join(outputPath, 'fixtures-es6.js'), 'utf8');
-      var jsExtOutput = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
+      let es6ExtOutput = fs.readFileSync(path.join(outputPath, 'fixtures-es6.js'), 'utf8');
+      let jsExtOutput = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
+      let input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
 
       expect(es6ExtOutput).to.eql(input);
       expect(jsExtOutput).to.eql(input);
@@ -454,11 +463,11 @@ describe('filters files to transform', function() {
         'transform-es2015-modules-amd',
         'transform-es2015-block-scoping'
       ]
-    }).then(function(results) {
-      var outputPath = results.directory;
+    }).then(results => {
+      let outputPath = results.directory;
 
-      var output = fs.readFileSync(path.join(outputPath, 'named-module-fixture.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'named-module.js'), 'utf8');
+      let output = fs.readFileSync(path.join(outputPath, 'named-module-fixture.js'), 'utf8');
+      let input = fs.readFileSync(path.join(expectations, 'named-module.js'), 'utf8');
 
       expect(output).to.eql(input);
     });
@@ -474,11 +483,11 @@ describe('filters files to transform', function() {
         'transform-es2015-modules-amd',
         'transform-es2015-block-scoping'
       ]
-    }).then(function(results) {
-      var outputPath = results.directory;
+    }).then(results => {
+      let outputPath = results.directory;
 
-      var output = fs.readFileSync(path.join(outputPath, 'true-module-fixture.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'true-module.js'), 'utf8');
+      let output = fs.readFileSync(path.join(outputPath, 'true-module-fixture.js'), 'utf8');
+      let input = fs.readFileSync(path.join(expectations, 'true-module.js'), 'utf8');
 
       expect(output).to.eql(input);
     });
@@ -488,7 +497,7 @@ describe('filters files to transform', function() {
     return babel('file', {
       helperWhiteList: ['classCallCheck', 'possibleConstructorReturn'],
       plugins: ['transform-es2015-classes']
-    }).catch(function(err) {
+    }).catch(err => {
       expect(err.message).to.match(/^fixtures.js was transformed and relies on `inherits`, which was not included in the helper whitelist. Either add this helper to the whitelist or refactor to not be dependent on this runtime helper.$/);
     });
   });
@@ -497,7 +506,7 @@ describe('filters files to transform', function() {
     return babel('file', {
       helperWhiteList: [],
       plugins: ['transform-es2015-classes']
-    }).catch(function(err) {
+    }).catch(err => {
       expect(err.message).to.match(/^fixtures.js was transformed and relies on `[a-zA-Z]+`, `[a-zA-Z]+`, & `[a-zA-z]+`, which were not included in the helper whitelist. Either add these helpers to the whitelist or refactor to not be dependent on these runtime helpers.$/);
     });
   });
@@ -506,10 +515,11 @@ describe('filters files to transform', function() {
     return babel('files', {
       helperWhiteList: ['classCallCheck', 'possibleConstructorReturn', 'inherits'],
       plugins: ['transform-es2015-classes']
-    }).then(function(results) {
-      var outputPath = results.directory;
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures-classes.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'classes.js'), 'utf8');
+    }).then(results => {
+      let outputPath = results.directory;
+      let output = fs.readFileSync(path.join(outputPath, 'fixtures-classes.js'), 'utf8');
+      let input = fs.readFileSync(path.join(expectations, 'classes.js'), 'utf8');
+
       expect(output).to.eql(input);
     });
   });
@@ -1261,17 +1271,17 @@ describe('concurrency', function() {
 
 describe('getBabelVersion()', function() {
   it ('returns the correct version', function() {
-    var expectedVersion = require(path.join(__dirname, 'node_modules/babel-core/package.json')).version;
+    let expectedVersion = require(path.join(__dirname, 'node_modules/babel-core/package.json')).version;
     expect(ParallelApi.getBabelVersion()).to.equal(expectedVersion);
   });
 });
 
 describe('workerpool', function() {
-  var parallelApiPath = require.resolve('./lib/parallel-api');
+  let parallelApiPath = require.resolve('./lib/parallel-api');
 
-  var stringToTransform = "const x = 0;";
+  let stringToTransform = "const x = 0;";
 
-  var options = {
+  let options = {
     inputSourceMap: false,
     sourceMap: false,
     plugins: [
@@ -1289,9 +1299,9 @@ describe('workerpool', function() {
     this.timeout(5*1000);
     delete require.cache[parallelApiPath];
     process.env.JOBS = '2';
-    var ParallelApiOne = require('./lib/parallel-api');
+    let ParallelApiOne = require('./lib/parallel-api');
     delete require.cache[parallelApiPath];
-    var ParallelApiTwo = require('./lib/parallel-api');
+    let ParallelApiTwo = require('./lib/parallel-api');
 
     let lookup = RSVP.denodeify(ps.lookup);
 
@@ -1315,5 +1325,4 @@ describe('workerpool', function() {
       expect(resultList.length).to.eql(2);
     });
   });
-
 });
