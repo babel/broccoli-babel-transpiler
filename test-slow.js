@@ -18,7 +18,7 @@ function fixtureFullPath(filename) {
 }
 
 describe('large operations', function() {
-  this.timeout(1 * 60 * 1000); // 1 minute
+  this.timeout(3 * 60 * 1000); // 1 minute
 
   const inputTreePath = path.join(os.tmpdir(), 'lots-of-files');
   let expectedContents;

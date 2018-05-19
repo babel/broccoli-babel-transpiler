@@ -952,11 +952,10 @@ describe('deserializeOptions()', function() {
       getModuleId: moduleNameFunc,
       shouldPrintComment: commentFunc,
     };
-    expect(ParallelApi.deserializeOptions(options)).to.eql({
-      resolveModuleSource: moduleResolve,
-      getModuleId: moduleNameFunc,
-      shouldPrintComment: commentFunc,
-    });
+
+    expect(ParallelApi.deserializeOptions(options).resolveModuleSource).to.not.eql(moduleResolve);
+    expect(ParallelApi.deserializeOptions(options).getModuleId).to.eql(moduleNameFunc);
+    expect(ParallelApi.deserializeOptions(options).shouldPrintComment).to.eql(commentFunc);
   });
 
   it('builds resolveModuleSource using the parallel API', function () {
@@ -964,7 +963,7 @@ describe('deserializeOptions()', function() {
       resolveModuleSource: moduleResolveParallel
     };
     expect(ParallelApi.deserializeOptions(options).resolveModuleSource).to.be.a('function');
-    expect(ParallelApi.deserializeOptions(options)).to.eql({
+    expect(ParallelApi.deserializeOptions(options)).to.not.eql({
       resolveModuleSource: moduleResolve
     });
   });
