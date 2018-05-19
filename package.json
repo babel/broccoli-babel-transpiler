@@ -10,8 +10,9 @@
   "scripts": {
     "test": "mocha test.js",
     "test:debug": "mocha debug test.js",
-    "test:slow": "mocha test_slow.js",
-    "test:all": "mocha test.js test_slow.js"
+    "test:slow": "mocha test-slow.js",
+    "test:slow:debug": "mocha debug test-slow.js",
+    "test:all": "mocha test.js test-slow.js"
   },
   "repository": {
     "type": "git",
@@ -51,8 +52,7 @@
     "babel-plugin-transform-es2015-classes": "^6.9.0",
     "babel-plugin-transform-es2015-modules-amd": "^6.4.3",
     "babel-plugin-transform-strict-mode": "^6.3.13",
-    "broccoli": "^0.16.3",
-    "broccoli-test-helpers": "0.0.8",
+    "broccoli-test-helpers": "0.0.9",
     "chai": "^4.1.2",
     "mkdirp": "^0.5.1",
     "mocha": "^5.2.0",

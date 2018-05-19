@@ -3,7 +3,6 @@
 const fs = require('fs');
 const os = require('os');
 const expect = require('chai').expect;
-const broccoli = require('broccoli');
 const path = require('path');
 const ps = require('ps-node');
 const Babel = require('./index');
