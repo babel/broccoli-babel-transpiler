@@ -4,9 +4,9 @@ const fs = require('fs');
 const os = require('os');
 const expect = require('chai').expect;
 const path = require('path');
-const Babel = require('./index');
+const Babel = require('../');
 const helpers = require('broccoli-test-helpers');
-const terminateWorkerPool = require('./tests/utils/terminate-workers');
+const terminateWorkerPool = require('./utils/terminate-workers');
 const makeTestHelper = helpers.makeTestHelper;
 const cleanupBuilders = helpers.cleanupBuilders;
 

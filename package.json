@@ -8,11 +8,11 @@
     "lib"
   ],
   "scripts": {
-    "test": "mocha test.js",
-    "test:debug": "mocha debug test.js",
-    "test:slow": "mocha test-slow.js",
-    "test:slow:debug": "mocha debug test-slow.js",
-    "test:all": "mocha test.js test-slow.js"
+    "test": "mocha tests/test.js",
+    "test:debug": "mocha debug tests/test.js",
+    "test:slow": "mocha tests/test-slow.js",
+    "test:slow:debug": "mocha debug tests/test-slow.js",
+    "test:all": "mocha tests/test.js tests/test-slow.js"
   },
   "repository": {
     "type": "git",

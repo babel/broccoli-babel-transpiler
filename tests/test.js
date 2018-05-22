@@ -5,7 +5,7 @@ const os = require('os');
 const expect = require('chai').expect;
 const path = require('path');
 const ps = require('ps-node');
-const Babel = require('./index');
+const Babel = require('../');
 const helpers = require('broccoli-test-helpers');
 const stringify = require('json-stable-stringify');
 const mkdirp = require('mkdirp').sync;
@@ -14,12 +14,12 @@ const cleanupBuilders = helpers.cleanupBuilders;
 const RSVP = require('rsvp');
 const Promise = RSVP.Promise;
 const moduleResolve = require('amd-name-resolver').moduleResolve;
-const terminateWorkerPool = require('./tests/utils/terminate-workers');
+const terminateWorkerPool = require('./utils/terminate-workers');
 
 const inputPath = path.join(__dirname, 'fixtures');
 const expectations = path.join(__dirname, 'expectations');
 
-let ParallelApi = require('./lib/parallel-api');
+let ParallelApi = require('../lib/parallel-api');
 
 function moduleResolveParallel() { }
 
@@ -216,7 +216,7 @@ describe('transpile ES6 to ES5', function() {
   it('basic - parallel API (in main process)', function () {
     let pluginFunction = require('babel-plugin-transform-es2015-block-scoping');
     pluginFunction.baseDir = function() {
-      return path.join(__dirname, 'node_modules', 'babel-plugin-transform-es2015-block-scoping');
+      return path.join(__dirname, '../node_modules', 'babel-plugin-transform-es2015-block-scoping');
     };
     return babel('files', {
       inputSourceMap: false,
@@ -242,7 +242,7 @@ describe('transpile ES6 to ES5', function() {
   it('basic (in main process)', function () {
     let pluginFunction = require('babel-plugin-transform-strict-mode');
     pluginFunction.baseDir = function() {
-      return path.join(__dirname, 'node_modules', 'babel-plugin-transform-strict-mode');
+      return path.join(__dirname, '../node_modules', 'babel-plugin-transform-strict-mode');
     };
     return babel('files', {
       inputSourceMap: false,
@@ -807,7 +807,7 @@ describe('on error', function() {
   it('returns error from the main process', function () {
     let pluginFunction = require('babel-plugin-transform-strict-mode');
     pluginFunction.baseDir = function() {
-      return path.join(__dirname, 'node_modules', 'babel-plugin-transform-strict-mode');
+      return path.join(__dirname, '../node_modules', 'babel-plugin-transform-strict-mode');
     };
     return babel('errors', {
       inputSourceMap: false,
@@ -1250,12 +1250,13 @@ describe('buildFromParallelApiInfo()', function() {
 });
 
 describe('concurrency', function() {
-  let parallelApiPath = require.resolve('./lib/parallel-api');
+  let PATH = '../lib/parallel-api';
+  let parallelApiPath = require.resolve(PATH);
 
   afterEach(function() {
     delete require.cache[parallelApiPath];
     delete process.env.JOBS;
-    ParallelApi = require('./lib/parallel-api');
+    ParallelApi = require(PATH);
     return terminateWorkerPool();
   });
 
@@ -1266,20 +1267,21 @@ describe('concurrency', function() {
   it('sets jobs using environment variable', function() {
     delete require.cache[parallelApiPath];
     process.env.JOBS = '17';
-    ParallelApi = require('./lib/parallel-api');
+    ParallelApi = require(PATH);
     expect(ParallelApi.jobs).to.equal(17);
   });
 });
 
 describe('getBabelVersion()', function() {
   it ('returns the correct version', function() {
-    let expectedVersion = require(path.join(__dirname, 'node_modules/babel-core/package.json')).version;
+    let expectedVersion = require('babel-core/package.json').version;
     expect(ParallelApi.getBabelVersion()).to.equal(expectedVersion);
   });
 });
 
 describe('workerpool', function() {
-  let parallelApiPath = require.resolve('./lib/parallel-api');
+  const PATH = '../lib/parallel-api';
+  let parallelApiPath = require.resolve(PATH);
 
   let stringToTransform = "const x = 0;";
   let options;
@@ -1303,9 +1305,9 @@ describe('workerpool', function() {
     this.timeout(5*1000);
     delete require.cache[parallelApiPath];
     process.env.JOBS = '2';
-    let ParallelApiOne = require('./lib/parallel-api');
+    let ParallelApiOne = require(PATH);
     delete require.cache[parallelApiPath];
-    let ParallelApiTwo = require('./lib/parallel-api');
+    let ParallelApiTwo = require(PATH);
 
     let lookup = RSVP.denodeify(ps.lookup);
 
@@ -1334,25 +1336,25 @@ describe('workerpool', function() {
     it('should throw if throwUnlessParallelizable: true, and one or more plugins could not be parallelized', function() {
       options.throwUnlessParallelizable = true;
       options.plugins = [function() { }];
-      expect(() => require('./lib/parallel-api').transformString(stringToTransform, options)).to.throw(/BroccoliBabelTranspiler was configured to `throwUnlessParallelizable` and was unable to parallelize/);
+      expect(() => require(PATH).transformString(stringToTransform, options)).to.throw(/BroccoliBabelTranspiler was configured to `throwUnlessParallelizable` and was unable to parallelize/);
     });
 
     it('should NOT throw if throwUnlessParallelizable: true, and all plugins can be parallelized', function() {
       options.throwUnlessParallelizable = true;
       options.plugins = [ { foo: 1 }];
-      expect(() => require('./lib/parallel-api').transformString(stringToTransform, options)).to.throw(/BroccoliBabelTranspiler was configured to `throwUnlessParallelizable` and was unable to parallelize/);
+      expect(() => require(PATH).transformString(stringToTransform, options)).to.throw(/BroccoliBabelTranspiler was configured to `throwUnlessParallelizable` and was unable to parallelize/);
     });
 
     it('should NOT throw if throwUnlessParallelizable: false, and one or more plugins could not be parallelized', function() {
       options.throwUnlessParallelizable = false
       options.plugins = [function() { }]
-      expect(() => require('./lib/parallel-api').transformString(stringToTransform, options)).to.not.throw();
+      expect(() => require(PATH).transformString(stringToTransform, options)).to.not.throw();
     });
 
     it('should NOT throw if throwUnlessParallelizable is unset, and one or more plugins could not be parallelized', function() {
       delete options.throwUnlessParallelizable;
       options.plugins = [function() { }]
-      expect(() => require('./lib/parallel-api').transformString(stringToTransform, options)).to.not.throw();
+      expect(() => require(PATH).transformString(stringToTransform, options)).to.not.throw();
     });
   });
 });
