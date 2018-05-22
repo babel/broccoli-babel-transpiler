@@ -14,6 +14,7 @@ const cleanupBuilders = helpers.cleanupBuilders;
 const RSVP = require('rsvp');
 const Promise = RSVP.Promise;
 const moduleResolve = require('amd-name-resolver').moduleResolve;
+const terminateWorkerPool = require('./tests/utils/terminate-workers');
 
 const inputPath = path.join(__dirname, 'fixtures');
 const expectations = path.join(__dirname, 'expectations');
@@ -49,22 +50,9 @@ function fixtureFullPath(filename) {
   return path.join(__dirname, 'fixtures', filename);
 }
 
-function terminateWorkerPool() {
-  // shut down any workerpool that is running at this point
-  let babelCoreVersion = ParallelApi.getBabelVersion();
-  let workerPoolId = 'v1/broccoli-babel-transpiler/workerpool/babel-core-' + babelCoreVersion;
-  let runningPool = process[workerPoolId];
-
-  if (runningPool) {
-    return runningPool.terminate()
-      .then(() => {
-        delete process[workerPoolId];
-      });
-  }
-}
-
 describe('options', function() {
   let options;
+  this.timeout(10000);
 
   before(function() {
     options = {
@@ -177,7 +165,7 @@ describe('transpile ES6 to ES5', function() {
 
   afterEach(function () {
     return cleanupBuilders()
-      .then(() => terminateWorkerPool);
+      .then(terminateWorkerPool);
   });
 
   it('basic', function () {
@@ -813,7 +801,7 @@ describe('on error', function() {
 
   afterEach(function () {
     return cleanupBuilders()
-      .then(() => terminateWorkerPool);
+      .then(terminateWorkerPool);
   });
 
   it('returns error from the main process', function () {
