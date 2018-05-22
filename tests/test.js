@@ -789,6 +789,7 @@ describe('when options change', function() {
 });
 
 describe('on error', function() {
+  this.timeout(5000);
 
   before(function() {
     babel = makeTestHelper({
