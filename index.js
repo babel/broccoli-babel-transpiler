@@ -42,7 +42,10 @@ function Babel(inputTree, _options) {
   delete options.description;
 
   this.console = options.console || console;
+  this.throwUnlessParallelizable = options.throwUnlessParallelizable;
+
   delete options.console;
+  delete options.throwUnlessParallelizable;
 
   this.options = options;
   this.extensions = this.options.filterExtensions || ['js'];
@@ -78,7 +81,10 @@ Babel.prototype.baseDir = function() {
 };
 
 Babel.prototype.transform = function(string, options) {
-  return transformString(string, options);
+  debugger;
+  return transformString(string, options, {
+    throwUnlessParallelizable: this.throwUnlessParallelizable
+  });
 };
 
 /*
