@@ -6,6 +6,7 @@ const expect = require('chai').expect;
 const path = require('path');
 const Babel = require('./index');
 const helpers = require('broccoli-test-helpers');
+const terminateWorkerPool = require('./tests/utils/terminate-workers');
 const makeTestHelper = helpers.makeTestHelper;
 const cleanupBuilders = helpers.cleanupBuilders;
 
@@ -18,7 +19,7 @@ function fixtureFullPath(filename) {
 }
 
 describe('large operations', function() {
-  this.timeout(1 * 60 * 1000); // 1 minute
+  this.timeout(3 * 60 * 1000); // 1 minute
 
   const inputTreePath = path.join(os.tmpdir(), 'lots-of-files');
   let expectedContents;
@@ -47,20 +48,16 @@ describe('large operations', function() {
     }
   });
 
-  afterEach(function () {
-    return cleanupBuilders();
-  });
-
   after(function() {
     fs.readdirSync(inputTreePath).forEach(file => {
       fs.unlinkSync(path.join(inputTreePath, file));
     });
 
     fs.rmdirSync(inputTreePath);
+    return terminateWorkerPool();
   });
 
   it('handles thousands of files', function () {
-
     return babel(inputTreePath, {
       inputSourceMap:false,
       sourceMap: false,

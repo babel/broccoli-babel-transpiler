@@ -20,7 +20,7 @@ install:
 test_script:
   # Output useful info for debugging.
   - npm version
-  - cmd: npm test
+  - cmd: npm run test:all
 
 # Don't actually build.
 build: off

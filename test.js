@@ -3,7 +3,6 @@
 const fs = require('fs');
 const os = require('os');
 const expect = require('chai').expect;
-const broccoli = require('broccoli');
 const path = require('path');
 const ps = require('ps-node');
 const Babel = require('./index');
@@ -15,6 +14,7 @@ const cleanupBuilders = helpers.cleanupBuilders;
 const RSVP = require('rsvp');
 const Promise = RSVP.Promise;
 const moduleResolve = require('amd-name-resolver').moduleResolve;
+const terminateWorkerPool = require('./tests/utils/terminate-workers');
 
 const inputPath = path.join(__dirname, 'fixtures');
 const expectations = path.join(__dirname, 'expectations');
@@ -50,22 +50,9 @@ function fixtureFullPath(filename) {
   return path.join(__dirname, 'fixtures', filename);
 }
 
-function terminateWorkerPool() {
-  // shut down any workerpool that is running at this point
-  let babelCoreVersion = ParallelApi.getBabelVersion();
-  let workerPoolId = 'v1/broccoli-babel-transpiler/workerpool/babel-core-' + babelCoreVersion;
-  let runningPool = process[workerPoolId];
-
-  if (runningPool) {
-    return runningPool.terminate()
-      .then(() => {
-        delete process[workerPoolId];
-      });
-  }
-}
-
 describe('options', function() {
   let options;
+  this.timeout(10000);
 
   before(function() {
     options = {
@@ -150,7 +137,7 @@ describe('options', function() {
   });
 
   it('does not propagate targetExtension', function () {
-    var transpilerOptions;
+    let transpilerOptions;
 
     babel.transform = function(string, options) {
       transpilerOptions = options;
@@ -178,7 +165,7 @@ describe('transpile ES6 to ES5', function() {
 
   afterEach(function () {
     return cleanupBuilders()
-      .then(() => terminateWorkerPool);
+      .then(terminateWorkerPool);
   });
 
   it('basic', function () {
@@ -542,28 +529,28 @@ describe('filters files to transform', function() {
 
 describe('consume broccoli-babel-transpiler options', function() {
   it('enabled', function() {
-    var options = {
+    let options = {
       browserPolyfill: true
     };
 
     babel = new Babel('foo', options);
-    var code = babel.processString('path', 'relativePath');
+    let code = babel.processString('path', 'relativePath');
     expect(code).to.be.ok;
   });
 
   it('explicitly disabled', function() {
-    var options = {
+    let options = {
       browserPolyfill: false
     };
 
     babel = new Babel('foo', options);
-    var code = babel.processString('path', 'relativePath');
+    let code = babel.processString('path', 'relativePath');
     expect(code).to.be.ok;
   });
 });
 
 describe('when options change', function() {
-  var originalHash, options, fakeConsole, consoleMessages;
+  let originalHash, options, fakeConsole, consoleMessages;
 
   beforeEach(function() {
     fakeConsole = {
@@ -578,7 +565,7 @@ describe('when options change', function() {
       plugins: []
     };
 
-    var babel = new Babel('foo', options);
+    let babel = new Babel('foo', options);
 
     originalHash = babel.optionsHash();
   });
@@ -586,7 +573,7 @@ describe('when options change', function() {
   it('clears cache for added properties', function() {
     options.foo = 1;
     options.console = fakeConsole;
-    var babelNew = new Babel('foo', options);
+    let babelNew = new Babel('foo', options);
 
     expect(babelNew.optionsHash()).to.not.eql(originalHash);
   });
@@ -596,7 +583,7 @@ describe('when options change', function() {
       { cacheKey: function() { return 'hi!'; }}
     ];
     options.console = fakeConsole;
-    var babelNew = new Babel('foo', options);
+    let babelNew = new Babel('foo', options);
 
     expect(babelNew.optionsHash()).to.not.eql(originalHash);
   });
@@ -609,7 +596,7 @@ describe('when options change', function() {
       fakePlugin
     ];
     options.console = fakeConsole;
-    var babelNew = new Babel('foo', options);
+    let babelNew = new Babel('foo', options);
 
     expect(babelNew.optionsHash()).to.not.eql(originalHash);
   });
@@ -619,127 +606,127 @@ describe('when options change', function() {
       'foo'
     ];
     options.console = fakeConsole;
-    var babelNew = new Babel('foo', options);
+    let babelNew = new Babel('foo', options);
 
     expect(babelNew.optionsHash()).to.not.eql(originalHash);
   });
 
   it('includes plugins specified with options in hash calculation when cacheable', function() {
-    var pluginOptions = { foo: 'bar' };
+    let pluginOptions = { foo: 'bar' };
     options.plugins = [
       ['foo', pluginOptions]
     ];
     options.console = fakeConsole;
-    var first = new Babel('foo', options);
-    var firstOptions = first.optionsHash();
+    let first = new Babel('foo', options);
+    let firstOptions = first.optionsHash();
 
     options.console = fakeConsole;
-    var second = new Babel('foo', options);
-    var secondOptions = second.optionsHash();
+    let second = new Babel('foo', options);
+    let secondOptions = second.optionsHash();
     expect(firstOptions).to.eql(secondOptions);
 
     pluginOptions.qux = 'huzzah';
     options.console = fakeConsole;
-    var third = new Babel('foo', options);
-    var thirdOptions = third.optionsHash();
+    let third = new Babel('foo', options);
+    let thirdOptions = third.optionsHash();
 
     expect(firstOptions).to.not.eql(thirdOptions);
   });
 
   it('invalidates plugins specified with options when not-cacheable', function() {
     function thing() { }
-    var pluginOptions = { foo: 'bar', thing: thing };
+    let pluginOptions = { foo: 'bar', thing: thing };
     options.plugins = [
       ['foo', pluginOptions]
     ];
     options.console = fakeConsole;
-    var first = new Babel('foo', options);
-    var firstOptions = first.optionsHash();
+    let first = new Babel('foo', options);
+    let firstOptions = first.optionsHash();
 
     options.console = fakeConsole;
-    var second = new Babel('foo', options);
-    var secondOptions = second.optionsHash();
+    let second = new Babel('foo', options);
+    let secondOptions = second.optionsHash();
     expect(firstOptions).to.not.eql(secondOptions);
   });
 
   it('plugins specified with options can have functions with `baseDir`', function() {
-    var dir = path.join(inputPath, 'plugin-a');
+    let dir = path.join(inputPath, 'plugin-a');
     function thing() { }
     thing.baseDir = function() { return dir; };
-    var pluginOptions = { foo: 'bar', thing: thing };
+    let pluginOptions = { foo: 'bar', thing: thing };
     options.plugins = [
       ['foo', pluginOptions]
     ];
 
     options.console = fakeConsole;
-    var first = new Babel('foo', options);
-    var firstOptions = first.optionsHash();
+    let first = new Babel('foo', options);
+    let firstOptions = first.optionsHash();
 
     options.console = fakeConsole;
-    var second = new Babel('foo', options);
-    var secondOptions = second.optionsHash();
+    let second = new Babel('foo', options);
+    let secondOptions = second.optionsHash();
     expect(firstOptions).to.eql(secondOptions);
 
     dir = path.join(inputPath, 'plugin-b');
     options.console = fakeConsole;
-    var third = new Babel('foo', options);
-    var thirdOptions = third.optionsHash();
+    let third = new Babel('foo', options);
+    let thirdOptions = third.optionsHash();
 
     expect(firstOptions).to.not.eql(thirdOptions);
   });
 
   it('plugins can be objects with `baseDir`', function() {
-    var dir = path.join(inputPath, 'plugin-a');
-    var pluginObject = { foo: 'foo' };
+    let dir = path.join(inputPath, 'plugin-a');
+    let pluginObject = { foo: 'foo' };
     pluginObject.baseDir = function() { return dir; };
     options.plugins = [ pluginObject ];
 
     options.console = fakeConsole;
-    var first = new Babel('foo', options);
-    var firstOptions = first.optionsHash();
+    let first = new Babel('foo', options);
+    let firstOptions = first.optionsHash();
 
     options.console = fakeConsole;
-    var second = new Babel('foo', options);
-    var secondOptions = second.optionsHash();
+    let second = new Babel('foo', options);
+    let secondOptions = second.optionsHash();
 
     expect(firstOptions).to.eql(secondOptions);
 
     dir = path.join(inputPath, 'plugin-b');
     options.console = fakeConsole;
-    var third = new Babel('foo', options);
-    var thirdOptions = third.optionsHash();
+    let third = new Babel('foo', options);
+    let thirdOptions = third.optionsHash();
 
     expect(firstOptions).to.not.eql(thirdOptions);
   });
 
   it('plugins can be objects with `cacheKey`', function() {
-    var dir = path.join(inputPath, 'plugin-a');
-    var key = 'cacheKey1';
-    var pluginObject = { foo: 'foo' };
+    let dir = path.join(inputPath, 'plugin-a');
+    let key = 'cacheKey1';
+    let pluginObject = { foo: 'foo' };
     pluginObject.baseDir = function() { return dir; };
     pluginObject.cacheKey = function() { return key; };
     options.plugins = [ pluginObject ];
 
     options.console = fakeConsole;
-    var first = new Babel('foo', options);
-    var firstOptions = first.optionsHash();
+    let first = new Babel('foo', options);
+    let firstOptions = first.optionsHash();
 
     options.console = fakeConsole;
-    var second = new Babel('foo', options);
-    var secondOptions = second.optionsHash();
+    let second = new Babel('foo', options);
+    let secondOptions = second.optionsHash();
 
     expect(firstOptions).to.eql(secondOptions);
 
     options.console = fakeConsole;
     key = 'cacheKey3';
-    var third = new Babel('foo', options);
-    var thirdOptions = third.optionsHash();
+    let third = new Babel('foo', options);
+    let thirdOptions = third.optionsHash();
 
     expect(firstOptions).to.not.eql(thirdOptions);
   });
 
   it('a plugins `baseDir` method is used for hash generation', function() {
-    var dir = path.join(inputPath, 'plugin-a');
+    let dir = path.join(inputPath, 'plugin-a');
 
     function plugin() {}
     plugin.baseDir = function() {
@@ -748,13 +735,13 @@ describe('when options change', function() {
     options.plugins = [ plugin ];
 
     options.console = fakeConsole;
-    var first = new Babel('foo', options);
-    var firstOptions = first.optionsHash();
+    let first = new Babel('foo', options);
+    let firstOptions = first.optionsHash();
 
     dir = path.join(inputPath, 'plugin-b');
     options.console = fakeConsole;
-    var second = new Babel('foo', options);
-    var secondOptions = second.optionsHash();
+    let second = new Babel('foo', options);
+    let secondOptions = second.optionsHash();
 
     expect(firstOptions).to.not.eql(secondOptions);
   });
@@ -765,9 +752,9 @@ describe('when options change', function() {
     options.plugins = [ plugin ];
 
     options.console = fakeConsole;
-    var babel1 = new Babel('foo', options);
+    let babel1 = new Babel('foo', options);
     options.console = fakeConsole;
-    var babel2 = new Babel('foo', options);
+    let babel2 = new Babel('foo', options);
 
     expect(babel1.optionsHash()).to.not.eql(babel2.optionsHash());
     expect(consoleMessages).to.eql([
@@ -779,7 +766,7 @@ describe('when options change', function() {
   it('clears cache for updated properties', function() {
     options.bar = 2;
     options.console = fakeConsole;
-    var babelNew = new Babel('foo', options);
+    let babelNew = new Babel('foo', options);
 
     expect(babelNew.optionsHash()).to.not.eql(originalHash);
   });
@@ -787,7 +774,7 @@ describe('when options change', function() {
   it('clears cache for added methods', function() {
     options.foo = function() {};
     options.console = fakeConsole;
-    var babelNew = new Babel('foo', options);
+    let babelNew = new Babel('foo', options);
 
     expect(babelNew.optionsHash()).to.not.eql(originalHash);
   });
@@ -795,7 +782,7 @@ describe('when options change', function() {
   it('clears cache for updated methods', function() {
     options.baz = function() { return 1; };
     options.console = fakeConsole;
-    var babelNew = new Babel('foo', options);
+    let babelNew = new Babel('foo', options);
 
     expect(babelNew.optionsHash()).to.not.eql(originalHash);
   });
@@ -814,11 +801,11 @@ describe('on error', function() {
 
   afterEach(function () {
     return cleanupBuilders()
-      .then(() => terminateWorkerPool);
+      .then(terminateWorkerPool);
   });
 
   it('returns error from the main process', function () {
-    var pluginFunction = require('babel-plugin-transform-strict-mode');
+    let pluginFunction = require('babel-plugin-transform-strict-mode');
     pluginFunction.baseDir = function() {
       return path.join(__dirname, 'node_modules', 'babel-plugin-transform-strict-mode');
     };
@@ -888,7 +875,7 @@ describe('deserializeOptions()', function() {
   });
 
   it('passes other options through', function () {
-    var options = {
+    let options = {
       inputSourceMap: false,
       sourceMap: false,
       somethingElse: 'foo',
@@ -901,10 +888,10 @@ describe('deserializeOptions()', function() {
   });
 
   it('passes through plugins that do not use the parallel API', function () {
-    var pluginFunction = function doSomething() {
+    let pluginFunction = function doSomething() {
       return 'something';
     };
-    var options = {
+    let options = {
       plugins: [
         pluginFunction,
         'transform-strict-mode',
@@ -927,7 +914,7 @@ describe('deserializeOptions()', function() {
   });
 
   it('builds plugins using the parallel API', function () {
-    var options = {
+    let options = {
       plugins: [
         {
           _parallelBabel: {
@@ -946,39 +933,38 @@ describe('deserializeOptions()', function() {
   });
 
   it('leaves callback functions alone', function () {
-    var moduleNameFunc = function(moduleName) {};
-    var commentFunc = function(comment) {};
-    var options = {
+    let moduleNameFunc = function(moduleName) {};
+    let commentFunc = function(comment) {};
+    let options = {
       resolveModuleSource: moduleResolve,
       getModuleId: moduleNameFunc,
       shouldPrintComment: commentFunc,
     };
-    expect(ParallelApi.deserializeOptions(options)).to.eql({
-      resolveModuleSource: moduleResolve,
-      getModuleId: moduleNameFunc,
-      shouldPrintComment: commentFunc,
-    });
+
+    expect(ParallelApi.deserializeOptions(options).resolveModuleSource).to.not.eql(moduleResolve);
+    expect(ParallelApi.deserializeOptions(options).getModuleId).to.eql(moduleNameFunc);
+    expect(ParallelApi.deserializeOptions(options).shouldPrintComment).to.eql(commentFunc);
   });
 
   it('builds resolveModuleSource using the parallel API', function () {
-    var options = {
+    let options = {
       resolveModuleSource: moduleResolveParallel
     };
     expect(ParallelApi.deserializeOptions(options).resolveModuleSource).to.be.a('function');
-    expect(ParallelApi.deserializeOptions(options)).to.eql({
+    expect(ParallelApi.deserializeOptions(options)).to.not.eql({
       resolveModuleSource: moduleResolve
     });
   });
 
   it('builds getModuleId using the parallel API', function () {
-    var options = {
+    let options = {
       getModuleId: getModuleIdParallel
     };
     expect(ParallelApi.deserializeOptions(options).getModuleId).to.be.a('function');
   });
 
   it('builds shouldPrintComment using the parallel API', function () {
-    var options = {
+    let options = {
       shouldPrintComment: shouldPrintCommentParallel
     };
     expect(ParallelApi.deserializeOptions(options).shouldPrintComment).to.be.a('function');
@@ -1056,7 +1042,7 @@ describe('pluginsAreParallelizable()', function() {
   });
 
   it('array of plugins that are parllelizable - yes', function () {
-    var plugins = [
+    let plugins = [
       'some-plugin',
       'some-other-plugin',
       { _parallelBabel: { requireFile: "a/file" } },
@@ -1065,7 +1051,7 @@ describe('pluginsAreParallelizable()', function() {
   });
 
   it('one plugin is not parallelizable - no', function () {
-    var plugins = [
+    let plugins = [
       'some-plugin',
       'some-other-plugin',
       { requireFile: "another/file", options: {} },
@@ -1077,7 +1063,7 @@ describe('pluginsAreParallelizable()', function() {
 
 describe('callbacksAreParallelizable()', function() {
   it('no callback functions - yes', function () {
-    var options = {
+    let options = {
       inputSourceMap: false,
       plugins: [
         'some-plugin',
@@ -1087,7 +1073,7 @@ describe('callbacksAreParallelizable()', function() {
   });
 
   it('function - no', function () {
-    var options = {
+    let options = {
       inputSourceMap: false,
       plugins: [
         'some-plugin'
@@ -1098,9 +1084,9 @@ describe('callbacksAreParallelizable()', function() {
   });
 
   it('function with correct _parallelBabel property - yes', function () {
-    var someFunc = function() {};
+    let someFunc = function() {};
     someFunc._parallelBabel = { requireFile: 'a/file' };
-    var options = {
+    let options = {
       inputSourceMap: false,
       plugins: [
         'some-plugin'
@@ -1111,9 +1097,9 @@ describe('callbacksAreParallelizable()', function() {
   });
 
   it('_parallelBabel set incorrectly - no', function () {
-    var someFunc = function() {};
+    let someFunc = function() {};
     someFunc._parallelBabel = { no: 'wrong' };
-    var options = {
+    let options = {
       inputSourceMap: false,
       plugins: [
         'some-plugin'
@@ -1126,26 +1112,26 @@ describe('callbacksAreParallelizable()', function() {
 
 describe('transformIsParallelizable()', function() {
   it('no plugins or resolveModule - yes', function () {
-    var options = {};
+    let options = {};
     expect(ParallelApi.transformIsParallelizable(options)).to.eql(true);
   });
 
   it('plugins are parallelizable - yes', function () {
-    var options = {
+    let options = {
       plugins: [ 'some-plugin' ],
     };
     expect(ParallelApi.transformIsParallelizable(options)).to.eql(true);
   });
 
   it('resolveModule is parallelizable - yes', function () {
-    var options = {
+    let options = {
       resolveModuleSource: moduleResolveParallel
     };
     expect(ParallelApi.transformIsParallelizable(options)).to.eql(true);
   });
 
   it('both are parallelizable - yes', function () {
-    var options = {
+    let options = {
       plugins: [ 'some-plugin' ],
       resolveModuleSource: moduleResolveParallel
     };
@@ -1153,7 +1139,7 @@ describe('transformIsParallelizable()', function() {
   });
 
   it('plugins not parallelizable - no', function () {
-    var options = {
+    let options = {
       plugins: [ function() {} ],
       resolveModuleSource: moduleResolveParallel
     };
@@ -1161,7 +1147,7 @@ describe('transformIsParallelizable()', function() {
   });
 
   it('resolveModuleSource not parallelizable - no', function () {
-    var options = {
+    let options = {
       plugins: [ 'some-plugin' ],
       resolveModuleSource: function() {},
     };
@@ -1175,7 +1161,7 @@ describe('serializeOptions()', function() {
   });
 
   it('passes through non-function options', function() {
-    var options = {
+    let options = {
       inputSourceMap: false,
       plugins: [ 'some-plugin' ],
     };
@@ -1183,12 +1169,12 @@ describe('serializeOptions()', function() {
   });
 
   it('transforms all functions', function() {
-    var options = {
+    let options = {
       moduleResolve: moduleResolveParallel,
       getModuleId: getModuleIdParallel,
       shouldPrintComment: shouldPrintCommentParallel,
     };
-    var expected = {
+    let expected = {
       moduleResolve: { _parallelBabel: moduleResolveParallel._parallelBabel },
       getModuleId: { _parallelBabel: getModuleIdParallel._parallelBabel },
       shouldPrintComment: { _parallelBabel: shouldPrintCommentParallel._parallelBabel },
@@ -1199,13 +1185,14 @@ describe('serializeOptions()', function() {
 
 describe('buildFromParallelApiInfo()', function() {
   it('requireFile', function() {
-    var filePath = fixtureFullPath('transform-strict-mode-parallel');
-    var builtPlugin = ParallelApi.buildFromParallelApiInfo({ requireFile: filePath });
+    let filePath = fixtureFullPath('transform-strict-mode-parallel');
+    let builtPlugin = ParallelApi.buildFromParallelApiInfo({ requireFile: filePath });
+
     expect(builtPlugin).to.eql(require(filePath));
   });
 
   it('throws error if requireFile path does not exist', function() {
-    var filePath = 'some/file/that/does/not/exist';
+    let filePath = 'some/file/that/does/not/exist';
     try {
       ParallelApi.buildFromParallelApiInfo({ requireFile: filePath });
       expect.fail('', '', 'should have thrown an error');
@@ -1216,13 +1203,13 @@ describe('buildFromParallelApiInfo()', function() {
   });
 
   it('useMethod', function() {
-    var filePath = fixtureFullPath('transform-es2015-block-scoping-parallel');
-    var builtPlugin = ParallelApi.buildFromParallelApiInfo({ requireFile: filePath, useMethod: 'pluginFunction' });
+    let filePath = fixtureFullPath('transform-es2015-block-scoping-parallel');
+    let builtPlugin = ParallelApi.buildFromParallelApiInfo({ requireFile: filePath, useMethod: 'pluginFunction' });
     expect(builtPlugin).to.eql(require('babel-plugin-transform-es2015-block-scoping'));
   });
 
   it('throws error if useMethod does not exist', function() {
-    var filePath = fixtureFullPath('transform-es2015-block-scoping-parallel');
+    let filePath = fixtureFullPath('transform-es2015-block-scoping-parallel');
     try {
       ParallelApi.buildFromParallelApiInfo({ requireFile: filePath, useMethod: 'doesNotExist' });
       expect.fail('', '', 'should have thrown an error');
@@ -1233,19 +1220,19 @@ describe('buildFromParallelApiInfo()', function() {
   });
 
   it('buildUsing, no params', function() {
-    var filePath = fixtureFullPath('transform-es2015-block-scoping-parallel');
-    var builtPlugin = ParallelApi.buildFromParallelApiInfo({ requireFile: filePath, buildUsing: 'build' });
+    let filePath = fixtureFullPath('transform-es2015-block-scoping-parallel');
+    let builtPlugin = ParallelApi.buildFromParallelApiInfo({ requireFile: filePath, buildUsing: 'build' });
     expect(builtPlugin).to.eql(require(filePath).build());
   });
 
   it('buildUsing, with params', function() {
-    var filePath = fixtureFullPath('transform-es2015-block-scoping-parallel');
-    var builtPlugin = ParallelApi.buildFromParallelApiInfo({ requireFile: filePath, buildUsing: 'buildTwo', params: { text: 'OK' } });
+    let filePath = fixtureFullPath('transform-es2015-block-scoping-parallel');
+    let builtPlugin = ParallelApi.buildFromParallelApiInfo({ requireFile: filePath, buildUsing: 'buildTwo', params: { text: 'OK' } });
     expect(builtPlugin).to.eql('for-testingOK');
   });
 
   it('throws error if buildUsing method does not exist', function() {
-    var filePath = fixtureFullPath('transform-es2015-block-scoping-parallel');
+    let filePath = fixtureFullPath('transform-es2015-block-scoping-parallel');
     try {
       ParallelApi.buildFromParallelApiInfo({ requireFile: filePath, buildUsing: 'doesNotExist' });
       expect.fail('', '', 'should have thrown an error');
@@ -1256,14 +1243,14 @@ describe('buildFromParallelApiInfo()', function() {
   });
 
   it('useMethod and buildUsing', function() {
-    var filePath = fixtureFullPath('transform-es2015-block-scoping-parallel');
-    var builtPlugin = ParallelApi.buildFromParallelApiInfo({ requireFile: filePath, useMethod: 'pluginFunction', buildUsing: 'buildTwo', params: { text: 'OK' } });
+    let filePath = fixtureFullPath('transform-es2015-block-scoping-parallel');
+    let builtPlugin = ParallelApi.buildFromParallelApiInfo({ requireFile: filePath, useMethod: 'pluginFunction', buildUsing: 'buildTwo', params: { text: 'OK' } });
     expect(builtPlugin).to.eql(require('babel-plugin-transform-es2015-block-scoping'));
   });
 });
 
 describe('concurrency', function() {
-  var parallelApiPath = require.resolve('./lib/parallel-api');
+  let parallelApiPath = require.resolve('./lib/parallel-api');
 
   afterEach(function() {
     delete require.cache[parallelApiPath];
