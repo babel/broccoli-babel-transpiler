@@ -1333,28 +1333,28 @@ describe('workerpool', function() {
   });
 
   describe('throwUnlessParallelizable', function() {
+    afterEach(function() {
+      return terminateWorkerPool();
+    });
+
     it('should throw if throwUnlessParallelizable: true, and one or more plugins could not be parallelized', function() {
-      options.throwUnlessParallelizable = true;
       options.plugins = [function() { }];
-      expect(() => require(PATH).transformString(stringToTransform, options)).to.throw(/BroccoliBabelTranspiler was configured to `throwUnlessParallelizable` and was unable to parallelize/);
+      expect(() => require(PATH).transformString(stringToTransform, options, { throwUnlessParallelizable: true })).to.throw(/BroccoliBabelTranspiler was configured to `throwUnlessParallelizable` and was unable to parallelize/);
     });
 
     it('should NOT throw if throwUnlessParallelizable: true, and all plugins can be parallelized', function() {
-      options.throwUnlessParallelizable = true;
       options.plugins = [ { foo: 1 }];
-      expect(() => require(PATH).transformString(stringToTransform, options)).to.throw(/BroccoliBabelTranspiler was configured to `throwUnlessParallelizable` and was unable to parallelize/);
+      expect(() => require(PATH).transformString(stringToTransform, options, { throwUnlessParallelizable: true })).to.throw(/BroccoliBabelTranspiler was configured to `throwUnlessParallelizable` and was unable to parallelize/);
     });
 
     it('should NOT throw if throwUnlessParallelizable: false, and one or more plugins could not be parallelized', function() {
-      options.throwUnlessParallelizable = false
       options.plugins = [function() { }]
-      expect(() => require(PATH).transformString(stringToTransform, options)).to.not.throw();
+      expect(() => require(PATH).transformString(stringToTransform, options, { throwUnlessParallelizable:  false })).to.not.throw();
     });
 
     it('should NOT throw if throwUnlessParallelizable is unset, and one or more plugins could not be parallelized', function() {
-      delete options.throwUnlessParallelizable;
-      options.plugins = [function() { }]
-      expect(() => require(PATH).transformString(stringToTransform, options)).to.not.throw();
+      expect(() => require(PATH).transformString(stringToTransform, options, { throwUnlessParallelizable: undefined })).to.not.throw();
+      expect(() => require(PATH).transformString(stringToTransform, options, { })).to.not.throw();
     });
   });
 });
