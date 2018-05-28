@@ -81,7 +81,6 @@ Babel.prototype.baseDir = function() {
 };
 
 Babel.prototype.transform = function(string, options) {
-  debugger;
   return transformString(string, options, {
     throwUnlessParallelizable: this.throwUnlessParallelizable
   });
