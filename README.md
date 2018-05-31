@@ -305,6 +305,5 @@ JOBS=4 ember build
 To disable parallelization:
 
 ```sh
-JOBS=0 ember build
 JOBS=1 ember build
 ```
