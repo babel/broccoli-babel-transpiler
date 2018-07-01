@@ -374,6 +374,39 @@ describe('transpile ES6 to ES5', function() {
       expect(output).to.eql(input);
     });
   });
+
+  describe('preventDoubleAmdCompile', function() {
+    it('prevents a double AMD compile with the option on', function () {
+      return babel('files', {
+        plugins: [
+          'transform-es2015-modules-amd'
+        ],
+        preventDoubleAmdCompile: true,
+      }).then(results => {
+        let outputPath = results.directory;
+  
+        let output = fs.readFileSync(path.join(outputPath, 'fixtures-amd.js'), 'utf8');
+        let input = fs.readFileSync(path.join(expectations, 'prevent-double-compile-on.js'), 'utf8');
+  
+        expect(output).to.eql(input);
+      });
+    });
+
+    it('doesn\'t prevent a double AMD compile with the option off', function () {
+      return babel('files', {
+        plugins: [
+          'transform-es2015-modules-amd'
+        ],
+      }).then(results => {
+        let outputPath = results.directory;
+  
+        let output = fs.readFileSync(path.join(outputPath, 'fixtures-amd.js'), 'utf8');
+        let input = fs.readFileSync(path.join(expectations, 'prevent-double-compile-off.js'), 'utf8');
+  
+        expect(output).to.eql(input);
+      });
+    });
+  });
 });
 
 describe('filters files to transform', function() {
