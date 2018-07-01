@@ -392,11 +392,40 @@ describe('transpile ES6 to ES5', function() {
       });
     });
 
+    it('calls callback if exists', function () {
+      let string, relativePath;
+      return babel('files', {
+        plugins: [
+          'transform-es2015-modules-amd'
+        ],
+        preventDoubleAmdCompile: true,
+        doubleAmdCallback(_string, _relativePath) {
+          string = _string;
+          relativePath = _relativePath;
+        }
+      }).then(results => {
+        let outputPath = results.directory;
+
+        let file = 'fixtures-amd.js';
+
+        let input = fs.readFileSync(path.join(inputPath, 'files', file), 'utf8');
+        let actual = fs.readFileSync(path.join(outputPath, file), 'utf8');
+        let expected = fs.readFileSync(path.join(expectations, 'prevent-double-compile-on.js'), 'utf8');
+  
+        expect(actual).to.eql(expected);
+        expect(string).to.eql(input);
+        expect(relativePath).to.eql(file);
+      });
+    });
+
     it('doesn\'t prevent a double AMD compile with the option off', function () {
       return babel('files', {
         plugins: [
           'transform-es2015-modules-amd'
         ],
+        doubleAmdCallback() {
+          expect(false, 'doubleAmdCallback should not be called').to.be.ok;
+        },
       }).then(results => {
         let outputPath = results.directory;
   

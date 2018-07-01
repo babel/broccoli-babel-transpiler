@@ -186,8 +186,12 @@ Babel.prototype.processString = function(string, relativePath) {
 
   if (options.preventDoubleAmdCompile && options.plugins && string.match(/^define\(/)) {
     options.plugins = options.plugins.filter(plugin => plugin !== 'transform-es2015-modules-amd');
+    if (options.doubleAmdCallback) {
+      options.doubleAmdCallback(string, relativePath);
+    }
   }
   delete options.preventDoubleAmdCompile;
+  delete options.doubleAmdCallback;
 
   let plugin = this;
   return this.transform(string, options)
