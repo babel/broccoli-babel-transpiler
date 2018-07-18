@@ -67,6 +67,65 @@ describe('options', function() {
     babel = new Babel('foo', options);
   });
 
+  afterEach(function() {
+    delete process.env.THROW_UNLESS_PARALLELIZABLE;
+  });
+
+  describe('throwUnlessParallelizable', function() {
+    const EXPECTED_PARALLEL_ERROR = /broccoli-persistent-filter:Babel.*throwUnlessParallelizable.*parallel-transpilation for more details/;
+
+    it('should throw if throwUnlessParallelizable: true, and one or more plugins could not be parallelized', function() {
+      const options = {
+        throwUnlessParallelizable: true,
+        plugins: [function() { }]
+      };
+
+      expect(() => new Babel('foo', options)).to.throw(EXPECTED_PARALLEL_ERROR);
+    });
+
+    it('should NOT throw if throwUnlessParallelizable: true, and all plugins can be parallelized', function() {
+      const options = {
+        plugins: [ { foo: 1 }],
+        throwUnlessParallelizable: true
+      };
+
+      expect(() => new Babel('foo', options)).to.throw(EXPECTED_PARALLEL_ERROR);
+    });
+
+    it('should throw if throwUnlessParallelizable: true, and one or more plugins could not be parallelized', function() {
+      process.env.THROW_UNLESS_PARALLELIZABLE = true;
+      const options = {
+        plugins: [function() { }]
+      };
+
+      expect(() => new Babel('foo', options)).to.throw(EXPECTED_PARALLEL_ERROR);
+    });
+
+    it('should NOT throw if throwUnlessParallelizable: true, and all plugins can be parallelized', function() {
+      process.env.THROW_UNLESS_PARALLELIZABLE = true;
+      const options = {
+        plugins: [ { foo: 1 }],
+        throwUnlessParallelizable: true
+      };
+
+      expect(() => new Babel('foo', options)).to.throw(EXPECTED_PARALLEL_ERROR);
+    });
+
+    it('should NOT throw if throwUnlessParallelizable: false, and one or more plugins could not be parallelized', function() {
+      const options = {
+        plugins: [function() { }],
+        throwUnlessParallelizable: false
+      };
+
+      expect(() => new Babel('foo', options)).to.not.throw();
+    });
+
+    it('should NOT throw if throwUnlessParallelizable is unset, and one or more plugins could not be parallelized', function() {
+      expect(() => new Babel('foo', { plugins: [function() {}], throwUnlessParallelizable: undefined })).to.not.throw();
+      expect(() => new Babel('foo', { plugins: [function() {}]})).to.not.throw();
+    });
+  });
+
   it('are cloned', function() {
     let transpilerOptions;
 
@@ -1330,32 +1389,6 @@ describe('workerpool', function() {
       });
     }).then((resultList) => {
       expect(resultList.length).to.eql(2);
-    });
-  });
-
-  describe('throwUnlessParallelizable', function() {
-    afterEach(function() {
-      return terminateWorkerPool();
-    });
-
-    it('should throw if throwUnlessParallelizable: true, and one or more plugins could not be parallelized', function() {
-      options.plugins = [function() { }];
-      expect(() => require(PATH).transformString(stringToTransform, options, { throwUnlessParallelizable: true })).to.throw(/BroccoliBabelTranspiler was configured to `throwUnlessParallelizable` and was unable to parallelize/);
-    });
-
-    it('should NOT throw if throwUnlessParallelizable: true, and all plugins can be parallelized', function() {
-      options.plugins = [ { foo: 1 }];
-      expect(() => require(PATH).transformString(stringToTransform, options, { throwUnlessParallelizable: true })).to.throw(/BroccoliBabelTranspiler was configured to `throwUnlessParallelizable` and was unable to parallelize/);
-    });
-
-    it('should NOT throw if throwUnlessParallelizable: false, and one or more plugins could not be parallelized', function() {
-      options.plugins = [function() { }]
-      expect(() => require(PATH).transformString(stringToTransform, options, { throwUnlessParallelizable:  false })).to.not.throw();
-    });
-
-    it('should NOT throw if throwUnlessParallelizable is unset, and one or more plugins could not be parallelized', function() {
-      expect(() => require(PATH).transformString(stringToTransform, options, { throwUnlessParallelizable: undefined })).to.not.throw();
-      expect(() => require(PATH).transformString(stringToTransform, options, { })).to.not.throw();
     });
   });
 });
