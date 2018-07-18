@@ -9,7 +9,7 @@ const funnel     = require('broccoli-funnel');
 const crypto     = require('crypto');
 const hashForDep = require('hash-for-dep');
 const transformString = require('./lib/parallel-api').transformString;
-
+const transformIsParallelizable = require('./lib/parallel-api').transformIsParallelizable;
 
 function getExtensionsRegex(extensions) {
   return extensions.map(extension => {
@@ -70,6 +70,11 @@ function Babel(inputTree, _options) {
     this.inputTree = inputTree;
   }
   delete this.options.browserPolyfill;
+
+  if ((this.throwUnlessParallelizable || process.env.THROW_UNLESS_PARALLELIZABLE) && transformIsParallelizable(options) === false) {
+    throw new Error(this.toString() + ' was configured to `throwUnlessParallelizable` and was unable to parallelize an plugin. Please see: https://github.com/babel/broccoli-babel-transpiler#parallel-transpilation for more details');
+  }
+
 }
 
 Babel.prototype = Object.create(Filter.prototype);
@@ -81,9 +86,7 @@ Babel.prototype.baseDir = function() {
 };
 
 Babel.prototype.transform = function(string, options) {
-  return transformString(string, options, {
-    throwUnlessParallelizable: this.throwUnlessParallelizable
-  });
+  return transformString(string, options);
 };
 
 /*

@@ -170,6 +170,12 @@ incompatible babel plugin.
 new Babel(input, { throwUnlessParallelizable: true | false });
 ```
 
+Alternatively, an environment variable can be set:
+
+```sh
+THROW_UNLESS_PARALLELIZABLE=1 node build.js
+```
+
 Plugins are specified as an object with a `_parallelBabel` property:
 
 ```js
