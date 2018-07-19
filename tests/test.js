@@ -71,8 +71,28 @@ describe('options', function() {
     delete process.env.THROW_UNLESS_PARALLELIZABLE;
   });
 
+  describe('humanizePlugin', function() {
+    const humanizePlugin = ParallelApi.humanizePlugin;
+
+    it('works', function() {
+      expect(humanizePlugin({})).to.eql('name: unknown, location: unknown');
+      expect(humanizePlugin({ name: '' })).to.eql('name: unknown, location: unknown');
+      expect(humanizePlugin({ name: false })).to.eql('name: unknown, location: unknown');
+      expect(humanizePlugin({ name: true })).to.eql('name: unknown, location: unknown');
+      expect(humanizePlugin({ name: 'foo' })).to.eql('name: foo, location: unknown');
+      expect(humanizePlugin({ name: 'foo', baseDir() { return '/a/b/c/'; } })).to.eql('name: foo, location: /a/b/c/');
+      expect(humanizePlugin(function Foo() { })).to.eql('name: Foo, location: unknown');
+      function Bar() { }
+      Bar.baseDir = function() { return 'orange'; };
+      expect(humanizePlugin(Bar)).to.eql('name: Bar, location: orange');
+      expect(humanizePlugin(() => {})).to.eql('name: unknown, location: unknown,\n↓ function source ↓ \n() => {}\n \n');
+      expect(humanizePlugin([function Apple() {}])).to.eql('name: Apple, location: unknown');
+      expect(humanizePlugin([Bar])).to.eql('name: Bar, location: orange');
+    });
+  });
+
   describe('throwUnlessParallelizable', function() {
-    const EXPECTED_PARALLEL_ERROR = /broccoli-persistent-filter:Babel.*throwUnlessParallelizable.*parallel-transpilation for more details/;
+    const EXPECTED_PARALLEL_ERROR = /broccoli-persistent-filter:Babel./;
 
     it('should throw if throwUnlessParallelizable: true, and one or more plugins could not be parallelized', function() {
       const options = {
@@ -1094,11 +1114,11 @@ describe('pluginCanBeParallelized()', function() {
 
 describe('pluginsAreParallelizable()', function() {
   it('undefined - yes', function () {
-    expect(ParallelApi.pluginsAreParallelizable(undefined)).to.eql(true);
+    expect(ParallelApi.pluginsAreParallelizable(undefined)).to.eql({ isParallelizable: true, errors: [] });
   });
 
   it('[] - yes', function () {
-    expect(ParallelApi.pluginsAreParallelizable([])).to.eql(true);
+    expect(ParallelApi.pluginsAreParallelizable([])).to.eql({ isParallelizable: true, errors: []});
   });
 
   it('array of plugins that are parllelizable - yes', function () {
@@ -1107,7 +1127,8 @@ describe('pluginsAreParallelizable()', function() {
       'some-other-plugin',
       { _parallelBabel: { requireFile: "a/file" } },
     ];
-    expect(ParallelApi.pluginsAreParallelizable(plugins)).to.eql(true);
+
+    expect(ParallelApi.pluginsAreParallelizable(plugins)).to.eql({ isParallelizable: true, errors: []});
   });
 
   it('one plugin is not parallelizable - no', function () {
@@ -1117,7 +1138,14 @@ describe('pluginsAreParallelizable()', function() {
       { requireFile: "another/file", options: {} },
       function() {},
     ];
-    expect(ParallelApi.pluginsAreParallelizable(plugins)).to.eql(false);
+
+    expect(ParallelApi.pluginsAreParallelizable(plugins)).to.eql({
+      isParallelizable: false,
+      errors: [
+        'name: unknown, location: unknown',
+        `name: unknown, location: unknown,\n↓ function source ↓ \n${function() {}.toString()}\n \n`
+      ]
+    });
   });
 });
 
@@ -1129,7 +1157,7 @@ describe('callbacksAreParallelizable()', function() {
         'some-plugin',
       ],
     };
-    expect(ParallelApi.callbacksAreParallelizable(options)).to.eql(true);
+    expect(ParallelApi.callbacksAreParallelizable(options)).to.eql({ isParallelizable: true, errors: []});
   });
 
   it('function - no', function () {
@@ -1140,7 +1168,13 @@ describe('callbacksAreParallelizable()', function() {
       ],
       resolveModuleSource: function() {},
     };
-    expect(ParallelApi.callbacksAreParallelizable(options)).to.eql(false);
+
+    if (options.resolveModuleSource.name === '') {
+      // old nodes don't create a good name here.
+      expect(ParallelApi.callbacksAreParallelizable(options)).to.eql({ isParallelizable: false, errors: [`name: unknown, location: unknown,\n↓ function source ↓ \nfunction () {}\n \n`] });
+    } else {
+      expect(ParallelApi.callbacksAreParallelizable(options)).to.eql({ isParallelizable: false, errors: [`name: resolveModuleSource, location: unknown`] });
+    }
   });
 
   it('function with correct _parallelBabel property - yes', function () {
@@ -1153,7 +1187,7 @@ describe('callbacksAreParallelizable()', function() {
       ],
       keyDontMatter: someFunc,
     };
-    expect(ParallelApi.callbacksAreParallelizable(options)).to.eql(true);
+    expect(ParallelApi.callbacksAreParallelizable(options)).to.eql({ isParallelizable: true, errors: [] });
   });
 
   it('_parallelBabel set incorrectly - no', function () {
@@ -1166,28 +1200,34 @@ describe('callbacksAreParallelizable()', function() {
       ],
       keyDontMatter: someFunc,
     };
-    expect(ParallelApi.callbacksAreParallelizable(options)).to.eql(false);
+
+    if (someFunc.name === '') {
+      // older nodes don't correctly assign the name
+      expect(ParallelApi.callbacksAreParallelizable(options)).to.eql({ isParallelizable: false, errors: ['name: unknown, location: unknown,\n↓ function source ↓ \nfunction () {}\n \n']});
+    } else {
+      expect(ParallelApi.callbacksAreParallelizable(options)).to.eql({ isParallelizable: false, errors: ['name: someFunc, location: unknown']});
+    }
   });
 });
 
 describe('transformIsParallelizable()', function() {
   it('no plugins or resolveModule - yes', function () {
     let options = {};
-    expect(ParallelApi.transformIsParallelizable(options)).to.eql(true);
+    expect(ParallelApi.transformIsParallelizable(options)).to.eql({ isParallelizable: true, errors: [] });
   });
 
   it('plugins are parallelizable - yes', function () {
     let options = {
       plugins: [ 'some-plugin' ],
     };
-    expect(ParallelApi.transformIsParallelizable(options)).to.eql(true);
+    expect(ParallelApi.transformIsParallelizable(options)).to.eql({ isParallelizable: true, errors: [] });
   });
 
   it('resolveModule is parallelizable - yes', function () {
     let options = {
       resolveModuleSource: moduleResolveParallel
     };
-    expect(ParallelApi.transformIsParallelizable(options)).to.eql(true);
+    expect(ParallelApi.transformIsParallelizable(options)).to.eql({ isParallelizable: true, errors: [] });
   });
 
   it('both are parallelizable - yes', function () {
@@ -1195,7 +1235,7 @@ describe('transformIsParallelizable()', function() {
       plugins: [ 'some-plugin' ],
       resolveModuleSource: moduleResolveParallel
     };
-    expect(ParallelApi.transformIsParallelizable(options)).to.eql(true);
+    expect(ParallelApi.transformIsParallelizable(options)).to.eql({ isParallelizable: true, errors: [] });
   });
 
   it('plugins not parallelizable - no', function () {
@@ -1203,7 +1243,10 @@ describe('transformIsParallelizable()', function() {
       plugins: [ function() {} ],
       resolveModuleSource: moduleResolveParallel
     };
-    expect(ParallelApi.transformIsParallelizable(options)).to.eql(false);
+    expect(ParallelApi.transformIsParallelizable(options)).to.eql({
+      isParallelizable: false,
+      errors: [ `name: unknown, location: unknown,\n↓ function source ↓ \n${(function() {}.toString())}\n \n`]
+    });
   });
 
   it('resolveModuleSource not parallelizable - no', function () {
@@ -1211,7 +1254,12 @@ describe('transformIsParallelizable()', function() {
       plugins: [ 'some-plugin' ],
       resolveModuleSource: function() {},
     };
-    expect(ParallelApi.transformIsParallelizable(options)).to.eql(false);
+
+    if (options.resolveModuleSource.name === '') {
+      expect(ParallelApi.transformIsParallelizable(options)).to.eql({ isParallelizable: false, errors: ['name: unknown, location: unknown,\n↓ function source ↓ \nfunction () {}\n \n']});
+    } else {
+      expect(ParallelApi.transformIsParallelizable(options)).to.eql({ isParallelizable: false, errors: ['name: resolveModuleSource, location: unknown'] });
+    }
   });
 });
 
