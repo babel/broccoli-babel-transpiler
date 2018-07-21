@@ -140,6 +140,25 @@ describe('options', function() {
       expect(() => new Babel('foo', options)).to.not.throw();
     });
 
+    it('should NOT throw if throwUnlessParallelizable: true, and plugin annotates how to serialize', function() {
+      function Foo() {
+
+      }
+
+      Foo._parallelBabel = {
+        requireFile: '/someFile'
+      };
+
+      const options = {
+        plugins: [
+          Foo,
+          [Foo, { arg: 1 }]
+        ],
+        throwUnlessParallelizable: true
+      };
+
+      expect(() => new Babel('foo', options)).to.not.throw();
+    });
     it('should NOT throw if throwUnlessParallelizable is unset, and one or more plugins could not be parallelized', function() {
       expect(() => new Babel('foo', { plugins: [function() {}], throwUnlessParallelizable: undefined })).to.not.throw();
       expect(() => new Babel('foo', { plugins: [function() {}]})).to.not.throw();
