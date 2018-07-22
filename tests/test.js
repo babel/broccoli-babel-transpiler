@@ -109,7 +109,7 @@ describe('options', function() {
         throwUnlessParallelizable: true
       };
 
-      expect(() => new Babel('foo', options)).to.throw(EXPECTED_PARALLEL_ERROR);
+      expect(() => new Babel('foo', options)).to.not.throw();
     });
 
     it('should throw if throwUnlessParallelizable: true, and one or more plugins could not be parallelized', function() {
@@ -128,7 +128,7 @@ describe('options', function() {
         throwUnlessParallelizable: true
       };
 
-      expect(() => new Babel('foo', options)).to.throw(EXPECTED_PARALLEL_ERROR);
+      expect(() => new Babel('foo', options)).to.not.throw(EXPECTED_PARALLEL_ERROR);
     });
 
     it('should NOT throw if throwUnlessParallelizable: false, and one or more plugins could not be parallelized', function() {
@@ -967,7 +967,7 @@ describe('on error', function() {
   });
 });
 
-describe('deserializeOptions()', function() {
+describe('deserialize()', function() {
 
   afterEach(function() {
     return terminateWorkerPool();
@@ -979,36 +979,10 @@ describe('deserializeOptions()', function() {
       sourceMap: false,
       somethingElse: 'foo',
     };
-    expect(ParallelApi.deserializeOptions(options)).to.eql({
+    expect(ParallelApi.deserialize(options)).to.eql({
       inputSourceMap: false,
       sourceMap: false,
       somethingElse: 'foo',
-    });
-  });
-
-  it('passes through plugins that do not use the parallel API', function () {
-    let pluginFunction = function doSomething() {
-      return 'something';
-    };
-    let options = {
-      plugins: [
-        pluginFunction,
-        'transform-strict-mode',
-        'transform-es2015-block-scoping',
-        [ 'something' ],
-        [ 'something', 'else' ],
-        [ { objects: 'should' }, { be: 'passed'}, 'through'],
-      ]
-    };
-    expect(ParallelApi.deserializeOptions(options)).to.eql({
-      plugins: [
-        pluginFunction,
-        'transform-strict-mode',
-        'transform-es2015-block-scoping',
-        [ 'something' ],
-        [ 'something', 'else' ],
-        [ { objects: 'should' }, { be: 'passed'}, 'through'],
-      ]
     });
   });
 
@@ -1023,7 +997,7 @@ describe('deserializeOptions()', function() {
         'transform-es2015-block-scoping'
       ]
     };
-    expect(ParallelApi.deserializeOptions(options)).to.eql({
+    expect(ParallelApi.deserialize(options)).to.eql({
       plugins: [
         'transform-strict-mode',
         'transform-es2015-block-scoping'
@@ -1040,17 +1014,17 @@ describe('deserializeOptions()', function() {
       shouldPrintComment: commentFunc,
     };
 
-    expect(ParallelApi.deserializeOptions(options).resolveModuleSource).to.not.eql(moduleResolve);
-    expect(ParallelApi.deserializeOptions(options).getModuleId).to.eql(moduleNameFunc);
-    expect(ParallelApi.deserializeOptions(options).shouldPrintComment).to.eql(commentFunc);
+    expect(ParallelApi.deserialize(options).resolveModuleSource).to.not.eql(moduleResolve);
+    expect(ParallelApi.deserialize(options).getModuleId).to.eql(moduleNameFunc);
+    expect(ParallelApi.deserialize(options).shouldPrintComment).to.eql(commentFunc);
   });
 
   it('builds resolveModuleSource using the parallel API', function () {
     let options = {
       resolveModuleSource: moduleResolveParallel
     };
-    expect(ParallelApi.deserializeOptions(options).resolveModuleSource).to.be.a('function');
-    expect(ParallelApi.deserializeOptions(options)).to.not.eql({
+    expect(ParallelApi.deserialize(options).resolveModuleSource).to.be.a('function');
+    expect(ParallelApi.deserialize(options)).to.eql({
       resolveModuleSource: moduleResolve
     });
   });
@@ -1059,14 +1033,14 @@ describe('deserializeOptions()', function() {
     let options = {
       getModuleId: getModuleIdParallel
     };
-    expect(ParallelApi.deserializeOptions(options).getModuleId).to.be.a('function');
+    expect(ParallelApi.deserialize(options).getModuleId).to.be.a('function');
   });
 
   it('builds shouldPrintComment using the parallel API', function () {
     let options = {
       shouldPrintComment: shouldPrintCommentParallel
     };
-    expect(ParallelApi.deserializeOptions(options).shouldPrintComment).to.be.a('function');
+    expect(ParallelApi.deserialize(options).shouldPrintComment).to.be.a('function');
   });
 });
 
@@ -1104,30 +1078,55 @@ describe('implementsParallelAPI()', function() {
   });
 });
 
-describe('pluginCanBeParallelized()', function() {
+describe('isSerializable()', function() {
   it('string - yes', function () {
-    expect(ParallelApi.pluginCanBeParallelized('transform-es2025')).to.eql(true);
+    expect(ParallelApi.isSerializable('transform-es2025')).to.eql(true);
   });
 
   it('function - no', function () {
-    expect(ParallelApi.pluginCanBeParallelized(function() {})).to.eql(false);
+    expect(ParallelApi.isSerializable(function() {})).to.eql(false);
   });
 
   it('[] - yes', function () {
-    expect(ParallelApi.pluginCanBeParallelized([])).to.eql(true);
+    expect(ParallelApi.isSerializable([])).to.eql(true);
   });
 
   it('[null, "plugin-name", 12, {foo: "bar"}, ["one",2], true, false] - yes', function () {
     let plugin = [null, "plugin-name", 12, {foo: "bar"}, ["one",2], true, false];
-    expect(ParallelApi.pluginCanBeParallelized(plugin)).to.eql(true);
+    expect(ParallelApi.isSerializable(plugin)).to.eql(true);
   });
 
   it('["plugin-name", x => x + 1] - no', function () {
-    expect(ParallelApi.pluginCanBeParallelized(['plugin-name', x => x + 1])).to.eql(false);
+    expect(ParallelApi.isSerializable(['plugin-name', x => x + 1])).to.eql(false);
   });
 
   it('{ _parallelBabel: { requireFile: "a/file" } } - yes', function () {
-    expect(ParallelApi.pluginCanBeParallelized({ _parallelBabel: { requireFile: 'a/file' } })).to.eql(true);
+    function Foo() {
+
+    }
+
+    Foo._parallelBabel = { requireFile: 'a/file' };
+    expect(ParallelApi.isSerializable([Foo])).to.eql(true);
+  });
+
+  it('[SerializeableFn, SerializeableFn]', function () {
+    function Foo() {
+
+    }
+
+    Foo._parallelBabel = { requireFile: 'a/file' };
+    expect(ParallelApi.isSerializable([Foo, Foo])).to.eql(true);
+  });
+
+
+
+  it('[SerializeableFn, NonSerializeableFn]', function () {
+    function Foo() {
+
+    }
+
+    Foo._parallelBabel = { requireFile: 'a/file' };
+    expect(ParallelApi.isSerializable([Foo, () => {}])).to.eql(false);
   });
 });
 
@@ -1161,7 +1160,6 @@ describe('pluginsAreParallelizable()', function() {
     expect(ParallelApi.pluginsAreParallelizable(plugins)).to.eql({
       isParallelizable: false,
       errors: [
-        'name: unknown, location: unknown',
         `name: unknown, location: unknown,\n↓ function source ↓ \n${function() {}.toString()}\n \n`
       ]
     });
@@ -1203,10 +1201,28 @@ describe('callbacksAreParallelizable()', function() {
       inputSourceMap: false,
       plugins: [
         'some-plugin'
+      ]
+    };
+    expect(ParallelApi.callbacksAreParallelizable(options)).to.eql({ isParallelizable: true, errors: [] });
+  });
+
+
+
+  it('function with correct _parallelBabel property - yes (but with sneaky second function)', function () {
+    let someFunc = function() {};
+    someFunc._parallelBabel = { requireFile: 'a/file' };
+    let options = {
+      inputSourceMap: false,
+      plugins: [
+        'some-plugin'
       ],
       keyDontMatter: someFunc,
     };
-    expect(ParallelApi.callbacksAreParallelizable(options)).to.eql({ isParallelizable: true, errors: [] });
+
+    expect(ParallelApi.callbacksAreParallelizable(options)).to.eql({
+      isParallelizable: true,
+      errors: [ ]
+    });
   });
 
   it('_parallelBabel set incorrectly - no', function () {
@@ -1268,6 +1284,7 @@ describe('transformIsParallelizable()', function() {
     });
   });
 
+
   it('resolveModuleSource not parallelizable - no', function () {
     let options = {
       plugins: [ 'some-plugin' ],
@@ -1282,9 +1299,9 @@ describe('transformIsParallelizable()', function() {
   });
 });
 
-describe('serializeOptions()', function() {
+describe('serialize()', function() {
   it('empty options', function() {
-    expect(ParallelApi.serializeOptions({})).to.eql({});
+    expect(ParallelApi.serialize({})).to.eql({});
   });
 
   it('passes through non-function options', function() {
@@ -1292,21 +1309,44 @@ describe('serializeOptions()', function() {
       inputSourceMap: false,
       plugins: [ 'some-plugin' ],
     };
-    expect(ParallelApi.serializeOptions(options)).to.eql(options);
+    expect(ParallelApi.serialize(options)).to.eql(options);
   });
 
   it('transforms all functions', function() {
-    let options = {
+    let serialized = ParallelApi.serialize({
       moduleResolve: moduleResolveParallel,
       getModuleId: getModuleIdParallel,
       shouldPrintComment: shouldPrintCommentParallel,
-    };
-    let expected = {
-      moduleResolve: { _parallelBabel: moduleResolveParallel._parallelBabel },
-      getModuleId: { _parallelBabel: getModuleIdParallel._parallelBabel },
-      shouldPrintComment: { _parallelBabel: shouldPrintCommentParallel._parallelBabel },
-    };
-    expect(ParallelApi.serializeOptions(options)).to.eql(expected);
+    });
+
+    expect(serialized).to.eql({
+      moduleResolve: {
+        _parallelBabel: {
+          requireFile: fixtureFullPath('amd-name-resolver-parallel'),
+          useMethod: 'moduleResolve'
+        }
+      },
+
+      getModuleId: {
+        _parallelBabel: {
+          requireFile: fixtureFullPath('get-module-id-parallel'),
+          buildUsing: "build",
+          params: {
+            name: "testModule"
+          }
+        }
+      },
+
+      shouldPrintComment: {
+        _parallelBabel: {
+          requireFile: fixtureFullPath('print-comment-parallel'),
+          buildUsing: "buildMe",
+          params: {
+            contents: "comment 1"
+          },
+        }
+      }
+    });
   });
 });
 

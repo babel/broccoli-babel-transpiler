@@ -76,8 +76,15 @@ function Babel(inputTree, _options) {
   let errors = result.errors;
 
   if ((this.throwUnlessParallelizable || process.env.THROW_UNLESS_PARALLELIZABLE) && isParallelizable === false) {
-    throw new Error(this.toString() +
-      ' was configured to `throwUnlessParallelizable` and was unable to parallelize a plugin. \nplugins:\n' + joinCount(errors) + '\nPlease see: https://github.com/babel/broccoli-babel-transpiler#parallel-transpilation for more details');
+    try {
+      throw new Error(this.toString() +
+        ' was configured to `throwUnlessParallelizable` and was unable to parallelize a plugin. \nplugins:\n' + joinCount(errors) + '\nPlease see: https://github.com/babel/broccoli-babel-transpiler#parallel-transpilation for more details');
+    } catch(e) {
+      debugger;
+
+  let result = transformIsParallelizable(options);
+      throw e;
+    }
   }
 }
 
