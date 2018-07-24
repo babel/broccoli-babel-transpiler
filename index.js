@@ -71,10 +71,31 @@ function Babel(inputTree, _options) {
   }
   delete this.options.browserPolyfill;
 
-  if ((this.throwUnlessParallelizable || process.env.THROW_UNLESS_PARALLELIZABLE) && transformIsParallelizable(options) === false) {
-    throw new Error(this.toString() + ' was configured to `throwUnlessParallelizable` and was unable to parallelize an plugin. Please see: https://github.com/babel/broccoli-babel-transpiler#parallel-transpilation for more details');
+  let result = transformIsParallelizable(options);
+  let isParallelizable = result.isParallelizable;
+  let errors = result.errors;
+
+  if ((this.throwUnlessParallelizable || process.env.THROW_UNLESS_PARALLELIZABLE) && isParallelizable === false) {
+    try {
+      throw new Error(this.toString() +
+        ' was configured to `throwUnlessParallelizable` and was unable to parallelize a plugin. \nplugins:\n' + joinCount(errors) + '\nPlease see: https://github.com/babel/broccoli-babel-transpiler#parallel-transpilation for more details');
+    } catch(e) {
+      debugger;
+
+  let result = transformIsParallelizable(options);
+      throw e;
+    }
+  }
+}
+
+function joinCount(list) {
+  let summary = '';
+
+  for (let i = 0; i < list.length; i++) {
+    summary += `${i + 1}: ${list[i]}\n`
   }
 
+  return summary;
 }
 
 Babel.prototype = Object.create(Filter.prototype);
@@ -187,20 +208,19 @@ Babel.prototype.processString = function(string, relativePath) {
     options.moduleId = replaceExtensions(this.extensionsRegex, options.filename);
   }
 
-  let plugin = this;
   return this.transform(string, options)
     .then(transpiled => {
 
-    if (plugin.helperWhiteList) {
-      let invalidHelpers = transpiled.metadata.usedHelpers.filter(helper => {
-        return plugin.helperWhiteList.indexOf(helper) === -1;
-      }, plugin);
+      if (this.helperWhiteList) {
+        let invalidHelpers = transpiled.metadata.usedHelpers.filter(helper => {
+          return this.helperWhiteList.indexOf(helper) === -1;
+        });
 
-      validateHelpers(invalidHelpers, relativePath);
-    }
+        validateHelpers(invalidHelpers, relativePath);
+      }
 
-    return transpiled.code;
-  });
+      return transpiled.code;
+    });
 };
 
 Babel.prototype.copyOptions = function() {
