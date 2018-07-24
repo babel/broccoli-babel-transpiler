@@ -208,20 +208,19 @@ Babel.prototype.processString = function(string, relativePath) {
     options.moduleId = replaceExtensions(this.extensionsRegex, options.filename);
   }
 
-  let plugin = this;
   return this.transform(string, options)
     .then(transpiled => {
 
-    if (plugin.helperWhiteList) {
-      let invalidHelpers = transpiled.metadata.usedHelpers.filter(helper => {
-        return plugin.helperWhiteList.indexOf(helper) === -1;
-      }, plugin);
+      if (this.helperWhiteList) {
+        let invalidHelpers = transpiled.metadata.usedHelpers.filter(helper => {
+          return this.helperWhiteList.indexOf(helper) === -1;
+        });
 
-      validateHelpers(invalidHelpers, relativePath);
-    }
+        validateHelpers(invalidHelpers, relativePath);
+      }
 
-    return transpiled.code;
-  });
+      return transpiled.code;
+    });
 };
 
 Babel.prototype.copyOptions = function() {
