@@ -1,64 +1,58 @@
 'use strict';
 
-var fs = require('fs');
-var os = require('os');
-var expect = require('chai').expect;
-var broccoli = require('broccoli');
-var path = require('path');
-var ps = require('ps-node');
-var Babel = require('./index');
-var helpers = require('broccoli-test-helpers');
-var stringify = require('json-stable-stringify');
-var mkdirp = require('mkdirp').sync;
-var makeTestHelper = helpers.makeTestHelper;
-var cleanupBuilders = helpers.cleanupBuilders;
-var RSVP = require('rsvp');
-var Promise = RSVP.Promise;
-var moduleResolve = require('amd-name-resolver').moduleResolve;
-var ParallelApi = require('./lib/parallel-api');
+const fs = require('fs');
+const os = require('os');
+const expect = require('chai').expect;
+const path = require('path');
+const ps = require('ps-node');
+const Babel = require('../');
+const helpers = require('broccoli-test-helpers');
+const stringify = require('json-stable-stringify');
+const mkdirp = require('mkdirp').sync;
+const makeTestHelper = helpers.makeTestHelper;
+const cleanupBuilders = helpers.cleanupBuilders;
+const RSVP = require('rsvp');
+const Promise = RSVP.Promise;
+const moduleResolve = require('amd-name-resolver').moduleResolve;
+const terminateWorkerPool = require('./utils/terminate-workers');
 
-var inputPath = path.join(__dirname, 'fixtures');
-var expectations = path.join(__dirname, 'expectations');
+const inputPath = path.join(__dirname, 'fixtures');
+const expectations = path.join(__dirname, 'expectations');
 
-var moduleResolveParallel = function() {};
+let ParallelApi = require('../lib/parallel-api');
+
+function moduleResolveParallel() { }
+
 moduleResolveParallel._parallelBabel = {
   requireFile: fixtureFullPath('amd-name-resolver-parallel'),
   useMethod: 'moduleResolve',
 };
-var getModuleIdParallel = function() {};
+
+function getModuleIdParallel () { }
+
 getModuleIdParallel._parallelBabel = {
   requireFile: fixtureFullPath('get-module-id-parallel'),
   buildUsing: 'build',
   params: { name: 'testModule' },
 };
-var shouldPrintCommentParallel = function() {};
+
+function shouldPrintCommentParallel () { }
+
 shouldPrintCommentParallel._parallelBabel = {
   requireFile: fixtureFullPath('print-comment-parallel'),
   buildUsing: 'buildMe',
   params: { contents: 'comment 1' },
 };
 
-var babel;
+let babel;
 
 function fixtureFullPath(filename) {
   return path.join(__dirname, 'fixtures', filename);
 }
 
-function terminateWorkerPool() {
-  // shut down any workerpool that is running at this point
-  var babelCoreVersion = ParallelApi.getBabelVersion();
-  var workerPoolId = 'v1/broccoli-babel-transpiler/workerpool/babel-core-' + babelCoreVersion;
-  var runningPool = process[workerPoolId];
-  if (runningPool) {
-    return runningPool.terminate()
-    .then(function() {
-      delete process[workerPoolId];
-    });
-  }
-}
-
 describe('options', function() {
-  var options;
+  let options;
+  this.timeout(10000);
 
   before(function() {
     options = {
@@ -66,14 +60,113 @@ describe('options', function() {
       bar: {
         baz: 1
       },
-      filterExtensions: ['es6']
+      filterExtensions: ['es6'],
+      targetExtension: 'js'
     };
 
     babel = new Babel('foo', options);
   });
 
+  afterEach(function() {
+    delete process.env.THROW_UNLESS_PARALLELIZABLE;
+  });
+
+  describe('humanizePlugin', function() {
+    const humanizePlugin = ParallelApi.humanizePlugin;
+
+    it('works', function() {
+      expect(humanizePlugin({})).to.eql('name: unknown, location: unknown');
+      expect(humanizePlugin({ name: '' })).to.eql('name: unknown, location: unknown');
+      expect(humanizePlugin({ name: false })).to.eql('name: unknown, location: unknown');
+      expect(humanizePlugin({ name: true })).to.eql('name: unknown, location: unknown');
+      expect(humanizePlugin({ name: 'foo' })).to.eql('name: foo, location: unknown');
+      expect(humanizePlugin({ name: 'foo', baseDir() { return '/a/b/c/'; } })).to.eql('name: foo, location: /a/b/c/');
+      expect(humanizePlugin(function Foo() { })).to.eql('name: Foo, location: unknown');
+      function Bar() { }
+      Bar.baseDir = function() { return 'orange'; };
+      expect(humanizePlugin(Bar)).to.eql('name: Bar, location: orange');
+      expect(humanizePlugin(() => {})).to.eql('name: unknown, location: unknown,\n↓ function source ↓ \n() => {}\n \n');
+      expect(humanizePlugin([function Apple() {}])).to.eql('name: Apple, location: unknown');
+      expect(humanizePlugin([Bar])).to.eql('name: Bar, location: orange');
+    });
+  });
+
+  describe('throwUnlessParallelizable', function() {
+    const EXPECTED_PARALLEL_ERROR = /broccoli-persistent-filter:Babel./;
+
+    it('should throw if throwUnlessParallelizable: true, and one or more plugins could not be parallelized', function() {
+      const options = {
+        throwUnlessParallelizable: true,
+        plugins: [function() { }]
+      };
+
+      expect(() => new Babel('foo', options)).to.throw(EXPECTED_PARALLEL_ERROR);
+    });
+
+    it('should NOT throw if throwUnlessParallelizable: true, and all plugins can be parallelized', function() {
+      const options = {
+        plugins: [ { foo: 1 }],
+        throwUnlessParallelizable: true
+      };
+
+      expect(() => new Babel('foo', options)).to.not.throw();
+    });
+
+    it('should throw if throwUnlessParallelizable: true, and one or more plugins could not be parallelized', function() {
+      process.env.THROW_UNLESS_PARALLELIZABLE = true;
+      const options = {
+        plugins: [function() { }]
+      };
+
+      expect(() => new Babel('foo', options)).to.throw(EXPECTED_PARALLEL_ERROR);
+    });
+
+    it('should NOT throw if throwUnlessParallelizable: true, and all plugins can be parallelized', function() {
+      process.env.THROW_UNLESS_PARALLELIZABLE = true;
+      const options = {
+        plugins: [ { foo: 1 }],
+        throwUnlessParallelizable: true
+      };
+
+      expect(() => new Babel('foo', options)).to.not.throw(EXPECTED_PARALLEL_ERROR);
+    });
+
+    it('should NOT throw if throwUnlessParallelizable: false, and one or more plugins could not be parallelized', function() {
+      const options = {
+        plugins: [function() { }],
+        throwUnlessParallelizable: false
+      };
+
+      expect(() => new Babel('foo', options)).to.not.throw();
+    });
+
+    it('should NOT throw if throwUnlessParallelizable: true, and plugin annotates how to serialize', function() {
+      function Foo() {
+
+      }
+
+      Foo._parallelBabel = {
+        requireFile: '/someFile'
+      };
+
+      const options = {
+        plugins: [
+          Foo,
+          [Foo, { arg: 1 }]
+        ],
+        throwUnlessParallelizable: true
+      };
+
+      expect(() => new Babel('foo', options)).to.not.throw();
+    });
+    it('should NOT throw if throwUnlessParallelizable is unset, and one or more plugins could not be parallelized', function() {
+      expect(() => new Babel('foo', { plugins: [function() {}], throwUnlessParallelizable: undefined })).to.not.throw();
+      expect(() => new Babel('foo', { plugins: [function() {}]})).to.not.throw();
+    });
+  });
+
   it('are cloned', function() {
-    var transpilerOptions;
+    let transpilerOptions;
 
     babel.transform = function(string, options) {
       transpilerOptions = options;
@@ -93,8 +186,8 @@ describe('options', function() {
     expect(transpilerOptions.bar.baz).to.eql(1);
   });
 
-  it('correct fileName, sourceFileName', function() {
-    var transpilerOptions;
+  it('correct fileName, sourceMapTarget, sourceFileName', function() {
+    let transpilerOptions;
 
     babel.transform = function(string, options) {
       transpilerOptions = options;
@@ -113,7 +206,7 @@ describe('options', function() {
     babel.options.moduleId = true;
     babel.options.filename = 'relativePath.es6';
 
-    var transpilerOptions;
+    let transpilerOptions;
 
     babel.transform = function(string, options) {
       transpilerOptions = options;
@@ -126,8 +219,8 @@ describe('options', function() {
     expect(transpilerOptions.moduleId).to.eql('relativePath');
   });
 
-  it('does not propagate validExtensions', function () {
-    var transpilerOptions;
+  it('does not propagate filterExtensions', function () {
+    let transpilerOptions;
 
     babel.transform = function(string, options) {
       transpilerOptions = options;
@@ -139,6 +232,20 @@ describe('options', function() {
 
     expect(transpilerOptions.filterExtensions).to.eql(undefined);
   });
+
+  it('does not propagate targetExtension', function () {
+    let transpilerOptions;
+
+    babel.transform = function(string, options) {
+      transpilerOptions = options;
+      return Promise.resolve({ code: {} });
+    };
+
+    expect(transpilerOptions).to.eql(undefined);
+    babel.processString('path', 'relativePath');
+
+    expect(transpilerOptions.targetExtension).to.eql(undefined);
+  });
 });
 
 describe('transpile ES6 to ES5', function() {
@@ -146,7 +253,7 @@ describe('transpile ES6 to ES5', function() {
 
   before(function() {
     babel = makeTestHelper({
-      subject: function() {
+      subject() {
         return new Babel(arguments[0], arguments[1]);
       },
       fixturePath: inputPath
@@ -155,7 +262,7 @@ describe('transpile ES6 to ES5', function() {
 
   afterEach(function () {
     return cleanupBuilders()
-      .then(() => terminateWorkerPool);
+      .then(terminateWorkerPool);
   });
 
   it('basic', function () {
@@ -166,11 +273,11 @@ describe('transpile ES6 to ES5', function() {
         'transform-strict-mode',
         'transform-es2015-block-scoping'
       ]
-    }).then(function(results) {
-      var outputPath = results.directory;
+    }).then(results => {
+      let outputPath = results.directory;
 
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
+      let output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
+      let input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
 
       expect(output).to.eql(input);
     });
@@ -193,20 +300,20 @@ describe('transpile ES6 to ES5', function() {
           }
         }
       ]
-    }).then(function(results) {
-      var outputPath = results.directory;
+    }).then(results => {
+      let outputPath = results.directory;
 
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
+      let output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
+      let input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
 
       expect(output).to.eql(input);
     });
   });
 
   it('basic - parallel API (in main process)', function () {
-    var pluginFunction = require('babel-plugin-transform-es2015-block-scoping');
+    let pluginFunction = require('babel-plugin-transform-es2015-block-scoping');
     pluginFunction.baseDir = function() {
-      return path.join(__dirname, 'node_modules', 'babel-plugin-transform-es2015-block-scoping');
+      return path.join(__dirname, '../node_modules', 'babel-plugin-transform-es2015-block-scoping');
     };
     return babel('files', {
       inputSourceMap: false,
@@ -219,20 +326,20 @@ describe('transpile ES6 to ES5', function() {
         },
         pluginFunction,
       ]
-    }).then(function(results) {
-      var outputPath = results.directory;
+    }).then(results => {
+      let outputPath = results.directory;
 
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
+      let output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
+      let input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
 
       expect(output).to.eql(input);
     });
   });
 
   it('basic (in main process)', function () {
-    var pluginFunction = require('babel-plugin-transform-strict-mode');
+    let pluginFunction = require('babel-plugin-transform-strict-mode');
     pluginFunction.baseDir = function() {
-      return path.join(__dirname, 'node_modules', 'babel-plugin-transform-strict-mode');
+      return path.join(__dirname, '../node_modules', 'babel-plugin-transform-strict-mode');
     };
     return babel('files', {
       inputSourceMap: false,
@@ -242,11 +349,11 @@ describe('transpile ES6 to ES5', function() {
         pluginFunction,
         'transform-es2015-block-scoping'
       ]
-    }).then(function(results) {
-      var outputPath = results.directory;
+    }).then(results => {
+      let outputPath = results.directory;
 
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
+      let output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
+      let input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
 
       expect(output).to.eql(input);
     });
@@ -259,11 +366,11 @@ describe('transpile ES6 to ES5', function() {
         'transform-strict-mode',
         'transform-es2015-block-scoping'
       ]
-    }).then(function(results) {
-      var outputPath = results.directory;
+    }).then(results => {
+      let outputPath = results.directory;
 
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'expected-inline-source-maps.js'), 'utf8');
+      let output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
+      let input = fs.readFileSync(path.join(expectations, 'expected-inline-source-maps.js'), 'utf8');
 
       expect(output).to.eql(input);
     });
@@ -278,11 +385,12 @@ describe('transpile ES6 to ES5', function() {
         'transform-es2015-block-scoping',
         ['module-resolver', { resolvePath: moduleResolve }],
       ],
-    }).then(function(results) {
-      var outputPath = results.directory;
+      resolveModuleSource: moduleResolve
+    }).then(results => {
+      let outputPath = results.directory;
 
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures-imports.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'imports.js'), 'utf8');
+      let output = fs.readFileSync(path.join(outputPath, 'fixtures-imports.js'), 'utf8');
+      let input = fs.readFileSync(path.join(expectations, 'imports.js'), 'utf8');
 
       expect(output).to.eql(input);
     });
@@ -297,11 +405,12 @@ describe('transpile ES6 to ES5', function() {
         'transform-es2015-block-scoping',
         ['module-resolver', { resolvePath: moduleResolve }],
       ],
-    }).then(function(results) {
-      var outputPath = results.directory;
+      resolveModuleSource: moduleResolveParallel
+    }).then(results => {
+      let outputPath = results.directory;
 
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures-imports.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'imports.js'), 'utf8');
+      let output = fs.readFileSync(path.join(outputPath, 'fixtures-imports.js'), 'utf8');
+      let input = fs.readFileSync(path.join(expectations, 'imports.js'), 'utf8');
 
       expect(output).to.eql(input);
     });
@@ -313,12 +422,12 @@ describe('transpile ES6 to ES5', function() {
         'transform-es2015-modules-amd'
       ],
       moduleIds: true,
-      getModuleId: function(moduleName) { return 'testModule'; },
-    }).then(function(results) {
-      var outputPath = results.directory;
+      getModuleId(moduleName) { return 'testModule'; },
+    }).then(results => {
+      let outputPath = results.directory;
 
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures-imports.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'imports-getModuleId.js'), 'utf8');
+      let output = fs.readFileSync(path.join(outputPath, 'fixtures-imports.js'), 'utf8');
+      let input = fs.readFileSync(path.join(expectations, 'imports-getModuleId.js'), 'utf8');
 
       expect(output).to.eql(input);
     });
@@ -331,11 +440,11 @@ describe('transpile ES6 to ES5', function() {
       ],
       moduleIds: true,
       getModuleId: getModuleIdParallel,
-    }).then(function(results) {
-      var outputPath = results.directory;
+    }).then(results => {
+      let outputPath = results.directory;
 
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures-imports.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'imports-getModuleId.js'), 'utf8');
+      let output = fs.readFileSync(path.join(outputPath, 'fixtures-imports.js'), 'utf8');
+      let input = fs.readFileSync(path.join(expectations, 'imports-getModuleId.js'), 'utf8');
 
       expect(output).to.eql(input);
     });
@@ -343,11 +452,12 @@ describe('transpile ES6 to ES5', function() {
 
   it('shouldPrintComment (in main process)', function () {
     return babel('files', {
-      shouldPrintComment: function(comment) { return comment === 'comment 1'; },
-    }).then(function(results) {
-      var outputPath = results.directory;
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures-comments.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'comments.js'), 'utf8');
+      shouldPrintComment(comment) { return comment === 'comment 1'; },
+    }).then(results => {
+      let outputPath = results.directory;
+      let output = fs.readFileSync(path.join(outputPath, 'fixtures-comments.js'), 'utf8');
+      let input = fs.readFileSync(path.join(expectations, 'comments.js'), 'utf8');
+
       expect(output).to.eql(input);
     });
   });
@@ -355,21 +465,22 @@ describe('transpile ES6 to ES5', function() {
   it('shouldPrintComment - parallel API', function () {
     return babel('files', {
       shouldPrintComment: shouldPrintCommentParallel,
-    }).then(function(results) {
-      var outputPath = results.directory;
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures-comments.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'comments.js'), 'utf8');
+    }).then(results => {
+      let outputPath = results.directory;
+      let output = fs.readFileSync(path.join(outputPath, 'fixtures-comments.js'), 'utf8');
+      let input = fs.readFileSync(path.join(expectations, 'comments.js'), 'utf8');
+
       expect(output).to.eql(input);
     });
   });
 });
 
 describe('filters files to transform', function() {
-  this.timeout(5*1000); // some of these are slow in CI
+  this.timeout(5 * 1000); // some of these are slow in CI
 
   before(function() {
     babel = makeTestHelper({
-      subject: function() {
+      subject() {
         return new Babel(arguments[0], arguments[1]);
       },
       fixturePath: inputPath
@@ -388,11 +499,11 @@ describe('filters files to transform', function() {
         'transform-strict-mode',
         'transform-es2015-block-scoping'
       ]
-    }).then(function(results) {
-      var outputPath = results.directory;
+    }).then(results => {
+      let outputPath = results.directory;
 
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
+      let output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
+      let input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
 
       expect(output).to.eql(input);
       // Verify that .es6 file was not transformed
@@ -409,11 +520,11 @@ describe('filters files to transform', function() {
         'transform-strict-mode',
         'transform-es2015-block-scoping'
       ]
-    }).then(function(results) {
-      var outputPath = results.directory;
+    }).then(results => {
+      let outputPath = results.directory;
 
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures-es6.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
+      let output = fs.readFileSync(path.join(outputPath, 'fixtures-es6.js'), 'utf8');
+      let input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
 
       expect(output).to.eql(input);
       // Verify that .es6 file was not transformed
@@ -430,12 +541,12 @@ describe('filters files to transform', function() {
         'transform-strict-mode',
         'transform-es2015-block-scoping'
       ]
-    }).then(function(results) {
-      var outputPath = results.directory;
+    }).then(results => {
+      let outputPath = results.directory;
 
-      var es6ExtOutput = fs.readFileSync(path.join(outputPath, 'fixtures-es6.js'), 'utf8');
-      var jsExtOutput = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
+      let es6ExtOutput = fs.readFileSync(path.join(outputPath, 'fixtures-es6.js'), 'utf8');
+      let jsExtOutput = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
+      let input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
 
       expect(es6ExtOutput).to.eql(input);
       expect(jsExtOutput).to.eql(input);
@@ -453,11 +564,11 @@ describe('filters files to transform', function() {
         'transform-es2015-modules-amd',
         'transform-es2015-block-scoping'
       ]
-    }).then(function(results) {
-      var outputPath = results.directory;
+    }).then(results => {
+      let outputPath = results.directory;
 
-      var output = fs.readFileSync(path.join(outputPath, 'named-module-fixture.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'named-module.js'), 'utf8');
+      let output = fs.readFileSync(path.join(outputPath, 'named-module-fixture.js'), 'utf8');
+      let input = fs.readFileSync(path.join(expectations, 'named-module.js'), 'utf8');
 
       expect(output).to.eql(input);
     });
@@ -473,11 +584,11 @@ describe('filters files to transform', function() {
         'transform-es2015-modules-amd',
         'transform-es2015-block-scoping'
       ]
-    }).then(function(results) {
-      var outputPath = results.directory;
+    }).then(results => {
+      let outputPath = results.directory;
 
-      var output = fs.readFileSync(path.join(outputPath, 'true-module-fixture.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'true-module.js'), 'utf8');
+      let output = fs.readFileSync(path.join(outputPath, 'true-module-fixture.js'), 'utf8');
+      let input = fs.readFileSync(path.join(expectations, 'true-module.js'), 'utf8');
 
       expect(output).to.eql(input);
     });
@@ -487,7 +598,7 @@ describe('filters files to transform', function() {
     return babel('file', {
       helperWhiteList: ['classCallCheck', 'possibleConstructorReturn'],
       plugins: ['transform-es2015-classes']
-    }).catch(function(err) {
+    }).catch(err => {
       expect(err.message).to.match(/^fixtures.js was transformed and relies on `inherits`, which was not included in the helper whitelist. Either add this helper to the whitelist or refactor to not be dependent on this runtime helper.$/);
     });
   });
@@ -496,7 +607,7 @@ describe('filters files to transform', function() {
     return babel('file', {
       helperWhiteList: [],
       plugins: ['transform-es2015-classes']
-    }).catch(function(err) {
+    }).catch(err => {
       expect(err.message).to.match(/^fixtures.js was transformed and relies on `[a-zA-Z]+`, `[a-zA-Z]+`, & `[a-zA-z]+`, which were not included in the helper whitelist. Either add these helpers to the whitelist or refactor to not be dependent on these runtime helpers.$/);
     });
   });
@@ -505,10 +616,11 @@ describe('filters files to transform', function() {
     return babel('files', {
       helperWhiteList: ['classCallCheck', 'possibleConstructorReturn', 'inherits'],
       plugins: ['transform-es2015-classes']
-    }).then(function(results) {
-      var outputPath = results.directory;
-      var output = fs.readFileSync(path.join(outputPath, 'fixtures-classes.js'), 'utf8');
-      var input = fs.readFileSync(path.join(expectations, 'classes.js'), 'utf8');
+    }).then(results => {
+      let outputPath = results.directory;
+      let output = fs.readFileSync(path.join(outputPath, 'fixtures-classes.js'), 'utf8');
+      let input = fs.readFileSync(path.join(expectations, 'classes.js'), 'utf8');
+
       expect(output).to.eql(input);
     });
   });
@@ -516,28 +628,28 @@ describe('filters files to transform', function() {
 
 describe('consume broccoli-babel-transpiler options', function() {
   it('enabled', function() {
-    var options = {
+    let options = {
       browserPolyfill: true
     };
 
     babel = new Babel('foo', options);
-    var code = babel.processString('path', 'relativePath');
+    let code = babel.processString('path', 'relativePath');
     expect(code).to.be.ok;
   });
 
   it('explicitly disabled', function() {
-    var options = {
+    let options = {
       browserPolyfill: false
     };
 
     babel = new Babel('foo', options);
-    var code = babel.processString('path', 'relativePath');
+    let code = babel.processString('path', 'relativePath');
     expect(code).to.be.ok;
   });
 });
 
 describe('when options change', function() {
-  var originalHash, options, fakeConsole, consoleMessages;
+  let originalHash, options, fakeConsole, consoleMessages;
 
   beforeEach(function() {
     fakeConsole = {
@@ -552,7 +664,7 @@ describe('when options change', function() {
       plugins: []
     };
 
-    var babel = new Babel('foo', options);
+    let babel = new Babel('foo', options);
 
     originalHash = babel.optionsHash();
   });
@@ -560,7 +672,7 @@ describe('when options change', function() {
   it('clears cache for added properties', function() {
     options.foo = 1;
     options.console = fakeConsole;
-    var babelNew = new Babel('foo', options);
+    let babelNew = new Babel('foo', options);
 
     expect(babelNew.optionsHash()).to.not.eql(originalHash);
   });
@@ -570,7 +682,7 @@ describe('when options change', function() {
       { cacheKey: function() { return 'hi!'; }}
     ];
     options.console = fakeConsole;
-    var babelNew = new Babel('foo', options);
+    let babelNew = new Babel('foo', options);
 
     expect(babelNew.optionsHash()).to.not.eql(originalHash);
   });
@@ -583,7 +695,7 @@ describe('when options change', function() {
       fakePlugin
     ];
     options.console = fakeConsole;
-    var babelNew = new Babel('foo', options);
+    let babelNew = new Babel('foo', options);
 
     expect(babelNew.optionsHash()).to.not.eql(originalHash);
   });
@@ -593,127 +705,127 @@ describe('when options change', function() {
       'foo'
     ];
     options.console = fakeConsole;
-    var babelNew = new Babel('foo', options);
+    let babelNew = new Babel('foo', options);
 
     expect(babelNew.optionsHash()).to.not.eql(originalHash);
   });
 
   it('includes plugins specified with options in hash calculation when cacheable', function() {
-    var pluginOptions = { foo: 'bar' };
+    let pluginOptions = { foo: 'bar' };
     options.plugins = [
       ['foo', pluginOptions]
     ];
     options.console = fakeConsole;
-    var first = new Babel('foo', options);
-    var firstOptions = first.optionsHash();
+    let first = new Babel('foo', options);
+    let firstOptions = first.optionsHash();
 
     options.console = fakeConsole;
-    var second = new Babel('foo', options);
-    var secondOptions = second.optionsHash();
+    let second = new Babel('foo', options);
+    let secondOptions = second.optionsHash();
     expect(firstOptions).to.eql(secondOptions);
 
     pluginOptions.qux = 'huzzah';
     options.console = fakeConsole;
-    var third = new Babel('foo', options);
-    var thirdOptions = third.optionsHash();
+    let third = new Babel('foo', options);
+    let thirdOptions = third.optionsHash();
 
     expect(firstOptions).to.not.eql(thirdOptions);
   });
 
   it('invalidates plugins specified with options when not-cacheable', function() {
     function thing() { }
-    var pluginOptions = { foo: 'bar', thing: thing };
+    let pluginOptions = { foo: 'bar', thing: thing };
     options.plugins = [
       ['foo', pluginOptions]
     ];
     options.console = fakeConsole;
-    var first = new Babel('foo', options);
-    var firstOptions = first.optionsHash();
+    let first = new Babel('foo', options);
+    let firstOptions = first.optionsHash();
 
     options.console = fakeConsole;
-    var second = new Babel('foo', options);
-    var secondOptions = second.optionsHash();
+    let second = new Babel('foo', options);
+    let secondOptions = second.optionsHash();
     expect(firstOptions).to.not.eql(secondOptions);
   });
 
   it('plugins specified with options can have functions with `baseDir`', function() {
-    var dir = path.join(inputPath, 'plugin-a');
+    let dir = path.join(inputPath, 'plugin-a');
     function thing() { }
     thing.baseDir = function() { return dir; };
-    var pluginOptions = { foo: 'bar', thing: thing };
+    let pluginOptions = { foo: 'bar', thing: thing };
     options.plugins = [
       ['foo', pluginOptions]
     ];
 
     options.console = fakeConsole;
-    var first = new Babel('foo', options);
-    var firstOptions = first.optionsHash();
+    let first = new Babel('foo', options);
+    let firstOptions = first.optionsHash();
 
     options.console = fakeConsole;
-    var second = new Babel('foo', options);
-    var secondOptions = second.optionsHash();
+    let second = new Babel('foo', options);
+    let secondOptions = second.optionsHash();
     expect(firstOptions).to.eql(secondOptions);
 
     dir = path.join(inputPath, 'plugin-b');
     options.console = fakeConsole;
-    var third = new Babel('foo', options);
-    var thirdOptions = third.optionsHash();
+    let third = new Babel('foo', options);
+    let thirdOptions = third.optionsHash();
 
     expect(firstOptions).to.not.eql(thirdOptions);
   });
 
   it('plugins can be objects with `baseDir`', function() {
-    var dir = path.join(inputPath, 'plugin-a');
-    var pluginObject = { foo: 'foo' };
+    let dir = path.join(inputPath, 'plugin-a');
+    let pluginObject = { foo: 'foo' };
     pluginObject.baseDir = function() { return dir; };
     options.plugins = [ pluginObject ];
 
     options.console = fakeConsole;
-    var first = new Babel('foo', options);
-    var firstOptions = first.optionsHash();
+    let first = new Babel('foo', options);
+    let firstOptions = first.optionsHash();
 
     options.console = fakeConsole;
-    var second = new Babel('foo', options);
-    var secondOptions = second.optionsHash();
+    let second = new Babel('foo', options);
+    let secondOptions = second.optionsHash();
 
     expect(firstOptions).to.eql(secondOptions);
 
     dir = path.join(inputPath, 'plugin-b');
     options.console = fakeConsole;
-    var third = new Babel('foo', options);
-    var thirdOptions = third.optionsHash();
+    let third = new Babel('foo', options);
+    let thirdOptions = third.optionsHash();
 
     expect(firstOptions).to.not.eql(thirdOptions);
   });
 
   it('plugins can be objects with `cacheKey`', function() {
-    var dir = path.join(inputPath, 'plugin-a');
-    var key = 'cacheKey1';
-    var pluginObject = { foo: 'foo' };
+    let dir = path.join(inputPath, 'plugin-a');
+    let key = 'cacheKey1';
+    let pluginObject = { foo: 'foo' };
     pluginObject.baseDir = function() { return dir; };
     pluginObject.cacheKey = function() { return key; };
     options.plugins = [ pluginObject ];
 
     options.console = fakeConsole;
-    var first = new Babel('foo', options);
-    var firstOptions = first.optionsHash();
+    let first = new Babel('foo', options);
+    let firstOptions = first.optionsHash();
 
     options.console = fakeConsole;
-    var second = new Babel('foo', options);
-    var secondOptions = second.optionsHash();
+    let second = new Babel('foo', options);
+    let secondOptions = second.optionsHash();
 
     expect(firstOptions).to.eql(secondOptions);
 
     options.console = fakeConsole;
     key = 'cacheKey3';
-    var third = new Babel('foo', options);
-    var thirdOptions = third.optionsHash();
+    let third = new Babel('foo', options);
+    let thirdOptions = third.optionsHash();
 
     expect(firstOptions).to.not.eql(thirdOptions);
   });
 
   it('a plugins `baseDir` method is used for hash generation', function() {
-    var dir = path.join(inputPath, 'plugin-a');
+    let dir = path.join(inputPath, 'plugin-a');
 
     function plugin() {}
     plugin.baseDir = function() {
@@ -722,13 +834,13 @@ describe('when options change', function() {
     options.plugins = [ plugin ];
 
     options.console = fakeConsole;
-    var first = new Babel('foo', options);
-    var firstOptions = first.optionsHash();
+    let first = new Babel('foo', options);
+    let firstOptions = first.optionsHash();
 
     dir = path.join(inputPath, 'plugin-b');
     options.console = fakeConsole;
-    var second = new Babel('foo', options);
-    var secondOptions = second.optionsHash();
+    let second = new Babel('foo', options);
+    let secondOptions = second.optionsHash();
 
     expect(firstOptions).to.not.eql(secondOptions);
   });
@@ -739,9 +851,9 @@ describe('when options change', function() {
     options.plugins = [ plugin ];
 
     options.console = fakeConsole;
-    var babel1 = new Babel('foo', options);
+    let babel1 = new Babel('foo', options);
     options.console = fakeConsole;
-    var babel2 = new Babel('foo', options);
+    let babel2 = new Babel('foo', options);
 
     expect(babel1.optionsHash()).to.not.eql(babel2.optionsHash());
     expect(consoleMessages).to.eql([
@@ -753,7 +865,7 @@ describe('when options change', function() {
   it('clears cache for updated properties', function() {
     options.bar = 2;
     options.console = fakeConsole;
-    var babelNew = new Babel('foo', options);
+    let babelNew = new Babel('foo', options);
 
     expect(babelNew.optionsHash()).to.not.eql(originalHash);
   });
@@ -761,7 +873,7 @@ describe('when options change', function() {
   it('clears cache for added methods', function() {
     options.foo = function() {};
     options.console = fakeConsole;
-    var babelNew = new Babel('foo', options);
+    let babelNew = new Babel('foo', options);
 
     expect(babelNew.optionsHash()).to.not.eql(originalHash);
   });
@@ -769,13 +881,14 @@ describe('when options change', function() {
   it('clears cache for updated methods', function() {
     options.baz = function() { return 1; };
     options.console = fakeConsole;
-    var babelNew = new Babel('foo', options);
+    let babelNew = new Babel('foo', options);
 
     expect(babelNew.optionsHash()).to.not.eql(originalHash);
   });
 });
 
 describe('on error', function() {
+  this.timeout(5000);
 
   before(function() {
     babel = makeTestHelper({
@@ -788,13 +901,13 @@ describe('on error', function() {
 
   afterEach(function () {
     return cleanupBuilders()
-      .then(() => terminateWorkerPool);
+      .then(terminateWorkerPool);
   });
 
   it('returns error from the main process', function () {
-    var pluginFunction = require('babel-plugin-transform-strict-mode');
+    let pluginFunction = require('babel-plugin-transform-strict-mode');
     pluginFunction.baseDir = function() {
-      return path.join(__dirname, 'node_modules', 'babel-plugin-transform-strict-mode');
+      return path.join(__dirname, '../node_modules', 'babel-plugin-transform-strict-mode');
     };
     return babel('errors', {
       inputSourceMap: false,
@@ -855,53 +968,27 @@ describe('on error', function() {
   });
 });
 
-describe('deserializeOptions()', function() {
+describe('deserialize()', function() {
 
   afterEach(function() {
     return terminateWorkerPool();
   });
 
   it('passes other options through', function () {
-    var options = {
+    let options = {
       inputSourceMap: false,
       sourceMap: false,
       somethingElse: 'foo',
     };
-    expect(ParallelApi.deserializeOptions(options)).to.eql({
+    expect(ParallelApi.deserialize(options)).to.eql({
       inputSourceMap: false,
       sourceMap: false,
       somethingElse: 'foo',
-    });
-  });
-
-  it('passes through plugins that do not use the parallel API', function () {
-    var pluginFunction = function doSomething() {
-      return 'something';
-    };
-    var options = {
-      plugins: [
-        pluginFunction,
-        'transform-strict-mode',
-        'transform-es2015-block-scoping',
-        [ 'something' ],
-        [ 'something', 'else' ],
-        [ { objects: 'should' }, { be: 'passed'}, 'through'],
-      ]
-    };
-    expect(ParallelApi.deserializeOptions(options)).to.eql({
-      plugins: [
-        pluginFunction,
-        'transform-strict-mode',
-        'transform-es2015-block-scoping',
-        [ 'something' ],
-        [ 'something', 'else' ],
-        [ { objects: 'should' }, { be: 'passed'}, 'through'],
-      ]
     });
   });
 
   it('builds plugins using the parallel API', function () {
-    var options = {
+    let options = {
       plugins: [
         {
           _parallelBabel: {
@@ -911,7 +998,7 @@ describe('deserializeOptions()', function() {
         'transform-es2015-block-scoping'
       ]
     };
-    expect(ParallelApi.deserializeOptions(options)).to.eql({
+    expect(ParallelApi.deserialize(options)).to.eql({
       plugins: [
         'transform-strict-mode',
         'transform-es2015-block-scoping'
@@ -920,42 +1007,41 @@ describe('deserializeOptions()', function() {
   });
 
   it('leaves callback functions alone', function () {
-    var moduleNameFunc = function(moduleName) {};
-    var commentFunc = function(comment) {};
-    var options = {
+    let moduleNameFunc = function(moduleName) {};
+    let commentFunc = function(comment) {};
+    let options = {
       resolveModuleSource: moduleResolve,
       getModuleId: moduleNameFunc,
       shouldPrintComment: commentFunc,
     };
-    expect(ParallelApi.deserializeOptions(options)).to.eql({
-      resolveModuleSource: moduleResolve,
-      getModuleId: moduleNameFunc,
-      shouldPrintComment: commentFunc,
-    });
+
+    expect(ParallelApi.deserialize(options).resolveModuleSource).to.not.eql(moduleResolve);
+    expect(ParallelApi.deserialize(options).getModuleId).to.eql(moduleNameFunc);
+    expect(ParallelApi.deserialize(options).shouldPrintComment).to.eql(commentFunc);
   });
 
   it('builds resolveModuleSource using the parallel API', function () {
-    var options = {
+    let options = {
       resolveModuleSource: moduleResolveParallel
     };
-    expect(ParallelApi.deserializeOptions(options).resolveModuleSource).to.be.a('function');
-    expect(ParallelApi.deserializeOptions(options)).to.eql({
+    expect(ParallelApi.deserialize(options).resolveModuleSource).to.be.a('function');
+    expect(ParallelApi.deserialize(options)).to.eql({
       resolveModuleSource: moduleResolve
     });
   });
 
   it('builds getModuleId using the parallel API', function () {
-    var options = {
+    let options = {
       getModuleId: getModuleIdParallel
     };
-    expect(ParallelApi.deserializeOptions(options).getModuleId).to.be.a('function');
+    expect(ParallelApi.deserialize(options).getModuleId).to.be.a('function');
   });
 
   it('builds shouldPrintComment using the parallel API', function () {
-    var options = {
+    let options = {
       shouldPrintComment: shouldPrintCommentParallel
     };
-    expect(ParallelApi.deserializeOptions(options).shouldPrintComment).to.be.a('function');
+    expect(ParallelApi.deserialize(options).shouldPrintComment).to.be.a('function');
   });
 });
 
@@ -993,188 +1079,288 @@ describe('implementsParallelAPI()', function() {
   });
 });
 
-describe('pluginCanBeParallelized()', function() {
+describe('isSerializable()', function() {
   it('string - yes', function () {
-    expect(ParallelApi.pluginCanBeParallelized('transform-es2025')).to.eql(true);
+    expect(ParallelApi.isSerializable('transform-es2025')).to.eql(true);
   });
 
   it('function - no', function () {
-    expect(ParallelApi.pluginCanBeParallelized(function() {})).to.eql(false);
+    expect(ParallelApi.isSerializable(function() {})).to.eql(false);
   });
 
-  it('[] - no', function () {
-    expect(ParallelApi.pluginCanBeParallelized([])).to.eql(false);
+  it('[] - yes', function () {
+    expect(ParallelApi.isSerializable([])).to.eql(true);
   });
 
-  it('["plugin-name", { options }] - no', function () {
-    expect(ParallelApi.pluginCanBeParallelized(['plugin-name', {foo: 'bar'}])).to.eql(false);
+  it('[null, "plugin-name", 12, {foo: "bar"}, ["one",2], true, false] - yes', function () {
+    let plugin = [null, "plugin-name", 12, {foo: "bar"}, ["one",2], true, false];
+    expect(ParallelApi.isSerializable(plugin)).to.eql(true);
+  });
+
+  it('["plugin-name", x => x + 1] - no', function () {
+    expect(ParallelApi.isSerializable(['plugin-name', x => x + 1])).to.eql(false);
   });
 
   it('{ _parallelBabel: { requireFile: "a/file" } } - yes', function () {
-    expect(ParallelApi.pluginCanBeParallelized({ _parallelBabel: { requireFile: 'a/file' } })).to.eql(true);
+    function Foo() {
+
+    }
+
+    Foo._parallelBabel = { requireFile: 'a/file' };
+    expect(ParallelApi.isSerializable([Foo])).to.eql(true);
+  });
+
+  it('[SerializeableFn, SerializeableFn]', function () {
+    function Foo() {
+
+    }
+
+    Foo._parallelBabel = { requireFile: 'a/file' };
+    expect(ParallelApi.isSerializable([Foo, Foo])).to.eql(true);
+  });
+
+
+
+  it('[SerializeableFn, NonSerializeableFn]', function () {
+    function Foo() {
+
+    }
+
+    Foo._parallelBabel = { requireFile: 'a/file' };
+    expect(ParallelApi.isSerializable([Foo, () => {}])).to.eql(false);
   });
 });
 
 describe('pluginsAreParallelizable()', function() {
   it('undefined - yes', function () {
-    expect(ParallelApi.pluginsAreParallelizable(undefined)).to.eql(true);
+    expect(ParallelApi.pluginsAreParallelizable(undefined)).to.eql({ isParallelizable: true, errors: [] });
   });
 
   it('[] - yes', function () {
-    expect(ParallelApi.pluginsAreParallelizable([])).to.eql(true);
+    expect(ParallelApi.pluginsAreParallelizable([])).to.eql({ isParallelizable: true, errors: []});
   });
 
   it('array of plugins that are parllelizable - yes', function () {
-    var plugins = [
+    let plugins = [
       'some-plugin',
       'some-other-plugin',
       { _parallelBabel: { requireFile: "a/file" } },
     ];
-    expect(ParallelApi.pluginsAreParallelizable(plugins)).to.eql(true);
+
+    expect(ParallelApi.pluginsAreParallelizable(plugins)).to.eql({ isParallelizable: true, errors: []});
   });
 
   it('one plugin is not parallelizable - no', function () {
-    var plugins = [
+    let plugins = [
       'some-plugin',
       'some-other-plugin',
       { requireFile: "another/file", options: {} },
       function() {},
     ];
-    expect(ParallelApi.pluginsAreParallelizable(plugins)).to.eql(false);
+
+    expect(ParallelApi.pluginsAreParallelizable(plugins)).to.eql({
+      isParallelizable: false,
+      errors: [
+        `name: unknown, location: unknown,\n↓ function source ↓ \n${function() {}.toString()}\n \n`
+      ]
+    });
   });
 });
 
 describe('callbacksAreParallelizable()', function() {
   it('no callback functions - yes', function () {
-    var options = {
+    let options = {
       inputSourceMap: false,
       plugins: [
         'some-plugin',
       ],
     };
-    expect(ParallelApi.callbacksAreParallelizable(options)).to.eql(true);
+    expect(ParallelApi.callbacksAreParallelizable(options)).to.eql({ isParallelizable: true, errors: []});
   });
 
   it('function - no', function () {
-    var options = {
+    let options = {
       inputSourceMap: false,
       plugins: [
         'some-plugin'
       ],
       resolveModuleSource: function() {},
     };
-    expect(ParallelApi.callbacksAreParallelizable(options)).to.eql(false);
+
+    if (options.resolveModuleSource.name === '') {
+      // old nodes don't create a good name here.
+      expect(ParallelApi.callbacksAreParallelizable(options)).to.eql({ isParallelizable: false, errors: [`name: unknown, location: unknown,\n↓ function source ↓ \nfunction () {}\n \n`] });
+    } else {
+      expect(ParallelApi.callbacksAreParallelizable(options)).to.eql({ isParallelizable: false, errors: [`name: resolveModuleSource, location: unknown`] });
+    }
   });
 
   it('function with correct _parallelBabel property - yes', function () {
-    var someFunc = function() {};
+    let someFunc = function() {};
     someFunc._parallelBabel = { requireFile: 'a/file' };
-    var options = {
+    let options = {
+      inputSourceMap: false,
+      plugins: [
+        'some-plugin'
+      ]
+    };
+    expect(ParallelApi.callbacksAreParallelizable(options)).to.eql({ isParallelizable: true, errors: [] });
+  });
+
+
+
+  it('function with correct _parallelBabel property - yes (but with sneaky second function)', function () {
+    let someFunc = function() {};
+    someFunc._parallelBabel = { requireFile: 'a/file' };
+    let options = {
       inputSourceMap: false,
       plugins: [
         'some-plugin'
       ],
       keyDontMatter: someFunc,
     };
-    expect(ParallelApi.callbacksAreParallelizable(options)).to.eql(true);
+
+    expect(ParallelApi.callbacksAreParallelizable(options)).to.eql({
+      isParallelizable: true,
+      errors: [ ]
+    });
   });
 
   it('_parallelBabel set incorrectly - no', function () {
-    var someFunc = function() {};
+    let someFunc = function() {};
     someFunc._parallelBabel = { no: 'wrong' };
-    var options = {
+    let options = {
       inputSourceMap: false,
       plugins: [
         'some-plugin'
       ],
       keyDontMatter: someFunc,
     };
-    expect(ParallelApi.callbacksAreParallelizable(options)).to.eql(false);
+
+    if (someFunc.name === '') {
+      // older nodes don't correctly assign the name
+      expect(ParallelApi.callbacksAreParallelizable(options)).to.eql({ isParallelizable: false, errors: ['name: unknown, location: unknown,\n↓ function source ↓ \nfunction () {}\n \n']});
+    } else {
+      expect(ParallelApi.callbacksAreParallelizable(options)).to.eql({ isParallelizable: false, errors: ['name: someFunc, location: unknown']});
+    }
   });
 });
 
 describe('transformIsParallelizable()', function() {
   it('no plugins or resolveModule - yes', function () {
-    var options = {};
-    expect(ParallelApi.transformIsParallelizable(options)).to.eql(true);
+    let options = {};
+    expect(ParallelApi.transformIsParallelizable(options)).to.eql({ isParallelizable: true, errors: [] });
   });
 
   it('plugins are parallelizable - yes', function () {
-    var options = {
+    let options = {
       plugins: [ 'some-plugin' ],
     };
-    expect(ParallelApi.transformIsParallelizable(options)).to.eql(true);
+    expect(ParallelApi.transformIsParallelizable(options)).to.eql({ isParallelizable: true, errors: [] });
   });
 
   it('resolveModule is parallelizable - yes', function () {
-    var options = {
+    let options = {
       resolveModuleSource: moduleResolveParallel
     };
-    expect(ParallelApi.transformIsParallelizable(options)).to.eql(true);
+    expect(ParallelApi.transformIsParallelizable(options)).to.eql({ isParallelizable: true, errors: [] });
   });
 
   it('both are parallelizable - yes', function () {
-    var options = {
+    let options = {
       plugins: [ 'some-plugin' ],
       resolveModuleSource: moduleResolveParallel
     };
-    expect(ParallelApi.transformIsParallelizable(options)).to.eql(true);
+    expect(ParallelApi.transformIsParallelizable(options)).to.eql({ isParallelizable: true, errors: [] });
   });
 
   it('plugins not parallelizable - no', function () {
-    var options = {
+    let options = {
       plugins: [ function() {} ],
       resolveModuleSource: moduleResolveParallel
     };
-    expect(ParallelApi.transformIsParallelizable(options)).to.eql(false);
+    expect(ParallelApi.transformIsParallelizable(options)).to.eql({
+      isParallelizable: false,
+      errors: [ `name: unknown, location: unknown,\n↓ function source ↓ \n${(function() {}.toString())}\n \n`]
+    });
   });
 
+
   it('resolveModuleSource not parallelizable - no', function () {
-    var options = {
+    let options = {
       plugins: [ 'some-plugin' ],
       resolveModuleSource: function() {},
     };
-    expect(ParallelApi.transformIsParallelizable(options)).to.eql(false);
+
+    if (options.resolveModuleSource.name === '') {
+      expect(ParallelApi.transformIsParallelizable(options)).to.eql({ isParallelizable: false, errors: ['name: unknown, location: unknown,\n↓ function source ↓ \nfunction () {}\n \n']});
+    } else {
+      expect(ParallelApi.transformIsParallelizable(options)).to.eql({ isParallelizable: false, errors: ['name: resolveModuleSource, location: unknown'] });
+    }
   });
 });
 
-describe('serializeOptions()', function() {
+describe('serialize()', function() {
   it('empty options', function() {
-    expect(ParallelApi.serializeOptions({})).to.eql({});
+    expect(ParallelApi.serialize({})).to.eql({});
   });
 
   it('passes through non-function options', function() {
-    var options = {
+    let options = {
       inputSourceMap: false,
       plugins: [ 'some-plugin' ],
     };
-    expect(ParallelApi.serializeOptions(options)).to.eql(options);
+    expect(ParallelApi.serialize(options)).to.eql(options);
   });
 
   it('transforms all functions', function() {
-    var options = {
+    let serialized = ParallelApi.serialize({
       moduleResolve: moduleResolveParallel,
       getModuleId: getModuleIdParallel,
       shouldPrintComment: shouldPrintCommentParallel,
-    };
-    var expected = {
-      moduleResolve: { _parallelBabel: moduleResolveParallel._parallelBabel },
-      getModuleId: { _parallelBabel: getModuleIdParallel._parallelBabel },
-      shouldPrintComment: { _parallelBabel: shouldPrintCommentParallel._parallelBabel },
-    };
-    expect(ParallelApi.serializeOptions(options)).to.eql(expected);
+    });
+
+    expect(serialized).to.eql({
+      moduleResolve: {
+        _parallelBabel: {
+          requireFile: fixtureFullPath('amd-name-resolver-parallel'),
+          useMethod: 'moduleResolve'
+        }
+      },
+
+      getModuleId: {
+        _parallelBabel: {
+          requireFile: fixtureFullPath('get-module-id-parallel'),
+          buildUsing: "build",
+          params: {
+            name: "testModule"
+          }
+        }
+      },
+
+      shouldPrintComment: {
+        _parallelBabel: {
+          requireFile: fixtureFullPath('print-comment-parallel'),
+          buildUsing: "buildMe",
+          params: {
+            contents: "comment 1"
+          },
+        }
+      }
+    });
   });
 });
 
 describe('buildFromParallelApiInfo()', function() {
-  it('requireFile only', function() {
-    var filePath = fixtureFullPath('transform-strict-mode-parallel');
-    var builtPlugin = ParallelApi.buildFromParallelApiInfo({ requireFile: filePath });
+  it('requireFile', function() {
+    let filePath = fixtureFullPath('transform-strict-mode-parallel');
+    let builtPlugin = ParallelApi.buildFromParallelApiInfo({ requireFile: filePath });
+
     expect(builtPlugin).to.eql(require(filePath));
   });
 
   it('throws error if requireFile path does not exist', function() {
-    var filePath = 'some/file/that/does/not/exist';
+    let filePath = 'some/file/that/does/not/exist';
     try {
       ParallelApi.buildFromParallelApiInfo({ requireFile: filePath });
       expect.fail('', '', 'should have thrown an error');
@@ -1185,13 +1371,13 @@ describe('buildFromParallelApiInfo()', function() {
   });
 
   it('useMethod', function() {
-    var filePath = fixtureFullPath('transform-es2015-block-scoping-parallel');
-    var builtPlugin = ParallelApi.buildFromParallelApiInfo({ requireFile: filePath, useMethod: 'pluginFunction' });
+    let filePath = fixtureFullPath('transform-es2015-block-scoping-parallel');
+    let builtPlugin = ParallelApi.buildFromParallelApiInfo({ requireFile: filePath, useMethod: 'pluginFunction' });
     expect(builtPlugin).to.eql(require('babel-plugin-transform-es2015-block-scoping'));
   });
 
   it('throws error if useMethod does not exist', function() {
-    var filePath = fixtureFullPath('transform-es2015-block-scoping-parallel');
+    let filePath = fixtureFullPath('transform-es2015-block-scoping-parallel');
     try {
       ParallelApi.buildFromParallelApiInfo({ requireFile: filePath, useMethod: 'doesNotExist' });
       expect.fail('', '', 'should have thrown an error');
@@ -1202,19 +1388,19 @@ describe('buildFromParallelApiInfo()', function() {
   });
 
   it('buildUsing, no params', function() {
-    var filePath = fixtureFullPath('transform-es2015-block-scoping-parallel');
-    var builtPlugin = ParallelApi.buildFromParallelApiInfo({ requireFile: filePath, buildUsing: 'build' });
+    let filePath = fixtureFullPath('transform-es2015-block-scoping-parallel');
+    let builtPlugin = ParallelApi.buildFromParallelApiInfo({ requireFile: filePath, buildUsing: 'build' });
     expect(builtPlugin).to.eql(require(filePath).build());
   });
 
   it('buildUsing, with params', function() {
-    var filePath = fixtureFullPath('transform-es2015-block-scoping-parallel');
-    var builtPlugin = ParallelApi.buildFromParallelApiInfo({ requireFile: filePath, buildUsing: 'buildTwo', params: { text: 'OK' } });
+    let filePath = fixtureFullPath('transform-es2015-block-scoping-parallel');
+    let builtPlugin = ParallelApi.buildFromParallelApiInfo({ requireFile: filePath, buildUsing: 'buildTwo', params: { text: 'OK' } });
     expect(builtPlugin).to.eql('for-testingOK');
   });
 
   it('throws error if buildUsing method does not exist', function() {
-    var filePath = fixtureFullPath('transform-es2015-block-scoping-parallel');
+    let filePath = fixtureFullPath('transform-es2015-block-scoping-parallel');
     try {
       ParallelApi.buildFromParallelApiInfo({ requireFile: filePath, buildUsing: 'doesNotExist' });
       expect.fail('', '', 'should have thrown an error');
@@ -1225,19 +1411,20 @@ describe('buildFromParallelApiInfo()', function() {
   });
 
   it('useMethod and buildUsing', function() {
-    var filePath = fixtureFullPath('transform-es2015-block-scoping-parallel');
-    var builtPlugin = ParallelApi.buildFromParallelApiInfo({ requireFile: filePath, useMethod: 'pluginFunction', buildUsing: 'buildTwo', params: { text: 'OK' } });
+    let filePath = fixtureFullPath('transform-es2015-block-scoping-parallel');
+    let builtPlugin = ParallelApi.buildFromParallelApiInfo({ requireFile: filePath, useMethod: 'pluginFunction', buildUsing: 'buildTwo', params: { text: 'OK' } });
     expect(builtPlugin).to.eql(require('babel-plugin-transform-es2015-block-scoping'));
   });
 });
 
 describe('concurrency', function() {
-  var parallelApiPath = require.resolve('./lib/parallel-api');
+  let PATH = '../lib/parallel-api';
+  let parallelApiPath = require.resolve(PATH);
 
   afterEach(function() {
     delete require.cache[parallelApiPath];
     delete process.env.JOBS;
-    ParallelApi = require('./lib/parallel-api');
+    ParallelApi = require(PATH);
     return terminateWorkerPool();
   });
 
@@ -1248,31 +1435,34 @@ describe('concurrency', function() {
   it('sets jobs using environment variable', function() {
     delete require.cache[parallelApiPath];
     process.env.JOBS = '17';
-    ParallelApi = require('./lib/parallel-api');
+    ParallelApi = require(PATH);
     expect(ParallelApi.jobs).to.equal(17);
   });
 });
 
 describe('getBabelVersion()', function() {
   it ('returns the correct version', function() {
-    var expectedVersion = require(path.join(__dirname, 'node_modules/@babel/core/package.json')).version;
+    let expectedVersion = require(path.join(__dirname, 'node_modules/@babel/core/package.json')).version;
     expect(ParallelApi.getBabelVersion()).to.equal(expectedVersion);
   });
 });
 
 describe('workerpool', function() {
-  var parallelApiPath = require.resolve('./lib/parallel-api');
+  const PATH = '../lib/parallel-api';
+  let parallelApiPath = require.resolve(PATH);
 
-  var stringToTransform = "const x = 0;";
+  let stringToTransform = "const x = 0;";
+  let options;
 
-  var options = {
-    inputSourceMap: false,
-    sourceMap: false,
-    plugins: [
-      'transform-strict-mode',
-      'transform-es2015-block-scoping'
-    ]
-  };
+  beforeEach(function() {
+    options = {
+      inputSourceMap: false,
+      sourceMap: false, plugins: [
+        'transform-strict-mode',
+        'transform-es2015-block-scoping'
+      ]
+    };
+  });
 
   afterEach(function() {
     delete process.env.JOBS;
@@ -1283,9 +1473,9 @@ describe('workerpool', function() {
     this.timeout(5*1000);
     delete require.cache[parallelApiPath];
     process.env.JOBS = '2';
-    var ParallelApiOne = require('./lib/parallel-api');
+    let ParallelApiOne = require(PATH);
     delete require.cache[parallelApiPath];
-    var ParallelApiTwo = require('./lib/parallel-api');
+    let ParallelApiTwo = require(PATH);
 
     let lookup = RSVP.denodeify(ps.lookup);
 
@@ -1309,5 +1499,4 @@ describe('workerpool', function() {
       expect(resultList.length).to.eql(2);
     });
   });
-
 });

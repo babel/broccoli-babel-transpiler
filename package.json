@@ -8,10 +8,11 @@
     "lib"
   ],
   "scripts": {
-    "test": "mocha test.js",
-    "test:debug": "mocha debug test.js",
-    "test:slow": "mocha test_slow.js",
-    "test:all": "mocha test.js test_slow.js"
+    "test": "mocha tests/test.js",
+    "test:debug": "mocha debug tests/test.js",
+    "test:slow": "mocha tests/test-slow.js",
+    "test:slow:debug": "mocha debug tests/test-slow.js",
+    "test:all": "mocha tests/test.js tests/test-slow.js"
   },
   "repository": {
     "type": "git",
@@ -35,18 +36,18 @@
   "homepage": "https://github.com/babel/broccoli-babel-transpiler",
   "dependencies": {
     "@babel/core": "^7.0.0-beta.44",
-    "broccoli-funnel": "^1.0.0",
-    "broccoli-merge-trees": "^1.0.0",
-    "broccoli-persistent-filter": "^1.4.0",
+    "broccoli-funnel": "^2.0.1",
+    "broccoli-merge-trees": "^2.0.0",
+    "broccoli-persistent-filter": "^1.4.3",
     "clone": "^2.0.0",
-    "hash-for-dep": "^1.0.2",
+    "hash-for-dep": "^1.2.3",
     "heimdalljs-logger": "^0.1.7",
     "json-stable-stringify": "^1.0.0",
-    "rsvp": "^3.5.0",
+    "rsvp": "^4.8.2",
     "workerpool": "^2.3.0"
   },
   "devDependencies": {
-    "amd-name-resolver": "0.0.6",
+    "amd-name-resolver": "1.2.0",
     "babel-plugin-module-resolver": "^3.0.0",
     "babel-plugin-transform-es2015-block-scoping": "^7.0.0-beta.0",
     "babel-plugin-transform-es2015-classes": "^7.0.0-beta.0",
@@ -54,9 +55,10 @@
     "babel-plugin-transform-strict-mode": "^7.0.0-beta.0",
     "broccoli": "^0.16.3",
     "broccoli-test-helpers": "0.0.8",
-    "chai": "^3.5.0",
+    "broccoli-test-helpers": "0.0.9",
+    "chai": "^4.1.2",
     "mkdirp": "^0.5.1",
-    "mocha": "^3.0.2",
+    "mocha": "^5.2.0",
     "ps-node": "^0.1.6"
   },
   "engines": {

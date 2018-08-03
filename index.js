@@ -1,36 +1,37 @@
 'use strict';
 
-var Filter     = require('broccoli-persistent-filter');
-var clone      = require('clone');
-var fs         = require('fs');
-var stringify  = require('json-stable-stringify');
-var mergeTrees = require('broccoli-merge-trees');
-var funnel     = require('broccoli-funnel');
-var crypto     = require('crypto');
-var hashForDep = require('hash-for-dep');
-var ParallelApi = require('./lib/parallel-api');
-
+const Filter     = require('broccoli-persistent-filter');
+const clone      = require('clone');
+const fs         = require('fs');
+const stringify  = require('json-stable-stringify');
+const mergeTrees = require('broccoli-merge-trees');
+const funnel     = require('broccoli-funnel');
+const crypto     = require('crypto');
+const hashForDep = require('hash-for-dep');
+const transformString = require('./lib/parallel-api').transformString;
+const transformIsParallelizable = require('./lib/parallel-api').transformIsParallelizable;
 
 function getExtensionsRegex(extensions) {
-  return extensions.map(function(extension) {
+  return extensions.map(extension => {
     return new RegExp('\.' + extension + '$');
   });
 }
 
 function replaceExtensions(extensionsRegex, name) {
-  for (var i = 0, l = extensionsRegex.length; i < l; i++) {
+  for (let i = 0, l = extensionsRegex.length; i < l; i++) {
     name = name.replace(extensionsRegex[i], '');
   }
 
   return name;
 }
 
+module.exports = Babel;
 function Babel(inputTree, _options) {
   if (!(this instanceof Babel)) {
     return new Babel(inputTree, _options);
   }
 
-  var options = _options || {};
+  let options = _options || {};
   options.persist = 'persist' in options ? options.persist : true;
   options.async = true;
   Filter.call(this, inputTree, options);
@@ -41,7 +42,10 @@ function Babel(inputTree, _options) {
   delete options.description;
 
   this.console = options.console || console;
+  this.throwUnlessParallelizable = options.throwUnlessParallelizable;
+
   delete options.console;
+  delete options.throwUnlessParallelizable;
 
   this.options = options;
   this.extensions = this.options.filterExtensions || ['js'];
@@ -60,24 +64,50 @@ function Babel(inputTree, _options) {
     var babelCorePath = require.resolve('@babel/core');
     babelCorePath = babelCorePath.replace(/\/babel-core\/.*$/, '/babel-core');
 
-    var polyfill = funnel(babelCorePath, { files: ['browser-polyfill.js'] });
+    let polyfill = funnel(babelCorePath, { files: ['browser-polyfill.js'] });
     this.inputTree = mergeTrees([polyfill, inputTree]);
   } else {
     this.inputTree = inputTree;
   }
   delete this.options.browserPolyfill;
+
+  let result = transformIsParallelizable(options);
+  let isParallelizable = result.isParallelizable;
+  let errors = result.errors;
+
+  if ((this.throwUnlessParallelizable || process.env.THROW_UNLESS_PARALLELIZABLE) && isParallelizable === false) {
+    try {
+      throw new Error(this.toString() +
+        ' was configured to `throwUnlessParallelizable` and was unable to parallelize a plugin. \nplugins:\n' + joinCount(errors) + '\nPlease see: https://github.com/babel/broccoli-babel-transpiler#parallel-transpilation for more details');
+    } catch(e) {
+      debugger;
+
+  let result = transformIsParallelizable(options);
+      throw e;
+    }
+  }
+}
+
+function joinCount(list) {
+  let summary = '';
+
+  for (let i = 0; i < list.length; i++) {
+    summary += `${i + 1}: ${list[i]}\n`
+  }
+
+  return summary;
 }
 
 Babel.prototype = Object.create(Filter.prototype);
 Babel.prototype.constructor = Babel;
-Babel.prototype.targetExtension = ['js'];
+Babel.prototype.targetExtension = 'js';
 
 Babel.prototype.baseDir = function() {
   return __dirname;
 };
 
 Babel.prototype.transform = function(string, options) {
-  return ParallelApi.transformString(string, options);
+  return transformString(string, options);
 };
 
 /*
@@ -87,9 +117,9 @@ Babel.prototype.transform = function(string, options) {
  * @returns a stringified version of the input options
  */
 Babel.prototype.optionsHash = function() {
-  var options = this.options;
-  var hash = {};
-  var key, value;
+  let options = this.options;
+  let hash = {};
+  let key, value;
 
   if (!this._optionsHash) {
     for (key in options) {
@@ -100,15 +130,15 @@ Babel.prototype.optionsHash = function() {
     if (options.plugins) {
       hash.plugins = [];
 
-      var cacheableItems = options.plugins.slice();
+      let cacheableItems = options.plugins.slice();
 
-      for (var i = 0; i < cacheableItems.length; i++) {
-        var item = cacheableItems[i];
+      for (let i = 0; i < cacheableItems.length; i++) {
+        let item = cacheableItems[i];
 
-        var type = typeof item;
-        var augmentsCacheKey = false;
-        var providesBaseDir = false;
-        var requiresBaseDir = true;
+        let type = typeof item;
+        let augmentsCacheKey = false;
+        let providesBaseDir = false;
+        let requiresBaseDir = true;
 
         if (type === 'function') {
           augmentsCacheKey = typeof item.cacheKey === 'function';
@@ -119,7 +149,7 @@ Babel.prototype.optionsHash = function() {
           }
 
           if (providesBaseDir) {
-            var depHash = hashForDep(item.baseDir());
+            let depHash = hashForDep(item.baseDir());
 
             hash.plugins.push(depHash);
           }
@@ -132,10 +162,7 @@ Babel.prototype.optionsHash = function() {
             break;
           }
         } else if (Array.isArray(item)) {
-          item.forEach(function(part) {
-            cacheableItems.push(part);
-          });
-
+          item.forEach(part => cacheableItems.push(part));
           continue;
         } else if (type !== 'object' || item === null) {
           // handle native strings, numbers, or null (which can JSON.stringify properly)
@@ -149,8 +176,7 @@ Babel.prototype.optionsHash = function() {
           }
         } else if (type === 'object') {
           // iterate all keys in the item and push them into the cache
-          var keys = Object.keys(item);
-          keys.forEach(function(key) {
+          Object.keys(item).forEach(key => {
             cacheableItems.push(key);
             cacheableItems.push(item[key]);
           });
@@ -174,7 +200,7 @@ Babel.prototype.cacheKeyProcessString = function(string, relativePath) {
 };
 
 Babel.prototype.processString = function(string, relativePath) {
-  var options = this.copyOptions();
+  let options = this.copyOptions();
 
   options.filename = options.sourceFileName = relativePath;
 
@@ -182,37 +208,37 @@ Babel.prototype.processString = function(string, relativePath) {
     options.moduleId = replaceExtensions(this.extensionsRegex, options.filename);
   }
 
-  var plugin = this;
   return this.transform(string, options)
-  .then(function (transpiled) {
+    .then(transpiled => {
+      if (this.helperWhiteList) {
+        let invalidHelpers = transpiled.metadata.usedHelpers.filter(helper => {
+          return this.helperWhiteList.indexOf(helper) === -1;
+        });
 
-    if (plugin.helperWhiteList) {
-      var usedHelpers = transpiled.metadata.usedHelpers || [];
-      var invalidHelpers = usedHelpers.filter(function(helper) {
-        return plugin.helperWhiteList.indexOf(helper) === -1;
-      }, plugin);
+        validateHelpers(invalidHelpers, relativePath);
+      }
 
-      validateHelpers(invalidHelpers, relativePath);
-    }
-
-    return transpiled.code;
-  });
+      return transpiled.code;
+    });
 };
 
 Babel.prototype.copyOptions = function() {
-  var cloned = clone(this.options);
+  let cloned = clone(this.options);
   if (cloned.filterExtensions) {
     delete cloned.filterExtensions;
+  }
+  if (cloned.targetExtension) {
+    delete cloned.targetExtension;
   }
   return cloned;
 };
 
 function validateHelpers(invalidHelpers, relativePath) {
   if (invalidHelpers.length > 0) {
-    var message = relativePath + ' was transformed and relies on `' + invalidHelpers[0] + '`, which was not included in the helper whitelist. Either add this helper to the whitelist or refactor to not be dependent on this runtime helper.';
+    let message = relativePath + ' was transformed and relies on `' + invalidHelpers[0] + '`, which was not included in the helper whitelist. Either add this helper to the whitelist or refactor to not be dependent on this runtime helper.';
 
     if (invalidHelpers.length > 1) {
-      var helpers = invalidHelpers.map(function(item, i) {
+      let helpers = invalidHelpers.map((item, i) => {
         if (i === invalidHelpers.length - 1) {
           return '& `' + item;
         } else if (i === invalidHelpers.length - 2) {
@@ -228,5 +254,3 @@ function validateHelpers(invalidHelpers, relativePath) {
     throw new Error(message);
   }
 }
-
-module.exports = Babel;
