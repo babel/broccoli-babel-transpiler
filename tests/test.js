@@ -363,7 +363,6 @@ describe('transpile ES6 to ES5', function() {
     return babel('files', {
       sourceMap: 'inline',
       plugins: [
-        'transform-strict-mode',
         'transform-es2015-block-scoping'
       ]
     }).then(results => {
@@ -381,11 +380,9 @@ describe('transpile ES6 to ES5', function() {
       inputSourceMap: false,
       sourceMap: false,
       plugins: [
-        'transform-strict-mode',
         'transform-es2015-block-scoping',
         ['module-resolver', { resolvePath: moduleResolve }],
       ],
-      resolveModuleSource: moduleResolve
     }).then(results => {
       let outputPath = results.directory;
 
@@ -401,11 +398,9 @@ describe('transpile ES6 to ES5', function() {
       inputSourceMap: false,
       sourceMap: false,
       plugins: [
-        'transform-strict-mode',
         'transform-es2015-block-scoping',
         ['module-resolver', { resolvePath: moduleResolve }],
       ],
-      resolveModuleSource: moduleResolveParallel
     }).then(results => {
       let outputPath = results.directory;
 
@@ -496,7 +491,6 @@ describe('filters files to transform', function() {
       inputSourceMap:false,
       sourceMap: false,
       plugins: [
-        'transform-strict-mode',
         'transform-es2015-block-scoping'
       ]
     }).then(results => {
@@ -517,7 +511,6 @@ describe('filters files to transform', function() {
       inputSourceMap: false,
       sourceMap: false,
       plugins: [
-        'transform-strict-mode',
         'transform-es2015-block-scoping'
       ]
     }).then(results => {
@@ -538,7 +531,6 @@ describe('filters files to transform', function() {
       inputSourceMap: false,
       sourceMap: false,
       plugins: [
-        'transform-strict-mode',
         'transform-es2015-block-scoping'
       ]
     }).then(results => {
@@ -1020,16 +1012,6 @@ describe('deserialize()', function() {
     expect(ParallelApi.deserialize(options).shouldPrintComment).to.eql(commentFunc);
   });
 
-  it('builds resolveModuleSource using the parallel API', function () {
-    let options = {
-      resolveModuleSource: moduleResolveParallel
-    };
-    expect(ParallelApi.deserialize(options).resolveModuleSource).to.be.a('function');
-    expect(ParallelApi.deserialize(options)).to.eql({
-      resolveModuleSource: moduleResolve
-    });
-  });
-
   it('builds getModuleId using the parallel API', function () {
     let options = {
       getModuleId: getModuleIdParallel
@@ -1261,15 +1243,14 @@ describe('transformIsParallelizable()', function() {
 
   it('resolveModule is parallelizable - yes', function () {
     let options = {
-      resolveModuleSource: moduleResolveParallel
+      plugins: [['module-resolver', { resolvePath: moduleResolve }]],
     };
     expect(ParallelApi.transformIsParallelizable(options)).to.eql({ isParallelizable: true, errors: [] });
   });
 
   it('both are parallelizable - yes', function () {
     let options = {
-      plugins: [ 'some-plugin' ],
-      resolveModuleSource: moduleResolveParallel
+      plugins: ['some-plugin', ['module-resolver', { resolvePath: moduleResolve }]],
     };
     expect(ParallelApi.transformIsParallelizable(options)).to.eql({ isParallelizable: true, errors: [] });
   });
@@ -1277,7 +1258,6 @@ describe('transformIsParallelizable()', function() {
   it('plugins not parallelizable - no', function () {
     let options = {
       plugins: [ function() {} ],
-      resolveModuleSource: moduleResolveParallel
     };
     expect(ParallelApi.transformIsParallelizable(options)).to.eql({
       isParallelizable: false,
@@ -1315,19 +1295,11 @@ describe('serialize()', function() {
 
   it('transforms all functions', function() {
     let serialized = ParallelApi.serialize({
-      moduleResolve: moduleResolveParallel,
       getModuleId: getModuleIdParallel,
       shouldPrintComment: shouldPrintCommentParallel,
     });
 
     expect(serialized).to.eql({
-      moduleResolve: {
-        _parallelBabel: {
-          requireFile: fixtureFullPath('amd-name-resolver-parallel'),
-          useMethod: 'moduleResolve'
-        }
-      },
-
       getModuleId: {
         _parallelBabel: {
           requireFile: fixtureFullPath('get-module-id-parallel'),
@@ -1442,7 +1414,8 @@ describe('concurrency', function() {
 
 describe('getBabelVersion()', function() {
   it ('returns the correct version', function() {
-    let expectedVersion = require(path.join(__dirname, 'node_modules/@babel/core/package.json')).version;
+    let expectedVersion = require('@babel/core/package.json').version;
+
     expect(ParallelApi.getBabelVersion()).to.equal(expectedVersion);
   });
 });
