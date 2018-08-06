@@ -67,7 +67,7 @@ describe('large operations', function() {
             requireFile: fixtureFullPath('transform-strict-mode-parallel'),
           }
         },
-        'transform-es2015-block-scoping'
+        '@babel/transform-block-scoping'
       ]
     }).then(results => {
       let outputPath = results.directory;

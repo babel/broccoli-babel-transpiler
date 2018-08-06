@@ -1,3 +1,3 @@
 "use strict";
 
-module.exports = 'transform-strict-mode';
+module.exports = '@babel/transform-strict-mode';
