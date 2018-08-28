@@ -916,6 +916,7 @@ describe('on error', function() {
     return babel('errors', {
       inputSourceMap: false,
       sourceMap: false,
+      highlightCode: false,
       plugins: [
         pluginFunction,
         '@babel/transform-block-scoping'
@@ -934,6 +935,7 @@ describe('on error', function() {
     return babel('errors', {
       inputSourceMap: false,
       sourceMap: false,
+      highlightCode: false,
       plugins: [
         '@babel/transform-strict-mode',
         '@babel/transform-block-scoping'
