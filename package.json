@@ -1,6 +1,6 @@
 {
   "name": "broccoli-babel-transpiler",
-  "version": "6.5.0",
+  "version": "7.0.0-beta.4",
   "description": "A Broccoli plugin which transpile ES6 to readable ES5 by using babel.",
   "main": "index.js",
   "files": [
@@ -35,23 +35,25 @@
   },
   "homepage": "https://github.com/babel/broccoli-babel-transpiler",
   "dependencies": {
-    "babel-core": "^6.26.0",
+    "@babel/core": "^7.0.0",
     "broccoli-funnel": "^2.0.1",
-    "broccoli-merge-trees": "^2.0.0",
+    "broccoli-merge-trees": "^3.0.0",
     "broccoli-persistent-filter": "^1.4.3",
-    "clone": "^2.0.0",
+    "clone": "^2.1.2",
     "hash-for-dep": "^1.2.3",
-    "heimdalljs-logger": "^0.1.7",
-    "json-stable-stringify": "^1.0.0",
-    "rsvp": "^4.8.2",
-    "workerpool": "^2.3.0"
+    "heimdalljs-logger": "^0.1.9",
+    "json-stable-stringify": "^1.0.1",
+    "rsvp": "^4.8.3",
+    "workerpool": "^2.3.1"
   },
   "devDependencies": {
+    "@babel/plugin-transform-block-scoping": "^7.0.0",
+    "@babel/plugin-transform-classes": "^7.0.0",
+    "@babel/plugin-transform-modules-amd": "^7.0.0",
+    "@babel/plugin-transform-strict-mode": "^7.0.0",
     "amd-name-resolver": "1.2.0",
-    "babel-plugin-transform-es2015-block-scoping": "^6.26.0",
-    "babel-plugin-transform-es2015-classes": "^6.9.0",
-    "babel-plugin-transform-es2015-modules-amd": "^6.4.3",
-    "babel-plugin-transform-strict-mode": "^6.3.13",
+    "babel-plugin-module-resolver": "^3.1.1",
+    "broccoli": "^0.16.3",
     "broccoli-test-helpers": "0.0.9",
     "chai": "^4.1.2",
     "mkdirp": "^0.5.1",
@@ -59,6 +61,6 @@
     "ps-node": "^0.1.6"
   },
   "engines": {
-    "node": ">= 4"
+    "node": ">= 6"
   }
 }

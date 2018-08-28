@@ -61,7 +61,7 @@ function Babel(inputTree, _options) {
   delete this.options.helperWhiteList;
 
   if (this.options.browserPolyfill) {
-    let babelCorePath = require.resolve('babel-core');
+    var babelCorePath = require.resolve('@babel/core');
     babelCorePath = babelCorePath.replace(/\/babel-core\/.*$/, '/babel-core');
 
     let polyfill = funnel(babelCorePath, { files: ['browser-polyfill.js'] });
@@ -202,7 +202,7 @@ Babel.prototype.cacheKeyProcessString = function(string, relativePath) {
 Babel.prototype.processString = function(string, relativePath) {
   let options = this.copyOptions();
 
-  options.filename = options.sourceMapTarget = options.sourceFileName = relativePath;
+  options.filename = options.sourceFileName = relativePath;
 
   if (options.moduleId === true) {
     options.moduleId = replaceExtensions(this.extensionsRegex, options.filename);
@@ -210,7 +210,6 @@ Babel.prototype.processString = function(string, relativePath) {
 
   return this.transform(string, options)
     .then(transpiled => {
-
       if (this.helperWhiteList) {
         let invalidHelpers = transpiled.metadata.usedHelpers.filter(helper => {
           return this.helperWhiteList.indexOf(helper) === -1;
