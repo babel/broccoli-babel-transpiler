@@ -208,7 +208,8 @@ Babel.prototype.processString = function(string, relativePath) {
     options.moduleId = replaceExtensions(this.extensionsRegex, options.filename);
   }
 
-  return this.transform(string, options)
+  let optionsObj = { 'babel' : options, 'cacheKey' : this._optionsHash};
+  return this.transform(string, optionsObj)
     .then(transpiled => {
       if (this.helperWhiteList) {
         let invalidHelpers = transpiled.metadata.usedHelpers.filter(helper => {

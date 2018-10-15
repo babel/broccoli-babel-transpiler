@@ -178,14 +178,14 @@ describe('options', function() {
     expect(transpilerOptions).to.eql(undefined);
     babel.processString('path', 'relativePath');
 
-    expect(transpilerOptions.foo).to.eql(1);
-    expect(transpilerOptions.bar.baz).to.eql(1);
+    expect(transpilerOptions.babel.foo).to.eql(1);
+    expect(transpilerOptions.babel.bar.baz).to.eql(1);
 
     options.foo = 2;
     options.bar.baz = 2;
 
-    expect(transpilerOptions.foo).to.eql(1);
-    expect(transpilerOptions.bar.baz).to.eql(1);
+    expect(transpilerOptions.babel.foo).to.eql(1);
+    expect(transpilerOptions.babel.bar.baz).to.eql(1);
   });
 
   it('correct fileName, sourceMapTarget, sourceFileName', function() {
@@ -199,9 +199,9 @@ describe('options', function() {
     expect(transpilerOptions).to.eql(undefined);
     babel.processString('path', 'relativePath');
 
-    expect(transpilerOptions.moduleId).to.eql(undefined);
-    expect(transpilerOptions.filename).to.eql('relativePath');
-    expect(transpilerOptions.sourceFileName).to.eql('relativePath');
+    expect(transpilerOptions.babel.moduleId).to.eql(undefined);
+    expect(transpilerOptions.babel.filename).to.eql('relativePath');
+    expect(transpilerOptions.babel.sourceFileName).to.eql('relativePath');
   });
 
   it('includes moduleId if options.moduleId is true', function() {
@@ -218,7 +218,7 @@ describe('options', function() {
     expect(transpilerOptions).to.eql(undefined);
     babel.processString('path', 'relativePath');
 
-    expect(transpilerOptions.moduleId).to.eql('relativePath');
+    expect(transpilerOptions.babel.moduleId).to.eql('relativePath');
   });
 
   it('does not propagate filterExtensions', function () {
@@ -1443,12 +1443,16 @@ describe('workerpool', function() {
 
   beforeEach(function() {
     options = {
-      inputSourceMap: false,
-      sourceMap: false, plugins: [
-        '@babel/transform-strict-mode',
-        '@babel/transform-block-scoping'
-      ]
+      babel: {
+        inputSourceMap: false,
+        sourceMap: false, plugins: [
+          '@babel/transform-strict-mode',
+          '@babel/transform-block-scoping'
+        ]
+      },
+      cacheKey : "cache-key"
     };
+
   });
 
   afterEach(function() {
