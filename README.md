@@ -17,8 +17,8 @@ $ npm install broccoli-babel-transpiler --save-dev
 In your `Brocfile.js`:
 
 ```js
-const esTranspiler = require('broccoli-babel-transpiler');
-const scriptTree = esTranspiler(inputTree, babelOptions);
+const babel = require('broccoli-babel-transpiler');
+const scriptTree = babel(inputTree, babelOptions);
 ```
 
 Note that, since Babel 6 (and v6 of this plugin), you need to be specific as to
@@ -37,6 +37,7 @@ $ npm install babel-preset-env
 And then run the transform like this:
 
 ```js
+const babel = require('broccoli-babel-transpiler');
 let scriptTree = babel(inputTree, {
   presets: [
     ['env', {
