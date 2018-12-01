@@ -4,9 +4,6 @@ node_js:
   - "lts/carbon"
   - "10"
 
-sudo: false
-dist: trusty
-
 cache:
   yarn: true
 
