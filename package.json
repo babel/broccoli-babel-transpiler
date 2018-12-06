@@ -8,6 +8,7 @@
     "lib"
   ],
   "scripts": {
+    "changelog": "lerna-changelog",
     "test": "mocha tests/test.js",
     "test:debug": "mocha debug tests/test.js",
     "test:slow": "mocha tests/test-slow.js",
@@ -56,6 +57,7 @@
     "broccoli": "^0.16.3",
     "broccoli-test-helpers": "0.0.9",
     "chai": "^4.1.2",
+    "lerna-changelog": "^0.8.2",
     "mkdirp": "^0.5.1",
     "mocha": "^5.2.0",
     "ps-node": "^0.1.6"
