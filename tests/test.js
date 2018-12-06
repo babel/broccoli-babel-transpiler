@@ -1312,6 +1312,18 @@ describe('serialize()', function() {
     expect(ParallelApi.serialize(options)).to.eql(options);
   });
 
+  it('does not crash for null', function() {
+    expect(ParallelApi.serialize(null)).to.eql(null);
+  });
+
+  it('does not crash for nested null', function() {
+    let options = {
+      foo: 'bar',
+      baz: null,
+    };
+    expect(ParallelApi.serialize(options)).to.eql(options);
+  });
+
   it('transforms all functions', function() {
     let serialized = ParallelApi.serialize({
       moduleResolve: moduleResolveParallel,
