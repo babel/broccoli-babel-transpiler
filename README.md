@@ -103,6 +103,17 @@ const esTranspiler = require('broccoli-babel-transpiler');
 let scriptTree = esTranspiler(inputTree, { browserPolyfill: true });
 ```
 
+By default, the polyfill will appear as `./browser-polyfill.js` in the output
+tree. You can specify a custom output path and filename by supplying a (relative)
+filename in the `browserPolyfillPath` option:
+
+```js
+let scriptTree = esTranspiler(inputTree, {
+  browserPolyfill: true,
+  browserPolyfillPath: 'vendor/polyfill.js'
+})
+```
+
 ## Plugins
 
 Use of custom plugins works similarly to `babel` itself. You would pass a

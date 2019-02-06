@@ -2,7 +2,7 @@
 
 const Filter     = require('broccoli-persistent-filter');
 const clone      = require('clone');
-const fs         = require('fs');
+const path       = require('path');
 const stringify  = require('json-stable-stringify');
 const mergeTrees = require('broccoli-merge-trees');
 const funnel     = require('broccoli-funnel');
@@ -34,6 +34,21 @@ function Babel(inputTree, _options) {
   let options = _options || {};
   options.persist = 'persist' in options ? options.persist : true;
   options.async = true;
+
+  if (options.browserPolyfill) {
+    let polyfillPath = require.resolve('@babel/polyfill/package.json');
+    polyfillPath = path.join(path.dirname(polyfillPath), "dist");
+
+    let browserPolyfillPath = options.browserPolyfillPath || "browser-polyfill.js"
+    let polyfill = funnel(polyfillPath, {
+      files: ['polyfill.js'],
+      getDestinationPath: () => browserPolyfillPath
+    });
+    inputTree = mergeTrees([polyfill, inputTree]);
+  }
+  delete options.browserPolyfill;
+  delete options.browserPolyfillPath;
+
   Filter.call(this, inputTree, options);
 
   delete options.persist;
@@ -59,17 +74,6 @@ function Babel(inputTree, _options) {
   // Note, Babel does not support this option so we must save it then
   // delete it from the options hash
   delete this.options.helperWhiteList;
-
-  if (this.options.browserPolyfill) {
-    var babelCorePath = require.resolve('@babel/core');
-    babelCorePath = babelCorePath.replace(/\/babel-core\/.*$/, '/babel-core');
-
-    let polyfill = funnel(babelCorePath, { files: ['browser-polyfill.js'] });
-    this.inputTree = mergeTrees([polyfill, inputTree]);
-  } else {
-    this.inputTree = inputTree;
-  }
-  delete this.options.browserPolyfill;
 
   let result = transformIsParallelizable(options);
   let isParallelizable = result.isParallelizable;
