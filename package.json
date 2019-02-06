@@ -37,6 +37,7 @@
   "homepage": "https://github.com/babel/broccoli-babel-transpiler",
   "dependencies": {
     "@babel/core": "^7.0.0",
+    "@babel/polyfill": "^7.0.0",
     "broccoli-funnel": "^2.0.1",
     "broccoli-merge-trees": "^3.0.0",
     "broccoli-persistent-filter": "^1.4.3",
