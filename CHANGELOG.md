@@ -1,3 +1,17 @@
+## v7.1.2 (2019-02-08)
+
+#### :bug: Bug Fix
+* [#163](https://github.com/babel/broccoli-babel-transpiler/pull/163) Prevent mismatch between worker and host process. ([@rwjblue](https://github.com/rwjblue))
+* [#162](https://github.com/babel/broccoli-babel-transpiler/pull/162) Fix browser polyfill for Babel 7 ([@Elberet](https://github.com/Elberet))
+
+#### :memo: Documentation
+* [#160](https://github.com/babel/broccoli-babel-transpiler/pull/160) Add Changelog ([@Turbo87](https://github.com/Turbo87))
+
+#### Committers: 3
+- Jens Maier ([@Elberet](https://github.com/Elberet))
+- Robert Jackson ([@rwjblue](https://github.com/rwjblue))
+- Tobias Bieniek ([@Turbo87](https://github.com/Turbo87))
+
 ## v7.1.1 (2018-12-06)
 
 #### :bug: Bug Fix
