@@ -530,7 +530,7 @@ broccoli-test-helpers@0.0.9:
     rsvp "^3.0.17"
     walk-sync "^0.2.6"
 
-broccoli@^0.16.2, broccoli@^0.16.3:
+broccoli@^0.16.2:
   version "0.16.9"
   resolved "https://registry.yarnpkg.com/broccoli/-/broccoli-0.16.9.tgz#b87ca679f09005c576901a9bc19f5df77efd55a4"
   dependencies:
