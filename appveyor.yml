@@ -11,17 +11,12 @@ install:
   - git rev-parse HEAD
   # Get the latest stable version of Node 0.STABLE.latest
   - ps: Install-Product node $env:nodejs_version
-  # Typical npm stuff.
-  - md C:\nc
-  - npm config set cache C:\nc
-  - npm version
-  - npm install --no-optional
+  - appveyor-retry yarn
 
 # Post-install test scripts.
 test_script:
   # Output useful info for debugging.
-  - npm version
-  - cmd: npm run test:all
+  - cmd: yarn run test:all
 
 # Don't actually build.
 build: off
