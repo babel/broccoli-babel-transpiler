@@ -1,3 +1,9 @@
+
+## v7.2.0 (2019-02-25)
+
+* If available use node workerThreads
+* upgrade and cleanup dependencies
+
 ## v7.1.2 (2019-02-08)
 
 #### :bug: Bug Fix
