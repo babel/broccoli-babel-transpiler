@@ -4,7 +4,6 @@ const fs = require('fs');
 const os = require('os');
 const expect = require('chai').expect;
 const path = require('path');
-const ps = require('ps-node');
 const Babel = require('../');
 const helpers = require('broccoli-test-helpers');
 const stringify = require('json-stable-stringify');
@@ -1480,26 +1479,44 @@ describe('workerpool', function() {
     delete require.cache[parallelApiPath];
     let ParallelApiTwo = require(PATH);
 
-    let lookup = RSVP.denodeify(ps.lookup);
-
     return Promise.all([
       ParallelApiOne.transformString(stringToTransform, options),
       ParallelApiOne.transformString(stringToTransform, options),
       ParallelApiTwo.transformString(stringToTransform, options),
       ParallelApiTwo.transformString(stringToTransform, options),
     ]).then(() => {
-      // for ps-node,
-      // unix paths look like 'broccoli-babel-transpiler/lib/worker.js'
-      // windows paths look like 'broccoli-babel-transpiler\\lib\\worker.js' (2 path separators)
-      const processMatch = (os.platform() === 'win32')
-        ? 'broccoli-babel-transpiler\\\\lib\\\\worker.js'
-        : path.join('broccoli-babel-transpiler', 'lib', 'worker.js');
-      return lookup({
-        command: 'node',
-        arguments: processMatch,
-      });
-    }).then((resultList) => {
-      expect(resultList.length).to.eql(2);
+      const pool = ParallelApi.getWorkerPool();
+      expect(pool).to.eql(ParallelApiTwo.getWorkerPool());
+      expect(pool.workers.length).to.eql(2);
+    });
+  });
+
+  it('if available should use workerThreads', function() {
+    this.timeout(5*1000);
+
+    return Promise.all([
+      ParallelApi.transformString(stringToTransform, options),
+      ParallelApi.transformString(stringToTransform, options),
+    ]).then(() => {
+      const pool = ParallelApi.getWorkerPool();
+      let hasWorkerThreads = false;
+      try {
+        require('worker_threads');
+        hasWorkerThreads = true;
+      } catch (e) {
+        if (e.code === 'MODULE_NOT_FOUND') {
+          hasWorkerThreads = false;
+        } else {
+          throw e;
+        }
+      }
+
+      expect(pool.workers.length).to.eql(2);
+      if (hasWorkerThreads) {
+        pool.workers.forEach(worker => expect(worker.worker.isWorkerThread).to.eql(true));
+      } else {
+        pool.workers.forEach(worker => expect(worker.worker.isChildProcess).to.eql(true));
+      }
     });
   });
 });
