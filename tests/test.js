@@ -967,7 +967,7 @@ describe('on error', function() {
         expect.fail('', '', 'babel should throw an error');
       },
       function onFailure(err) {
-        expect(err.message).to.eql('Worker terminated unexpectedly');
+        expect(err.message).to.match(/Worker terminated unexpectedly/);
       }
     );
   });
