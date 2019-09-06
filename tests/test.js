@@ -1363,7 +1363,7 @@ describe('buildFromParallelApiInfo()', function() {
       expect.fail('', '', 'should have thrown an error');
     }
     catch (err) {
-      expect(err.message).to.eql("Cannot find module 'some/file/that/does/not/exist'");
+      expect(err.message).to.match(/Cannot find module 'some\/file\/that\/does\/not\/exist'/);
     }
   });
 
