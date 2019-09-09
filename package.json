@@ -57,6 +57,7 @@
     "babel-plugin-module-resolver": "^3.2.0",
     "broccoli-test-helpers": "0.0.9",
     "chai": "^4.2.0",
+    "fixturify-project": "^1.9.0",
     "lerna-changelog": "^0.8.2",
     "mkdirp": "^0.5.1",
     "mocha": "^6.0.1",

@@ -4,8 +4,8 @@ const expect = require('chai').expect;
 const optionsHash = require('../../lib/options-hash');
 const VALID_HASH = /^[a-z0-9]{32}$/;
 
-const PLUGIN_A_PATH = __dirname + '../fixtures/plugin-a/';
-const PLUGIN_B_PATH = __dirname + '../fixtures/plugin-ab';
+const PLUGIN_A_PATH = __dirname + '/../fixtures/plugin-a/';
+const PLUGIN_B_PATH = __dirname + '/../fixtures/plugin-ab';
 
 describe('optionsHash', function() {
   const warnWasCalledWith = [];
@@ -20,8 +20,8 @@ describe('optionsHash', function() {
   });
 
   it('handles simple scenarios', function() {
-    expect(optionsHash({ plugins:[] }), console).to.match(VALID_HASH);
-    expect(optionsHash({ plugins:[] }), console).to.eql(optionsHash({plugins: []}));
+    expect(optionsHash({ plugins: [] }), console).to.match(VALID_HASH);
+    expect(optionsHash({ plugins: [] }), console).to.eql(optionsHash({plugins: []}));
 
     expect(warnWasCalledWith.length).to.eql(0);
   });
@@ -222,6 +222,40 @@ describe('optionsHash', function() {
 
       expect(hash3).to.match(VALID_HASH);
       expect(hash1).to.not.eql(hash3);
+    });
+
+    it('handles absolute path plugins', function() {
+      const Project = require('fixturify-project');
+      const project = new Project('rsvp', '3.1.4');
+
+      project.writeSync();
+
+      const hash1 = optionsHash({ plugins: [project.root + '/' + project.name]}, console);
+      const hash1b = optionsHash({ plugins: [project.root + '/' + project.name, {}]}, console);
+      const hash1c = optionsHash({ plugins: [project.root + '/' + project.name, { one: 2 }]}, console);
+
+      expect(hash1).to.eql(hash1b);
+      expect(hash1).to.not.eql(hash1c);
+
+      project.version = '3.1.5';
+      project.writeSync();
+
+      const hash2 = optionsHash({ plugins: [project.root + '/' + project.name]}, console);
+      expect(hash1).to.eql(hash2);
+
+      require('hash-for-dep')._resetCache();
+
+      project.version = '3.1.6';
+      project.writeSync();
+
+      const hash3 = optionsHash({ plugins: [project.root + '/' + project.name]}, console);
+      expect(hash2).to.not.eql(hash3);
+
+      project.version = '3.1.7';
+      project.writeSync();
+
+      const hash4 = optionsHash({ plugins: [project.root + '/' + project.name]}, console);
+      expect(hash3).to.eql(hash4);
     });
 
     it('handles objects \w cacheKey()', function() {
