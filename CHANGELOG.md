@@ -1,4 +1,12 @@
 
+## v7.3.0 (2019-09-23)
+
+#### :bug: Bug Fix
+* [#173](https://github.com/babel/broccoli-babel-transpiler/pull/173) Fix options hash generation ([@stefanpenner](https://github.com/stefanpenner))
+
+#### Committers: 1
+- Stefan Penner ([@stefanpenner](https://github.com/stefanpenner))
+
 ## v7.2.0 (2019-02-25)
 
 * If available use node workerThreads
