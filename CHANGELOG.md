@@ -1,3 +1,11 @@
+## v7.4.0 (2020-01-22)
+
+#### :rocket: Enhancement
+* [#179](https://github.com/babel/broccoli-babel-transpiler/pull/179) Update Babel dependencies to v7.8.3 ([@Turbo87](https://github.com/Turbo87))
+
+#### Committers: 1
+- Tobias Bieniek ([@Turbo87](https://github.com/Turbo87))
+
 
 ## v7.3.0 (2019-09-23)
 
@@ -7,10 +15,12 @@
 #### Committers: 1
 - Stefan Penner ([@stefanpenner](https://github.com/stefanpenner))
 
+
 ## v7.2.0 (2019-02-25)
 
 * If available use node workerThreads
 * upgrade and cleanup dependencies
+
 
 ## v7.1.2 (2019-02-08)
 
@@ -25,6 +35,7 @@
 - Jens Maier ([@Elberet](https://github.com/Elberet))
 - Robert Jackson ([@rwjblue](https://github.com/rwjblue))
 - Tobias Bieniek ([@Turbo87](https://github.com/Turbo87))
+
 
 ## v7.1.1 (2018-12-06)
 
