@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - 'v*' # older version branches
+    tags:
+      - '*'
+
+  pull_request: {}
+  schedule:
+  - cron:  '0 6 * * 0' # weekly, on sundays
+
+jobs:
+  test:
+    name: "Node ${{ matrix.node }} - ${{ matrix.os }}"
+    runs-on: "${{matrix.os}}-latest"
+
+    strategy:
+      matrix:
+        os: ['ubuntu', 'windows', 'macOS']
+        node: ['10', '12', '14']
+
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node }}
+    - name: install dependencies
+      run: yarn install --frozen-lockfile
+    - name: test
+      run: yarn test
+
+  floating-test:
+    name: Floating dependencies
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+      with:
+        node-version: '14.x'
+    - name: install dependencies
+      run: yarn install --no-lockfile
+    - name: test
+      run: yarn test
+
