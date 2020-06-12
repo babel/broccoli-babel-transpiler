@@ -1,3 +1,15 @@
+## v7.5.0 (2020-06-12)
+
+#### :rocket: Enhancement
+* [#182](https://github.com/babel/broccoli-babel-transpiler/pull/182) Update the minimum Babel dependencies to 7.10 ([@rwjblue](https://github.com/rwjblue))
+
+#### :house: Internal
+* [#178](https://github.com/babel/broccoli-babel-transpiler/pull/178) Add dependabot config file ([@Turbo87](https://github.com/Turbo87))
+
+#### Committers: 2
+- Robert Jackson ([@rwjblue](https://github.com/rwjblue))
+- Tobias Bieniek ([@Turbo87](https://github.com/Turbo87))
+
 ## v7.4.0 (2020-01-22)
 
 #### :rocket: Enhancement
