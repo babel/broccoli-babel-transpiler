@@ -1,3 +1,11 @@
+##  v7.6.0 (2020-06-23)
+
+#### :rocket: Enhancement
+* [#181](https://github.com/babel/broccoli-babel-transpiler/pull/181) [feature] adds heimdall monitor for logging information helpful for debugging babel process ([@gabrielcsapo](https://github.com/gabrielcsapo))
+
+#### Committers: 1
+- Gabriel Csapo ([@gabrielcsapo](https://github.com/gabrielcsapo))
+
 ## v7.5.0 (2020-06-12)
 
 #### :rocket: Enhancement
