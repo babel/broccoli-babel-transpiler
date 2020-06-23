@@ -5,9 +5,10 @@ const clone      = require('clone');
 const path       = require('path');
 const mergeTrees = require('broccoli-merge-trees');
 const funnel     = require('broccoli-funnel');
-const transformString = require('./lib/parallel-api').transformString;
-const transformIsParallelizable = require('./lib/parallel-api').transformIsParallelizable;
+const { transformString } = require('./lib/parallel-api');
+const { transformIsParallelizable } = require('./lib/parallel-api');
 const optionsHash = require('./lib/options-hash');
+const heimdall = require('heimdalljs');
 
 function getExtensionsRegex(extensions) {
   return extensions.map(extension => {
@@ -21,6 +22,13 @@ function replaceExtensions(extensionsRegex, name) {
   }
 
   return name;
+}
+
+if(!heimdall.hasMonitor('babel')) {
+  heimdall.registerMonitor('babel', function BabelSchema() {
+    this.stringsProcessed = 0;
+    this.isParallelizable = false;
+  });
 }
 
 module.exports = Babel;
@@ -74,9 +82,9 @@ function Babel(inputTree, _options) {
   // delete it from the options hash
   delete this.options.helperWhiteList;
 
-  let result = transformIsParallelizable(options);
-  let isParallelizable = result.isParallelizable;
-  let errors = result.errors;
+  let { isParallelizable, errors } = transformIsParallelizable(options);
+
+  heimdall.statsFor('babel').isParallelizable = isParallelizable;
 
   if ((this.throwUnlessParallelizable || process.env.THROW_UNLESS_PARALLELIZABLE) && isParallelizable === false) {
     throw new Error(this.toString() +
@@ -125,6 +133,8 @@ Babel.prototype.cacheKeyProcessString = function(string, relativePath) {
 };
 
 Babel.prototype.processString = function(string, relativePath) {
+  heimdall.statsFor('babel').stringsProcessed++;
+
   let options = this.copyOptions();
 
   options.filename = options.sourceFileName = relativePath;
