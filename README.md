@@ -53,7 +53,7 @@ let scriptTree = babel(inputTree, {
 
 You'll find three example projects using this plugin in the repository
 [broccoli-babel-examples](https://github.com/givanse/broccoli-babel-examples).
-Each one of them builds on top of the previous example so you can progess from
+Each one of them builds on top of the previous example so you can progress from
 bare minimum to ambitious development.
 
  * [es6-fruits](https://github.com/givanse/broccoli-babel-examples/tree/master/es6-fruits) - Execute a single ES6 script.
