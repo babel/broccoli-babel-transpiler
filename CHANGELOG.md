@@ -1,3 +1,15 @@
+## v7.7.0 (2020-07-30)
+
+#### :rocket: Enhancement
+* [#186](https://github.com/babel/broccoli-babel-transpiler/pull/186) Update minimum @babel/core version to 7.11.0. ([@rwjblue](https://github.com/rwjblue))
+
+#### :memo: Documentation
+* [#184](https://github.com/babel/broccoli-babel-transpiler/pull/184) Fix typo in README ([@kant](https://github.com/kant))
+
+#### Committers: 2
+- Darío Hereñú ([@kant](https://github.com/kant))
+- Robert Jackson ([@rwjblue](https://github.com/rwjblue))
+
 ##  v7.6.0 (2020-06-23)
 
 #### :rocket: Enhancement
