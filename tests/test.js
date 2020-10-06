@@ -6,8 +6,6 @@ const expect = require('chai').expect;
 const path = require('path');
 const Babel = require('../');
 const helpers = require('broccoli-test-helpers');
-const stringify = require('json-stable-stringify');
-const mkdirp = require('mkdirp').sync;
 const makeTestHelper = helpers.makeTestHelper;
 const cleanupBuilders = helpers.cleanupBuilders;
 const RSVP = require('rsvp');
@@ -93,7 +91,7 @@ describe('options', function() {
   });
 
   describe('throwUnlessParallelizable', function() {
-    const EXPECTED_PARALLEL_ERROR = /broccoli-persistent-filter:Babel./;
+    const EXPECTED_PARALLEL_ERROR = /\[Babel\] was configured to `throwUnlessParallelizable` and was unable to parallelize a plugin/;
 
     it('should throw if throwUnlessParallelizable: true, and one or more plugins could not be parallelized', function() {
       const options = {
@@ -941,7 +939,7 @@ describe('on error', function() {
         '@babel/transform-block-scoping'
       ]
     }).then(
-      function onSuccess(results) {
+      function onSuccess() {
         expect.fail('', '', 'babel should throw an error');
       },
       function onFailure(err) {
