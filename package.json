@@ -38,8 +38,6 @@
   "dependencies": {
     "@babel/core": "^7.11.0",
     "@babel/polyfill": "^7.10.4",
-    "broccoli-funnel": "^2.0.2",
-    "broccoli-merge-trees": "^3.0.2",
     "broccoli-persistent-filter": "^3.0.0",
     "clone": "^2.1.2",
     "hash-for-dep": "^1.4.7",
@@ -47,7 +45,7 @@
     "heimdalljs-logger": "^0.1.9",
     "json-stable-stringify": "^1.0.1",
     "rsvp": "^4.8.4",
-    "workerpool": "^3.1.1"
+    "workerpool": "^6.0.2"
   },
   "devDependencies": {
     "@babel/plugin-transform-block-scoping": "^7.10.5",
