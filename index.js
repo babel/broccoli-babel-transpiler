@@ -41,20 +41,6 @@ function Babel(inputTree, _options) {
   options.persist = 'persist' in options ? options.persist : true;
   options.async = true;
 
-  if (options.browserPolyfill) {
-    let polyfillPath = require.resolve('@babel/polyfill/package.json');
-    polyfillPath = path.join(path.dirname(polyfillPath), "dist");
-
-    let browserPolyfillPath = options.browserPolyfillPath || "browser-polyfill.js"
-    let polyfill = funnel(polyfillPath, {
-      files: ['polyfill.js'],
-      getDestinationPath: () => browserPolyfillPath
-    });
-    inputTree = mergeTrees([polyfill, inputTree]);
-  }
-  delete options.browserPolyfill;
-  delete options.browserPolyfillPath;
-
   Filter.call(this, inputTree, options);
 
   delete options.persist;
