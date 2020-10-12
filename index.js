@@ -31,51 +31,113 @@ if(!heimdall.hasMonitor('babel')) {
   });
 }
 
-module.exports = Babel;
-function Babel(inputTree, _options) {
-  if (!(this instanceof Babel)) {
-    return new Babel(inputTree, _options);
+module.exports = class Babel extends Filter {
+  constructor(inputTree, options = {}) {
+    options.persist = 'persist' in options ? options.persist : true;
+    options.async = true;
+
+    super(inputTree, options);
+
+    delete options.persist;
+    delete options.async;
+    delete options.annotation;
+    delete options.description;
+
+    this._optionsHash = null;
+    this.console = options.console || console;
+    this.throwUnlessParallelizable = options.throwUnlessParallelizable;
+
+    delete options.console;
+    delete options.throwUnlessParallelizable;
+
+    this.inputTree = inputTree;
+    this.options = options;
+    this.extensions = this.options.filterExtensions || ['js'];
+    this.targetExtension = 'js';
+    this.extensionsRegex = getExtensionsRegex(this.extensions);
+    this.name = 'broccoli-babel-transpiler';
+
+
+    if (this.options.helperWhiteList) {
+      this.helperWhiteList = this.options.helperWhiteList;
+    }
+
+    // Note, Babel does not support this option so we must save it then
+    // delete it from the options hash
+    delete this.options.helperWhiteList;
+
+    let { isParallelizable, errors } = transformIsParallelizable(options);
+
+    heimdall.statsFor('babel').isParallelizable = isParallelizable;
+
+    if ((this.throwUnlessParallelizable || process.env.THROW_UNLESS_PARALLELIZABLE) && isParallelizable === false) {
+      throw new Error(this.toString() +
+        ' was configured to `throwUnlessParallelizable` and was unable to parallelize a plugin. \nplugins:\n' + joinCount(errors) + '\nPlease see: https://github.com/babel/broccoli-babel-transpiler#parallel-transpilation for more details');
+    }
   }
 
-  let options = _options || {};
-  options.persist = 'persist' in options ? options.persist : true;
-  options.async = true;
-
-  Filter.call(this, inputTree, options);
-
-  delete options.persist;
-  delete options.async;
-  delete options.annotation;
-  delete options.description;
-
-  this._optionsHash = null;
-  this.console = options.console || console;
-  this.throwUnlessParallelizable = options.throwUnlessParallelizable;
-
-  delete options.console;
-  delete options.throwUnlessParallelizable;
-
-  this.options = options;
-  this.extensions = this.options.filterExtensions || ['js'];
-  this.extensionsRegex = getExtensionsRegex(this.extensions);
-  this.name = 'broccoli-babel-transpiler';
-
-  if (this.options.helperWhiteList) {
-    this.helperWhiteList = this.options.helperWhiteList;
+  baseDir() {
+    return __dirname;
   }
 
-  // Note, Babel does not support this option so we must save it then
-  // delete it from the options hash
-  delete this.options.helperWhiteList;
-
-  let { isParallelizable, errors } = transformIsParallelizable(options);
-
-  heimdall.statsFor('babel').isParallelizable = isParallelizable;
-
-  if ((this.throwUnlessParallelizable || process.env.THROW_UNLESS_PARALLELIZABLE) && isParallelizable === false) {
-    throw new Error(this.toString() +
-      ' was configured to `throwUnlessParallelizable` and was unable to parallelize a plugin. \nplugins:\n' + joinCount(errors) + '\nPlease see: https://github.com/babel/broccoli-babel-transpiler#parallel-transpilation for more details');
+  transform(string, options) {
+    return transformString(string, options);
   }
+
+  /*
+    * @private
+    *
+    * @method optionsString
+    * @returns a stringified version of the input options
+    */
+  optionsHash() {
+    if (this._optionsHash == null) {
+      this._optionsHash = optionsHash(this.options, this.console);
+    }
+
+    return this._optionsHash;
+  }
+
+  cacheKeyProcessString(string, relativePath) {
+    return this.optionsHash() + Filter.prototype.cacheKeyProcessString.call(this, string, relativePath);
+  }
+
+  processString(string, relativePath) {
+    heimdall.statsFor('babel').stringsProcessed++;
+
+    let options = this.copyOptions();
+
+    options.filename = options.sourceFileName = relativePath;
+
+    if (options.moduleId === true) {
+      options.moduleId = replaceExtensions(this.extensionsRegex, options.filename);
+    }
+
+    let optionsObj = { 'babel' : options, 'cacheKey' : this._optionsHash};
+    return this.transform(string, optionsObj)
+      .then(transpiled => {
+        if (this.helperWhiteList) {
+          let invalidHelpers = transpiled.metadata.usedHelpers.filter(helper => {
+            return this.helperWhiteList.indexOf(helper) === -1;
+          });
+
+          validateHelpers(invalidHelpers, relativePath);
+        }
+
+        return transpiled.code;
+      });
+  }
+
+  copyOptions() {
+    let cloned = clone(this.options);
+    if (cloned.filterExtensions) {
+      delete cloned.filterExtensions;
+    }
+    if (cloned.targetExtension) {
+      delete cloned.targetExtension;
+    }
+    return cloned;
+  };
 }
 
 function joinCount(list) {
@@ -87,73 +149,6 @@ function joinCount(list) {
 
   return summary;
 }
-
-Babel.prototype = Object.create(Filter.prototype);
-Babel.prototype.constructor = Babel;
-Babel.prototype.targetExtension = 'js';
-
-Babel.prototype.baseDir = function() {
-  return __dirname;
-};
-
-Babel.prototype.transform = function(string, options) {
-  return transformString(string, options);
-};
-
-/*
- * @private
- *
- * @method optionsString
- * @returns a stringified version of the input options
- */
-Babel.prototype.optionsHash = function() {
-  if (this._optionsHash == null) {
-    this._optionsHash =  optionsHash(this.options, this.console);
-  }
-
-  return this._optionsHash;
-};
-
-Babel.prototype.cacheKeyProcessString = function(string, relativePath) {
-  return this.optionsHash() + Filter.prototype.cacheKeyProcessString.call(this, string, relativePath);
-};
-
-Babel.prototype.processString = function(string, relativePath) {
-  heimdall.statsFor('babel').stringsProcessed++;
-
-  let options = this.copyOptions();
-
-  options.filename = options.sourceFileName = relativePath;
-
-  if (options.moduleId === true) {
-    options.moduleId = replaceExtensions(this.extensionsRegex, options.filename);
-  }
-
-  let optionsObj = { 'babel' : options, 'cacheKey' : this._optionsHash};
-  return this.transform(string, optionsObj)
-    .then(transpiled => {
-      if (this.helperWhiteList) {
-        let invalidHelpers = transpiled.metadata.usedHelpers.filter(helper => {
-          return this.helperWhiteList.indexOf(helper) === -1;
-        });
-
-        validateHelpers(invalidHelpers, relativePath);
-      }
-
-      return transpiled.code;
-    });
-};
-
-Babel.prototype.copyOptions = function() {
-  let cloned = clone(this.options);
-  if (cloned.filterExtensions) {
-    delete cloned.filterExtensions;
-  }
-  if (cloned.targetExtension) {
-    delete cloned.targetExtension;
-  }
-  return cloned;
-};
 
 function validateHelpers(invalidHelpers, relativePath) {
   if (invalidHelpers.length > 0) {

@@ -40,7 +40,7 @@
     "@babel/polyfill": "^7.10.4",
     "broccoli-funnel": "^2.0.2",
     "broccoli-merge-trees": "^3.0.2",
-    "broccoli-persistent-filter": "^2.2.1",
+    "broccoli-persistent-filter": "^3.0.0",
     "clone": "^2.1.2",
     "hash-for-dep": "^1.4.7",
     "heimdalljs": "^0.2.1",
@@ -65,6 +65,6 @@
     "ps-node": "^0.1.6"
   },
   "engines": {
-    "node": ">= 6"
+    "node": "10.* || >= 12.*"
   }
 }
