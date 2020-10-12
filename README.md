@@ -4,7 +4,7 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/a0nbd84m1x4y5fp5?svg=true)](https://ci.appveyor.com/project/embercli/broccoli-babel-transpiler)
 
 
-A [Broccoli](https://github.com/broccolijs/broccoli) plugin runs [Babel](https://github.com/babel/babel) plugins with caching and parallel capabilities..
+A [Broccoli](https://github.com/broccolijs/broccoli) plugin that runs [Babel](https://github.com/babel/babel) plugins with caching and parallel capabilities..
 
 ## How to install?
 
