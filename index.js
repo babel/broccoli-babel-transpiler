@@ -2,9 +2,6 @@
 
 const Filter     = require('broccoli-persistent-filter');
 const clone      = require('clone');
-const path       = require('path');
-const mergeTrees = require('broccoli-merge-trees');
-const funnel     = require('broccoli-funnel');
 const { transformString } = require('./lib/parallel-api');
 const { transformIsParallelizable } = require('./lib/parallel-api');
 const optionsHash = require('./lib/options-hash');
@@ -38,18 +35,9 @@ module.exports = class Babel extends Filter {
 
     super(inputTree, options);
 
-    delete options.persist;
-    delete options.async;
-    delete options.annotation;
-    delete options.description;
-
     this._optionsHash = null;
     this.console = options.console || console;
     this.throwUnlessParallelizable = options.throwUnlessParallelizable;
-
-    delete options.console;
-    delete options.throwUnlessParallelizable;
-
     this.inputTree = inputTree;
     this.options = options;
     this.extensions = this.options.filterExtensions || ['js'];
@@ -57,16 +45,11 @@ module.exports = class Babel extends Filter {
     this.extensionsRegex = getExtensionsRegex(this.extensions);
     this.name = 'broccoli-babel-transpiler';
 
-
     if (this.options.helperWhiteList) {
       this.helperWhiteList = this.options.helperWhiteList;
     }
 
-    // Note, Babel does not support this option so we must save it then
-    // delete it from the options hash
-    delete this.options.helperWhiteList;
-
-    let { isParallelizable, errors } = transformIsParallelizable(options);
+    let { isParallelizable, errors } = transformIsParallelizable(options.babel);
 
     heimdall.statsFor('babel').isParallelizable = isParallelizable;
 
@@ -107,13 +90,13 @@ module.exports = class Babel extends Filter {
 
     let options = this.copyOptions();
 
-    options.filename = options.sourceFileName = relativePath;
+    options.babel.filename = options.babel.sourceFileName = relativePath;
 
-    if (options.moduleId === true) {
-      options.moduleId = replaceExtensions(this.extensionsRegex, options.filename);
+    if (options.babel.moduleId === true) {
+      options.babel.moduleId = replaceExtensions(this.extensionsRegex, options.babel.filename);
     }
 
-    let optionsObj = { 'babel' : options, 'cacheKey' : this._optionsHash};
+    let optionsObj = { babel: options.babel, cacheKey: this._optionsHash};
     return this.transform(string, optionsObj)
       .then(transpiled => {
         if (this.helperWhiteList) {

@@ -55,9 +55,11 @@ describe('options', function() {
 
   before(function() {
     options = {
-      foo: 1,
-      bar: {
-        baz: 1
+      babel: {
+        foo: 1,
+        bar: {
+          baz: 1
+        },
       },
       filterExtensions: ['es6'],
       targetExtension: 'js'
@@ -95,8 +97,10 @@ describe('options', function() {
 
     it('should throw if throwUnlessParallelizable: true, and one or more plugins could not be parallelized', function() {
       const options = {
+        babel: {
+          plugins: [function() { }],
+        },
         throwUnlessParallelizable: true,
-        plugins: [function() { }]
       };
 
       expect(() => new Babel('foo', options)).to.throw(EXPECTED_PARALLEL_ERROR);
@@ -104,8 +108,10 @@ describe('options', function() {
 
     it('should NOT throw if throwUnlessParallelizable: true, and all plugins can be parallelized', function() {
       const options = {
-        plugins: [ { foo: 1 }],
-        throwUnlessParallelizable: true
+        babel: {
+          plugins: [ { foo: 1 }],
+        },
+        throwUnlessParallelizable: true,
       };
 
       expect(() => new Babel('foo', options)).to.not.throw();
@@ -114,7 +120,9 @@ describe('options', function() {
     it('should throw if throwUnlessParallelizable: true, and one or more plugins could not be parallelized', function() {
       process.env.THROW_UNLESS_PARALLELIZABLE = true;
       const options = {
-        plugins: [function() { }]
+        babel: {
+          plugins: [function() { }],
+        },
       };
 
       expect(() => new Babel('foo', options)).to.throw(EXPECTED_PARALLEL_ERROR);
@@ -123,8 +131,10 @@ describe('options', function() {
     it('should NOT throw if throwUnlessParallelizable: true, and all plugins can be parallelized', function() {
       process.env.THROW_UNLESS_PARALLELIZABLE = true;
       const options = {
-        plugins: [ { foo: 1 }],
-        throwUnlessParallelizable: true
+        babel: {
+          plugins: [ { foo: 1 }],
+        },
+        throwUnlessParallelizable: true,
       };
 
       expect(() => new Babel('foo', options)).to.not.throw(EXPECTED_PARALLEL_ERROR);
@@ -132,8 +142,10 @@ describe('options', function() {
 
     it('should NOT throw if throwUnlessParallelizable: false, and one or more plugins could not be parallelized', function() {
       const options = {
-        plugins: [function() { }],
-        throwUnlessParallelizable: false
+        babel: {
+          plugins: [function() { }],
+        },
+        throwUnlessParallelizable: false,
       };
 
       expect(() => new Babel('foo', options)).to.not.throw();
@@ -149,18 +161,31 @@ describe('options', function() {
       };
 
       const options = {
-        plugins: [
-          Foo,
-          [Foo, { arg: 1 }]
-        ],
-        throwUnlessParallelizable: true
+        throwUnlessParallelizable: true,
+        babel: {
+          plugins: [
+            Foo,
+            [Foo, { arg: 1 }]
+          ],
+        }
       };
 
       expect(() => new Babel('foo', options)).to.not.throw();
     });
     it('should NOT throw if throwUnlessParallelizable is unset, and one or more plugins could not be parallelized', function() {
-      expect(() => new Babel('foo', { plugins: [function() {}], throwUnlessParallelizable: undefined })).to.not.throw();
-      expect(() => new Babel('foo', { plugins: [function() {}]})).to.not.throw();
+      expect(() => {
+        return new Babel('foo', {
+          babel: {
+            plugins: [function() {}]
+          },
+          throwUnlessParallelizable: undefined
+        })}).to.not.throw();
+      expect(() => {
+        return new Babel('foo', {
+          babel: {
+            plugins: [function() {}]
+          }
+        })}).to.not.throw();
     });
   });
 
@@ -178,8 +203,8 @@ describe('options', function() {
     expect(transpilerOptions.babel.foo).to.eql(1);
     expect(transpilerOptions.babel.bar.baz).to.eql(1);
 
-    options.foo = 2;
-    options.bar.baz = 2;
+    options.babel.foo = 2;
+    options.babel.bar.baz = 2;
 
     expect(transpilerOptions.babel.foo).to.eql(1);
     expect(transpilerOptions.babel.bar.baz).to.eql(1);
@@ -201,9 +226,9 @@ describe('options', function() {
     expect(transpilerOptions.babel.sourceFileName).to.eql('relativePath');
   });
 
-  it('includes moduleId if options.moduleId is true', function() {
-    babel.options.moduleId = true;
-    babel.options.filename = 'relativePath.es6';
+  it('includes moduleId if options.babel.moduleId is true', function() {
+    babel.options.babel.moduleId = true;
+    babel.options.babel.filename = 'relativePath.es6';
 
     let transpilerOptions;
 
@@ -266,12 +291,14 @@ describe('transpile ES6 to ES5', function() {
 
   it('basic', function () {
     return babel('files', {
-      inputSourceMap: false,
-      sourceMap: false,
-      plugins: [
-        '@babel/transform-strict-mode',
-        '@babel/transform-block-scoping'
-      ]
+      babel: {
+        inputSourceMap: false,
+        sourceMap: false,
+        plugins: [
+          '@babel/transform-strict-mode',
+          '@babel/transform-block-scoping'
+        ]
+      }
     }).then(results => {
       let outputPath = results.directory;
 
@@ -284,21 +311,23 @@ describe('transpile ES6 to ES5', function() {
 
   it('basic - parallel API', function () {
     return babel('files', {
-      inputSourceMap: false,
-      sourceMap: false,
-      plugins: [
-        {
-          _parallelBabel: {
-            requireFile: fixtureFullPath('transform-strict-mode-parallel'),
+      babel: {
+        inputSourceMap: false,
+        sourceMap: false,
+        plugins: [
+          {
+            _parallelBabel: {
+              requireFile: fixtureFullPath('transform-strict-mode-parallel'),
+            }
+          },
+          {
+            _parallelBabel: {
+              requireFile: fixtureFullPath('transform-block-scoping-parallel'),
+              buildUsing: 'build',
+            }
           }
-        },
-        {
-          _parallelBabel: {
-            requireFile: fixtureFullPath('transform-block-scoping-parallel'),
-            buildUsing: 'build',
-          }
-        }
-      ]
+        ]
+      }
     }).then(results => {
       let outputPath = results.directory;
 
@@ -315,16 +344,18 @@ describe('transpile ES6 to ES5', function() {
       return path.join(__dirname, '../node_modules', '@babel/plugin-transform-block-scoping');
     };
     return babel('files', {
-      inputSourceMap: false,
-      sourceMap: false,
-      plugins: [
-        {
-          _parallelBabel: {
-            requireFile: fixtureFullPath('transform-strict-mode-parallel'),
-          }
-        },
-        pluginFunction,
-      ]
+      babel: {
+        inputSourceMap: false,
+        sourceMap: false,
+        plugins: [
+          {
+            _parallelBabel: {
+              requireFile: fixtureFullPath('transform-strict-mode-parallel'),
+            }
+          },
+          pluginFunction,
+        ]
+      }
     }).then(results => {
       let outputPath = results.directory;
 
@@ -341,13 +372,15 @@ describe('transpile ES6 to ES5', function() {
       return path.join(__dirname, '../node_modules', '@babel/plugin-transform-strict-mode');
     };
     return babel('files', {
-      inputSourceMap: false,
-      sourceMap: false,
-      // cannot parallelize if any of the plugins are functions
-      plugins: [
-        pluginFunction,
-        '@babel/transform-block-scoping'
-      ]
+      babel: {
+        inputSourceMap: false,
+        sourceMap: false,
+        // cannot parallelize if any of the plugins are functions
+        plugins: [
+          pluginFunction,
+          '@babel/transform-block-scoping'
+        ]
+      }
     }).then(results => {
       let outputPath = results.directory;
 
@@ -360,11 +393,13 @@ describe('transpile ES6 to ES5', function() {
 
   it('inline source maps', function () {
     return babel('files', {
-      sourceMap: 'inline',
-      plugins: [
-        '@babel/transform-strict-mode',
-        '@babel/transform-block-scoping'
-      ]
+      babel: {
+        sourceMap: 'inline',
+        plugins: [
+          '@babel/transform-strict-mode',
+          '@babel/transform-block-scoping'
+        ]
+      }
     }).then(results => {
       let outputPath = results.directory;
 
@@ -377,13 +412,15 @@ describe('transpile ES6 to ES5', function() {
 
   it('modules (in main process)', function () {
     return babel('files', {
-      inputSourceMap: false,
-      sourceMap: false,
-      plugins: [
-        '@babel/transform-strict-mode',
-        '@babel/transform-block-scoping',
-        ['module-resolver', { resolvePath: moduleResolve }],
-      ],
+      babel: {
+        inputSourceMap: false,
+        sourceMap: false,
+        plugins: [
+          '@babel/transform-strict-mode',
+          '@babel/transform-block-scoping',
+          ['module-resolver', { resolvePath: moduleResolve }],
+        ],
+      }
     }).then(results => {
       let outputPath = results.directory;
 
@@ -396,13 +433,15 @@ describe('transpile ES6 to ES5', function() {
 
   it('modules - parallel API', function () {
     return babel('files', {
-      inputSourceMap: false,
-      sourceMap: false,
-      plugins: [
-        '@babel/transform-strict-mode',
-        '@babel/transform-block-scoping',
-        ['module-resolver', { resolvePath: moduleResolve }],
-      ],
+      babel: {
+        inputSourceMap: false,
+        sourceMap: false,
+        plugins: [
+          '@babel/transform-strict-mode',
+          '@babel/transform-block-scoping',
+          ['module-resolver', { resolvePath: moduleResolve }],
+        ],
+      }
     }).then(results => {
       let outputPath = results.directory;
 
@@ -415,12 +454,14 @@ describe('transpile ES6 to ES5', function() {
 
   it('module IDs (in main process)', function () {
     return babel('files', {
-      plugins: [
-        '@babel/transform-strict-mode',
-        '@babel/transform-modules-amd'
-      ],
-      moduleIds: true,
-      getModuleId(moduleName) { return 'testModule'; },
+      babel: {
+        plugins: [
+          '@babel/transform-strict-mode',
+          '@babel/transform-modules-amd'
+        ],
+        moduleIds: true,
+        getModuleId() { return 'testModule'; },
+      }
     }).then(results => {
       let outputPath = results.directory;
 
@@ -433,12 +474,14 @@ describe('transpile ES6 to ES5', function() {
 
   it('module IDs - parallel API', function () {
     return babel('files', {
-      plugins: [
-        '@babel/transform-strict-mode',
-        '@babel/transform-modules-amd'
-      ],
-      moduleIds: true,
-      getModuleId: getModuleIdParallel,
+      babel: {
+        plugins: [
+          '@babel/transform-strict-mode',
+          '@babel/transform-modules-amd'
+        ],
+        moduleIds: true,
+        getModuleId: getModuleIdParallel,
+      }
     }).then(results => {
       let outputPath = results.directory;
 
@@ -451,7 +494,9 @@ describe('transpile ES6 to ES5', function() {
 
   it('shouldPrintComment (in main process)', function () {
     return babel('files', {
-      shouldPrintComment(comment) { return comment === 'comment 1'; },
+      babel: {
+        shouldPrintComment(comment) { return comment === 'comment 1'; },
+      }
     }).then(results => {
       let outputPath = results.directory;
       let output = fs.readFileSync(path.join(outputPath, 'fixtures-comments.js'), 'utf8');
@@ -463,7 +508,9 @@ describe('transpile ES6 to ES5', function() {
 
   it('shouldPrintComment - parallel API', function () {
     return babel('files', {
-      shouldPrintComment: shouldPrintCommentParallel,
+      babel: {
+        shouldPrintComment: shouldPrintCommentParallel,
+      }
     }).then(results => {
       let outputPath = results.directory;
       let output = fs.readFileSync(path.join(outputPath, 'fixtures-comments.js'), 'utf8');
@@ -492,12 +539,14 @@ describe('filters files to transform', function() {
 
   it('default', function () {
     return babel('files', {
-      inputSourceMap:false,
-      sourceMap: false,
-      plugins: [
-        '@babel/transform-strict-mode',
-        '@babel/transform-block-scoping'
-      ]
+      babel: {
+        inputSourceMap:false,
+        sourceMap: false,
+        plugins: [
+          '@babel/transform-strict-mode',
+          '@babel/transform-block-scoping'
+        ]
+      }
     }).then(results => {
       let outputPath = results.directory;
 
@@ -512,13 +561,15 @@ describe('filters files to transform', function() {
 
   it('uses specified filter', function () {
     return babel('files', {
+      babel: {
+        inputSourceMap: false,
+        sourceMap: false,
+        plugins: [
+          '@babel/transform-strict-mode',
+          '@babel/transform-block-scoping'
+        ]
+      },
       filterExtensions: ['es6'],
-      inputSourceMap: false,
-      sourceMap: false,
-      plugins: [
-        '@babel/transform-strict-mode',
-        '@babel/transform-block-scoping'
-      ]
     }).then(results => {
       let outputPath = results.directory;
 
@@ -534,12 +585,14 @@ describe('filters files to transform', function() {
   it('uses multiple specified filters', function() {
     return babel('files', {
       filterExtensions: ['js', 'es6'],
-      inputSourceMap: false,
-      sourceMap: false,
-      plugins: [
-        '@babel/transform-strict-mode',
-        '@babel/transform-block-scoping'
-      ]
+      babel: {
+        inputSourceMap: false,
+        sourceMap: false,
+        plugins: [
+          '@babel/transform-strict-mode',
+          '@babel/transform-block-scoping'
+        ]
+      }
     }).then(results => {
       let outputPath = results.directory;
 
@@ -556,13 +609,15 @@ describe('filters files to transform', function() {
 
   it('named module', function() {
     return babel('files', {
-      inputSourceMap: false,
-      sourceMap: false,
-      moduleId: "foo",
-      plugins: [
-        '@babel/transform-modules-amd',
-        '@babel/transform-block-scoping'
-      ]
+      babel: {
+        inputSourceMap: false,
+        sourceMap: false,
+        moduleId: "foo",
+        plugins: [
+          '@babel/transform-modules-amd',
+          '@babel/transform-block-scoping'
+        ]
+      }
     }).then(results => {
       let outputPath = results.directory;
 
@@ -576,13 +631,15 @@ describe('filters files to transform', function() {
 
   it('moduleId === true', function() {
     return babel('files', {
-      inputSourceMap: false,
-      sourceMap: false,
-      moduleId: true,
-      plugins: [
-        '@babel/transform-modules-amd',
-        '@babel/transform-block-scoping'
-      ]
+      babel: {
+        inputSourceMap: false,
+        sourceMap: false,
+        moduleId: true,
+        plugins: [
+          '@babel/transform-modules-amd',
+          '@babel/transform-block-scoping'
+        ]
+      }
     }).then(results => {
       let outputPath = results.directory;
 
@@ -597,7 +654,9 @@ describe('filters files to transform', function() {
   it.skip('throws if a single helper is not whitelisted', function() {
     return babel('file', {
       helperWhiteList: ['classCallCheck', 'possibleConstructorReturn'],
-      plugins: ['@babel/transform-classes']
+      babel: {
+        plugins: ['@babel/transform-classes'],
+      }
     }).catch(err => {
       console.log(err);
       expect(err.message).to.match(/^fixtures.js was transformed and relies on `inherits`, which was not included in the helper whitelist. Either add this helper to the whitelist or refactor to not be dependent on this runtime helper.$/);
@@ -607,7 +666,9 @@ describe('filters files to transform', function() {
   it.skip('throws if multiple helpers are not whitelisted', function() {
     return babel('file', {
       helperWhiteList: [],
-      plugins: ['@babel/transform-classes']
+      babel: {
+        plugins: ['@babel/transform-classes'],
+      }
     }).catch(err => {
       expect(err.message).to.match(/^fixtures.js was transformed and relies on `[a-zA-Z]+`, `[a-zA-Z]+`, & `[a-zA-z]+`, which were not included in the helper whitelist. Either add these helpers to the whitelist or refactor to not be dependent on these runtime helpers.$/);
     });
@@ -616,7 +677,9 @@ describe('filters files to transform', function() {
   it.skip('does not throw if helpers are specified', function() {
     return babel('files', {
       helperWhiteList: ['classCallCheck', 'possibleConstructorReturn', 'inherits'],
-      plugins: ['@babel/transform-classes']
+      babel: {
+        plugins: ['@babel/transform-classes'],
+      }
     }).then(results => {
       let outputPath = results.directory;
       let output = fs.readFileSync(path.join(outputPath, 'fixtures-classes.js'), 'utf8');
@@ -640,7 +703,9 @@ describe('when options change', function() {
       bar: 1,
       baz: function() {},
       console: fakeConsole,
-      plugins: []
+      babel: {
+        plugins: []
+      }
     };
 
     let babel = new Babel('foo', options);
@@ -657,7 +722,7 @@ describe('when options change', function() {
   });
 
   it('includes object plugins cacheKey result in hash', function() {
-    options.plugins = [
+    options.babel.plugins = [
       { cacheKey: function() { return 'hi!'; }}
     ];
     options.console = fakeConsole;
@@ -670,7 +735,7 @@ describe('when options change', function() {
     function fakePlugin() {}
     fakePlugin.cacheKey = function() { return 'Hi!'; };
 
-    options.plugins = [
+    options.babel.plugins = [
       fakePlugin
     ];
     options.console = fakeConsole;
@@ -680,7 +745,7 @@ describe('when options change', function() {
   });
 
   it('includes string plugins in hash calculation', function() {
-    options.plugins = [
+    options.babel.plugins = [
       'foo'
     ];
     options.console = fakeConsole;
@@ -691,7 +756,7 @@ describe('when options change', function() {
 
   it('includes plugins specified with options in hash calculation when cacheable', function() {
     let pluginOptions = { foo: 'bar' };
-    options.plugins = [
+    options.babel.plugins = [
       ['foo', pluginOptions]
     ];
     options.console = fakeConsole;
@@ -714,7 +779,7 @@ describe('when options change', function() {
   it('invalidates plugins specified with options when not-cacheable', function() {
     function thing() { }
     let pluginOptions = { foo: 'bar', thing: thing };
-    options.plugins = [
+    options.babel.plugins = [
       ['foo', pluginOptions]
     ];
     options.console = fakeConsole;
@@ -732,7 +797,7 @@ describe('when options change', function() {
     function thing() { }
     thing.baseDir = function() { return dir; };
     let pluginOptions = { foo: 'bar', thing: thing };
-    options.plugins = [
+    options.babel.plugins = [
       ['foo', pluginOptions]
     ];
 
@@ -757,7 +822,7 @@ describe('when options change', function() {
     let dir = path.join(inputPath, 'plugin-a');
     let pluginObject = { foo: 'foo' };
     pluginObject.baseDir = function() { return dir; };
-    options.plugins = [ pluginObject ];
+    options.babel.plugins = [ pluginObject ];
 
     options.console = fakeConsole;
     let first = new Babel('foo', options);
@@ -783,7 +848,7 @@ describe('when options change', function() {
     let pluginObject = { foo: 'foo' };
     pluginObject.baseDir = function() { return dir; };
     pluginObject.cacheKey = function() { return key; };
-    options.plugins = [ pluginObject ];
+    options.babel.plugins = [ pluginObject ];
 
     options.console = fakeConsole;
     let first = new Babel('foo', options);
@@ -810,7 +875,7 @@ describe('when options change', function() {
     plugin.baseDir = function() {
       return dir;
     };
-    options.plugins = [ plugin ];
+    options.babel.plugins = [ plugin ];
 
     options.console = fakeConsole;
     let first = new Babel('foo', options);
@@ -827,7 +892,7 @@ describe('when options change', function() {
   it('a plugin without a baseDir invalidates the cache every time', function() {
     function plugin() {}
     plugin.toString = function() { return '<derp plugin>'; };
-    options.plugins = [ plugin ];
+    options.babel.plugins = [ plugin ];
 
     options.console = fakeConsole;
     let babel1 = new Babel('foo', options);
@@ -889,13 +954,15 @@ describe('on error', function() {
       return path.join(__dirname, '../node_modules', '@babel/plugin-transform-strict-mode');
     };
     return babel('errors', {
-      inputSourceMap: false,
-      sourceMap: false,
-      highlightCode: false,
-      plugins: [
-        pluginFunction,
-        '@babel/transform-block-scoping'
-      ]
+      babel: {
+        inputSourceMap: false,
+        sourceMap: false,
+        highlightCode: false,
+        plugins: [
+          pluginFunction,
+          '@babel/transform-block-scoping'
+        ]
+      }
     }).then(
       function onSuccess(results) {
         expect.fail('', '', 'babel should throw an error');
@@ -908,13 +975,15 @@ describe('on error', function() {
 
   it('returns error from a worker process', function () {
     return babel('errors', {
-      inputSourceMap: false,
-      sourceMap: false,
-      highlightCode: false,
-      plugins: [
-        '@babel/transform-strict-mode',
-        '@babel/transform-block-scoping'
-      ]
+      babel: {
+        inputSourceMap: false,
+        sourceMap: false,
+        highlightCode: false,
+        plugins: [
+          '@babel/transform-strict-mode',
+          '@babel/transform-block-scoping'
+        ]
+      }
     }).then(
       function onSuccess(results) {
         expect.fail('', '', 'babel should throw an error');
@@ -927,17 +996,19 @@ describe('on error', function() {
 
   it('fails if worker process is terminated', function () {
     return babel('files', {
-      inputSourceMap: false,
-      sourceMap: false,
-      plugins: [
-        {
-          _parallelBabel: {
-            requireFile: fixtureFullPath('transform-strict-mode-process-exit'),
-            buildUsing: 'buildMeAFunction',
-          }
-        },
-        '@babel/transform-block-scoping'
-      ]
+      babel: {
+        inputSourceMap: false,
+        sourceMap: false,
+        plugins: [
+          {
+            _parallelBabel: {
+              requireFile: fixtureFullPath('transform-strict-mode-process-exit'),
+              buildUsing: 'buildMeAFunction',
+            }
+          },
+          '@babel/transform-block-scoping'
+        ]
+      }
     }).then(
       function onSuccess() {
         expect.fail('', '', 'babel should throw an error');
@@ -957,27 +1028,29 @@ describe('deserialize()', function() {
 
   it('passes other options through', function () {
     let options = {
-      inputSourceMap: false,
-      sourceMap: false,
-      somethingElse: 'foo',
+      babel: {
+        inputSourceMap: false,
+        sourceMap: false,
+      },
     };
     expect(ParallelApi.deserialize(options)).to.eql({
       inputSourceMap: false,
       sourceMap: false,
-      somethingElse: 'foo',
     });
   });
 
   it('builds plugins using the parallel API', function () {
     let options = {
-      plugins: [
-        {
-          _parallelBabel: {
-            requireFile: fixtureFullPath('transform-strict-mode-parallel'),
-          }
-        },
-        '@babel/transform-block-scoping'
-      ]
+      babel: {
+        plugins: [
+          {
+            _parallelBabel: {
+              requireFile: fixtureFullPath('transform-strict-mode-parallel'),
+            }
+          },
+          '@babel/transform-block-scoping'
+        ]
+      }
     };
     expect(ParallelApi.deserialize(options)).to.eql({
       plugins: [
@@ -991,9 +1064,11 @@ describe('deserialize()', function() {
     let moduleNameFunc = function(moduleName) {};
     let commentFunc = function(comment) {};
     let options = {
-      resolveModuleSource: moduleResolve,
-      getModuleId: moduleNameFunc,
-      shouldPrintComment: commentFunc,
+      babel: {
+        resolveModuleSource: moduleResolve,
+        getModuleId: moduleNameFunc,
+        shouldPrintComment: commentFunc,
+      }
     };
 
     expect(ParallelApi.deserialize(options).resolveModuleSource).to.eql(moduleResolve);
@@ -1003,14 +1078,18 @@ describe('deserialize()', function() {
 
   it('builds getModuleId using the parallel API', function () {
     let options = {
-      getModuleId: getModuleIdParallel
+      babel: {
+        getModuleId: getModuleIdParallel
+      }
     };
     expect(ParallelApi.deserialize(options).getModuleId).to.be.a('function');
   });
 
   it('builds shouldPrintComment using the parallel API', function () {
     let options = {
-      shouldPrintComment: shouldPrintCommentParallel
+      babel: {
+        shouldPrintComment: shouldPrintCommentParallel
+      }
     };
     expect(ParallelApi.deserialize(options).shouldPrintComment).to.be.a('function');
   });
@@ -1090,8 +1169,6 @@ describe('isSerializable()', function() {
     expect(ParallelApi.isSerializable([Foo, Foo])).to.eql(true);
   });
 
-
-
   it('[SerializeableFn, NonSerializeableFn]', function () {
     function Foo() {
 
@@ -1140,17 +1217,17 @@ describe('pluginsAreParallelizable()', function() {
 
 describe('callbacksAreParallelizable()', function() {
   it('no callback functions - yes', function () {
-    let options = {
+    let babelOptions = {
       inputSourceMap: false,
       plugins: [
         'some-plugin',
       ],
     };
-    expect(ParallelApi.callbacksAreParallelizable(options)).to.eql({ isParallelizable: true, errors: []});
+    expect(ParallelApi.callbacksAreParallelizable(babelOptions)).to.eql({ isParallelizable: true, errors: []});
   });
 
   it('function - no', function () {
-    let options = {
+    let babelOptions = {
       inputSourceMap: false,
       plugins: [
         'some-plugin'
@@ -1158,32 +1235,33 @@ describe('callbacksAreParallelizable()', function() {
       resolveModuleSource: function() {},
     };
 
-    if (options.resolveModuleSource.name === '') {
+    if (babelOptions.resolveModuleSource.name === '') {
       // old nodes don't create a good name here.
-      expect(ParallelApi.callbacksAreParallelizable(options)).to.eql({ isParallelizable: false, errors: [`name: unknown, location: unknown,\n↓ function source ↓ \nfunction () {}\n \n`] });
+      expect(ParallelApi.callbacksAreParallelizable(babelOptions)).to.eql({ isParallelizable: false, errors: [`name: unknown, location: unknown,\n↓ function source ↓ \nfunction () {}\n \n`] });
     } else {
-      expect(ParallelApi.callbacksAreParallelizable(options)).to.eql({ isParallelizable: false, errors: [`name: resolveModuleSource, location: unknown`] });
+      expect(ParallelApi.callbacksAreParallelizable(babelOptions)).to.eql({ isParallelizable: false, errors: [`name: resolveModuleSource, location: unknown`] });
     }
   });
 
   it('function with correct _parallelBabel property - yes', function () {
-    let someFunc = function() {};
-    someFunc._parallelBabel = { requireFile: 'a/file' };
-    let options = {
+    let babelOptions = {
       inputSourceMap: false,
       plugins: [
+        {
+          _parallelBabel: {
+            requireFile: 'a/file'
+          }
+        },
         'some-plugin'
       ]
     };
-    expect(ParallelApi.callbacksAreParallelizable(options)).to.eql({ isParallelizable: true, errors: [] });
+    expect(ParallelApi.callbacksAreParallelizable(babelOptions)).to.eql({ isParallelizable: true, errors: [] });
   });
-
-
 
   it('function with correct _parallelBabel property - yes (but with sneaky second function)', function () {
     let someFunc = function() {};
     someFunc._parallelBabel = { requireFile: 'a/file' };
-    let options = {
+    let babelOptions = {
       inputSourceMap: false,
       plugins: [
         'some-plugin'
@@ -1191,7 +1269,7 @@ describe('callbacksAreParallelizable()', function() {
       keyDontMatter: someFunc,
     };
 
-    expect(ParallelApi.callbacksAreParallelizable(options)).to.eql({
+    expect(ParallelApi.callbacksAreParallelizable(babelOptions)).to.eql({
       isParallelizable: true,
       errors: [ ]
     });
@@ -1200,7 +1278,7 @@ describe('callbacksAreParallelizable()', function() {
   it('_parallelBabel set incorrectly - no', function () {
     let someFunc = function() {};
     someFunc._parallelBabel = { no: 'wrong' };
-    let options = {
+    let babelOptions = {
       inputSourceMap: false,
       plugins: [
         'some-plugin'
@@ -1210,45 +1288,45 @@ describe('callbacksAreParallelizable()', function() {
 
     if (someFunc.name === '') {
       // older nodes don't correctly assign the name
-      expect(ParallelApi.callbacksAreParallelizable(options)).to.eql({ isParallelizable: false, errors: ['name: unknown, location: unknown,\n↓ function source ↓ \nfunction () {}\n \n']});
+      expect(ParallelApi.callbacksAreParallelizable(babelOptions)).to.eql({ isParallelizable: false, errors: ['name: unknown, location: unknown,\n↓ function source ↓ \nfunction () {}\n \n']});
     } else {
-      expect(ParallelApi.callbacksAreParallelizable(options)).to.eql({ isParallelizable: false, errors: ['name: someFunc, location: unknown']});
+      expect(ParallelApi.callbacksAreParallelizable(babelOptions)).to.eql({ isParallelizable: false, errors: ['name: someFunc, location: unknown']});
     }
   });
 });
 
 describe('transformIsParallelizable()', function() {
   it('no plugins or resolveModule - yes', function () {
-    let options = {};
-    expect(ParallelApi.transformIsParallelizable(options)).to.eql({ isParallelizable: true, errors: [] });
+    let babelOptions = {};
+    expect(ParallelApi.transformIsParallelizable(babelOptions)).to.eql({ isParallelizable: true, errors: [] });
   });
 
   it('plugins are parallelizable - yes', function () {
-    let options = {
+    let babelOptions = {
       plugins: [ 'some-plugin' ],
     };
-    expect(ParallelApi.transformIsParallelizable(options)).to.eql({ isParallelizable: true, errors: [] });
+    expect(ParallelApi.transformIsParallelizable(babelOptions)).to.eql({ isParallelizable: true, errors: [] });
   });
 
   it('resolveModule is parallelizable - yes', function () {
-    let options = {
+    let babelOptions = {
       plugins: [['module-resolver', { resolvePath: require('amd-name-resolver').moduleResolve }]],
     };
-    expect(ParallelApi.transformIsParallelizable(options)).to.eql({ isParallelizable: true, errors: [] });
+    expect(ParallelApi.transformIsParallelizable(babelOptions)).to.eql({ isParallelizable: true, errors: [] });
   });
 
   it('both are parallelizable - yes', function () {
-    let options = {
+    let babelOptions = {
       plugins: ['some-plugin', ['module-resolver', { resolvePath: require('amd-name-resolver').moduleResolve }]],
     };
-    expect(ParallelApi.transformIsParallelizable(options)).to.eql({ isParallelizable: true, errors: [] });
+    expect(ParallelApi.transformIsParallelizable(babelOptions)).to.eql({ isParallelizable: true, errors: [] });
   });
 
   it('plugins not parallelizable - no', function () {
-    let options = {
+    let babelOptions = {
       plugins: [ function() {} ],
     };
-    expect(ParallelApi.transformIsParallelizable(options)).to.eql({
+    expect(ParallelApi.transformIsParallelizable(babelOptions)).to.eql({
       isParallelizable: false,
       errors: [ `name: unknown, location: unknown,\n↓ function source ↓ \n${(function() {}.toString())}\n \n`]
     });
@@ -1256,15 +1334,15 @@ describe('transformIsParallelizable()', function() {
 
 
   it('resolveModuleSource not parallelizable - no', function () {
-    let options = {
+    let babelOptions = {
       plugins: [ 'some-plugin' ],
       resolveModuleSource: function() {},
     };
 
-    if (options.resolveModuleSource.name === '') {
-      expect(ParallelApi.transformIsParallelizable(options)).to.eql({ isParallelizable: false, errors: ['name: unknown, location: unknown,\n↓ function source ↓ \nfunction () {}\n \n']});
+    if (babelOptions.resolveModuleSource.name === '') {
+      expect(ParallelApi.transformIsParallelizable(babelOptions)).to.eql({ isParallelizable: false, errors: ['name: unknown, location: unknown,\n↓ function source ↓ \nfunction () {}\n \n']});
     } else {
-      expect(ParallelApi.transformIsParallelizable(options)).to.eql({ isParallelizable: false, errors: ['name: resolveModuleSource, location: unknown'] });
+      expect(ParallelApi.transformIsParallelizable(babelOptions)).to.eql({ isParallelizable: false, errors: ['name: resolveModuleSource, location: unknown'] });
     }
   });
 });
@@ -1276,8 +1354,10 @@ describe('serialize()', function() {
 
   it('passes through non-function options', function() {
     let options = {
-      inputSourceMap: false,
-      plugins: [ 'some-plugin' ],
+      babel: {
+        inputSourceMap: false,
+        plugins: [ 'some-plugin' ],
+      }
     };
     expect(ParallelApi.serialize(options)).to.eql(options);
   });
@@ -1432,7 +1512,8 @@ describe('workerpool', function() {
     options = {
       babel: {
         inputSourceMap: false,
-        sourceMap: false, plugins: [
+        sourceMap: false,
+        plugins: [
           '@babel/transform-strict-mode',
           '@babel/transform-block-scoping'
         ]
