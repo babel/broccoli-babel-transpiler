@@ -629,28 +629,6 @@ describe('filters files to transform', function() {
   });
 });
 
-describe('consume broccoli-babel-transpiler options', function() {
-  it('enabled', function() {
-    let options = {
-      browserPolyfill: true
-    };
-
-    babel = new Babel('foo', options);
-    let code = babel.processString('path', 'relativePath');
-    expect(code).to.be.ok;
-  });
-
-  it('explicitly disabled', function() {
-    let options = {
-      browserPolyfill: false
-    };
-
-    babel = new Babel('foo', options);
-    let code = babel.processString('path', 'relativePath');
-    expect(code).to.be.ok;
-  });
-});
-
 describe('when options change', function() {
   let originalHash, options, fakeConsole, consoleMessages;
 

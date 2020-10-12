@@ -90,30 +90,6 @@ let scriptTree = esTranspiler(inputTree, {
 });
 ```
 
-## Polyfill
-
-In order to use some of the ES6 features you must include the Babel
-[polyfill](http://babeljs.io/docs/usage/polyfill/#usage-in-browser).
-
-You don't always need this, review which features need the polyfill here: [ES6
-Features](https://babeljs.io/docs/learn-es6).
-
-```js
-const esTranspiler = require('broccoli-babel-transpiler');
-let scriptTree = esTranspiler(inputTree, { browserPolyfill: true });
-```
-
-By default, the polyfill will appear as `./browser-polyfill.js` in the output
-tree. You can specify a custom output path and filename by supplying a (relative)
-filename in the `browserPolyfillPath` option:
-
-```js
-let scriptTree = esTranspiler(inputTree, {
-  browserPolyfill: true,
-  browserPolyfillPath: 'vendor/polyfill.js'
-})
-```
-
 ## Plugins
 
 Use of custom plugins works similarly to `babel` itself. You would pass a
