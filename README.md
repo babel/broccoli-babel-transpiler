@@ -4,7 +4,7 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/a0nbd84m1x4y5fp5?svg=true)](https://ci.appveyor.com/project/embercli/broccoli-babel-transpiler)
 
 
-A [Broccoli](https://github.com/broccolijs/broccoli) plugin which transpiles ES6 to readable ES5 (and much more) by using [Babel](https://github.com/babel/babel).
+A [Broccoli](https://github.com/broccolijs/broccoli) plugin that runs [Babel](https://github.com/babel/babel) plugins with caching and parallel capabilities.
 
 ## How to install?
 
