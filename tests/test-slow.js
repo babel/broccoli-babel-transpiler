@@ -59,16 +59,18 @@ describe('large operations', function() {
 
   it('handles thousands of files', function () {
     return babel(inputTreePath, {
-      inputSourceMap:false,
-      sourceMap: false,
-      plugins: [
-        {
-          _parallelBabel: {
-            requireFile: fixtureFullPath('transform-strict-mode-parallel'),
-          }
-        },
-        '@babel/transform-block-scoping'
-      ]
+      babel: {
+        inputSourceMap:false,
+        sourceMap: false,
+        plugins: [
+          {
+            _parallelBabel: {
+              requireFile: fixtureFullPath('transform-strict-mode-parallel'),
+            }
+          },
+          '@babel/transform-block-scoping'
+        ]
+      }
     }).then(results => {
       let outputPath = results.directory;
 

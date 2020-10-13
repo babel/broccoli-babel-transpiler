@@ -107,9 +107,11 @@ let featureFlagPlugin = applyFeatureFlags({
 });
 
 let scriptTree = esTranspiler(inputTree, {
-  plugins: [
-    featureFlagPlugin
-  ]
+  babel: {
+    plugins: [
+      featureFlagPlugin
+    ]
+  }
 });
 ```
 
@@ -206,10 +208,12 @@ let somePlugin = {
 });
 
 let scriptTree = esTranspiler(inputTree, {
-  plugins: [
-    'transform-strict-mode', // plugins that are given as strings will automatically be parallelized
-    somePlugin
-  ]
+  babel: {
+    plugins: [
+      'transform-strict-mode', // plugins that are given as strings will automatically be parallelized
+      somePlugin
+    ]
+  }
 });
 ```
 
@@ -243,7 +247,9 @@ let somePlugin = {
 });
 
 let scriptTree = esTranspiler(inputTree, {
-  plugins: [ somePlugin ]
+  babel: {
+    plugins: [ somePlugin ]
+  }
 });
 ```
 
@@ -279,7 +285,9 @@ let somePlugin = {
 });
 
 let scriptTree = esTranspiler(inputTree, {
-  plugins: [ somePlugin ]
+  babeel: {
+    plugins: [ somePlugin ]
+  }
 });
 ```
 
