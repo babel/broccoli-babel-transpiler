@@ -1,3 +1,11 @@
+## v7.8.0 (2020-10-14)
+
+#### :rocket: Enhancement
+* [#194](https://github.com/babel/broccoli-babel-transpiler/pull/194) Update to `@babel/core@7.12.0`. ([@rwjblue](https://github.com/rwjblue))
+
+#### Committers: 1
+- Robert Jackson ([@rwjblue](https://github.com/rwjblue))
+
 ## v7.7.0 (2020-07-30)
 
 #### :rocket: Enhancement
