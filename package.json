@@ -44,7 +44,7 @@
     "heimdalljs-logger": "^0.1.7",
     "json-stable-stringify": "^1.0.0",
     "rsvp": "^4.8.2",
-    "workerpool": "^2.3.0"
+    "workerpool": "^6.1.4"
   },
   "devDependencies": {
     "amd-name-resolver": "1.2.0",
