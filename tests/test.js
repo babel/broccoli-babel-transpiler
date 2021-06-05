@@ -961,7 +961,7 @@ describe('on error', function() {
         expect.fail('', '', 'babel should throw an error');
       },
       function onFailure(err) {
-        expect(err.message).to.eql('Worker terminated unexpectedly');
+        expect(err.message).to.include('Workerpool Worker terminated Unexpectedly');
       }
     );
   });
@@ -1377,7 +1377,7 @@ describe('buildFromParallelApiInfo()', function() {
       expect.fail('', '', 'should have thrown an error');
     }
     catch (err) {
-      expect(err.message).to.eql("Cannot find module 'some/file/that/does/not/exist'");
+      expect(err.message).to.include("Cannot find module 'some/file/that/does/not/exist'");
     }
   });
 
