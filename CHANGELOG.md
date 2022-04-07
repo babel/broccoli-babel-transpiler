@@ -1,3 +1,14 @@
+## v7.8.1 (2022-04-07)
+
+#### :bug: Bug Fix
+* [#212](https://github.com/babel/broccoli-babel-transpiler/pull/212) [BACKPORT v7.x] Ensure the worker processes do not crash when parsing invalid syntax ([@rwjblue](https://github.com/rwjblue))
+
+#### :house: Internal
+* [#211](https://github.com/babel/broccoli-babel-transpiler/pull/211) Add GitHub Actions CI to v7.x branch ([@rwjblue](https://github.com/rwjblue))
+
+#### Committers: 1
+- Robert Jackson ([@rwjblue](https://github.com/rwjblue))
+
 ## v7.8.0 (2020-10-14)
 
 #### :rocket: Enhancement
