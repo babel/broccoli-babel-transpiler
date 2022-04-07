@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - 'v*' # older version branches
+    tags:
+      - '*'
+
+  pull_request: {}
+
+jobs:
+  test:
+    name: "Node ${{ matrix.node }} - ${{ matrix.os }}"
+    runs-on: "${{matrix.os}}-latest"
+
+    strategy:
+      matrix:
+        os: ['ubuntu', 'windows', 'macOS']
+        node: ['6', '8', '10', '12', '14', '16']
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node }}
+    - name: install dependencies
+      run: yarn install --frozen-lockfile
+    - name: test
+      run: yarn test
