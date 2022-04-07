@@ -534,7 +534,8 @@ describe('filters files to transform', function() {
   });
 
   afterEach(function () {
-    return cleanupBuilders();
+    return cleanupBuilders()
+      .then(terminateWorkerPool);
   });
 
   it('default', function () {
