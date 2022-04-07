@@ -28,9 +28,9 @@ jobs:
       with:
         node-version: ${{ matrix.node }}
     - name: install dependencies
-      run: yarn install --frozen-lockfile
+      run: npm ci
     - name: test
-      run: yarn test
+      run: npm test
 
   floating-test:
     name: Floating dependencies
@@ -42,7 +42,7 @@ jobs:
       with:
         node-version: '16.x'
     - name: install dependencies
-      run: yarn install --no-lockfile
+      run: npm install --ignore-shrinkwrap
     - name: test
-      run: yarn test
+      run: npm test
 
