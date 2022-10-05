@@ -36,7 +36,6 @@
   },
   "homepage": "https://github.com/babel/broccoli-babel-transpiler",
   "dependencies": {
-    "@babel/core": "^7.17.9",
     "broccoli-persistent-filter": "^3.0.0",
     "clone": "^2.1.2",
     "hash-for-dep": "^1.4.7",
@@ -47,6 +46,7 @@
     "workerpool": "^6.0.2"
   },
   "devDependencies": {
+    "@babel/core": "^7.17.9",
     "@babel/plugin-transform-block-scoping": "^7.16.7",
     "@babel/plugin-transform-classes": "^7.16.7",
     "@babel/plugin-transform-modules-amd": "^7.16.7",
@@ -60,6 +60,9 @@
     "mkdirp": "^0.5.1",
     "mocha": "^6.0.1",
     "ps-node": "^0.1.6"
+  },
+  "peerDependencies": {
+    "@babel/core": "^7.17.9"
   },
   "engines": {
     "node": "14.* || 16.* || >= 17"
