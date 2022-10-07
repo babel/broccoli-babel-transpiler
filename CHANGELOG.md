@@ -1,5 +1,40 @@
 # Changelog
 
+
+## v8.0.0-beta.1 (2022-10-07)
+
+#### :boom: Breaking Change
+* [#225](https://github.com/babel/broccoli-babel-transpiler/pull/225) Drop support for Node v17 and add support for Node v18 ([@bertdeblock](https://github.com/bertdeblock))
+* [#221](https://github.com/babel/broccoli-babel-transpiler/pull/221) Move `@babel/core` to `peerDependencies` to resolve peer dependency warnings and errors ([@bertdeblock](https://github.com/bertdeblock))
+* [#210](https://github.com/babel/broccoli-babel-transpiler/pull/210) Drop Node 10, 12, and 13 support ([@rwjblue](https://github.com/rwjblue))
+* [#193](https://github.com/babel/broccoli-babel-transpiler/pull/193) Separate Broccoli and Babel options ([@nlfurniss](https://github.com/nlfurniss))
+* [#191](https://github.com/babel/broccoli-babel-transpiler/pull/191) Remove `browserPolyfill` option ([@nlfurniss](https://github.com/nlfurniss))
+
+#### :rocket: Enhancement
+* [#190](https://github.com/babel/broccoli-babel-transpiler/pull/190) Update `workerpool` to latest (avoiding deprecations) ([@nlfurniss](https://github.com/nlfurniss))
+
+#### :bug: Bug Fix
+* [#221](https://github.com/babel/broccoli-babel-transpiler/pull/221) Move `@babel/core` to `peerDependencies` to resolve peer dependency warnings and errors ([@bertdeblock](https://github.com/bertdeblock))
+* [#209](https://github.com/babel/broccoli-babel-transpiler/pull/209) Ensure the worker processes do not crash when parsing invalid syntax ([@rwjblue](https://github.com/rwjblue))
+
+#### :memo: Documentation
+* [#192](https://github.com/babel/broccoli-babel-transpiler/pull/192) Tweak package description in README.md ([@gabrielcsapo](https://github.com/gabrielcsapo))
+
+#### :house: Internal
+* [#226](https://github.com/babel/broccoli-babel-transpiler/pull/226) Add release automation ([@rwjblue](https://github.com/rwjblue))
+* [#214](https://github.com/babel/broccoli-babel-transpiler/pull/214) Migrate from yarn@1 to npm ([@rwjblue](https://github.com/rwjblue))
+* [#215](https://github.com/babel/broccoli-babel-transpiler/pull/215) Update `@babel/*` dependencies/devDependencies ([@rwjblue](https://github.com/rwjblue))
+* [#200](https://github.com/babel/broccoli-babel-transpiler/pull/200) Remove @babel/polyfill dependency ([@nlfurniss](https://github.com/nlfurniss))
+* [#195](https://github.com/babel/broccoli-babel-transpiler/pull/195) Remove TravisCI and AppVeyor ([@rwjblue](https://github.com/rwjblue))
+* [#183](https://github.com/babel/broccoli-babel-transpiler/pull/183) Add GitHub Actions CI setup. ([@rwjblue](https://github.com/rwjblue))
+
+#### Committers: 4
+- Bert De Block ([@bertdeblock](https://github.com/bertdeblock))
+- Gabriel Csapo ([@gabrielcsapo](https://github.com/gabrielcsapo))
+- Nathaniel Furniss ([@nlfurniss](https://github.com/nlfurniss))
+- Robert Jackson ([@rwjblue](https://github.com/rwjblue))
+
+
 ## v7.7.0 (2020-07-30)
 
 #### :rocket: Enhancement
