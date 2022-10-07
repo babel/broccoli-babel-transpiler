@@ -2,6 +2,26 @@
   "name": "broccoli-babel-transpiler",
   "version": "7.7.0",
   "description": "A Broccoli plugin which transpile ES6 to readable ES5 by using babel.",
+  "keywords": [
+    "broccoli-plugin",
+    "transpiler",
+    "es6",
+    "ecmascript",
+    "ecmascript6",
+    "harmony",
+    "javascript",
+    "js"
+  ],
+  "homepage": "https://github.com/babel/broccoli-babel-transpiler",
+  "bugs": {
+    "url": "https://github.com/babel/broccoli-babel-transpiler/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/babel/broccoli-babel-transpiler.git"
+  },
+  "license": "MIT",
+  "author": "nightire <nightire@very-geek.com> (http://very-geek.com/)",
   "main": "index.js",
   "files": [
     "index.js",
@@ -15,26 +35,6 @@
     "test:slow:debug": "mocha debug tests/test-slow.js",
     "test:all": "mocha tests/test.js tests/test-slow.js"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/babel/broccoli-babel-transpiler.git"
-  },
-  "keywords": [
-    "broccoli-plugin",
-    "transpiler",
-    "es6",
-    "ecmascript",
-    "ecmascript6",
-    "harmony",
-    "javascript",
-    "js"
-  ],
-  "author": "nightire <nightire@very-geek.com> (http://very-geek.com/)",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/babel/broccoli-babel-transpiler/issues"
-  },
-  "homepage": "https://github.com/babel/broccoli-babel-transpiler",
   "dependencies": {
     "broccoli-persistent-filter": "^3.0.0",
     "clone": "^2.1.2",
@@ -59,12 +59,32 @@
     "lerna-changelog": "^0.8.2",
     "mkdirp": "^0.5.1",
     "mocha": "^6.0.1",
-    "ps-node": "^0.1.6"
+    "ps-node": "^0.1.6",
+    "release-it": "^14.2.1",
+    "release-it-lerna-changelog": "^3.1.0"
   },
   "peerDependencies": {
     "@babel/core": "^7.17.9"
   },
   "engines": {
     "node": "14.* || 16.* || >= 18"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
+  },
+  "release-it": {
+    "plugins": {
+      "release-it-lerna-changelog": {
+        "infile": "CHANGELOG.md",
+        "launchEditor": true
+      }
+    },
+    "git": {
+      "tagName": "v${version}"
+    },
+    "github": {
+      "release": true,
+      "tokenRef": "GITHUB_AUTH"
+    }
   }
 }
