@@ -1,3 +1,5 @@
+# Changelog
+
 ## v7.7.0 (2020-07-30)
 
 #### :rocket: Enhancement
