@@ -285,7 +285,7 @@ let somePlugin = {
 });
 
 let scriptTree = esTranspiler(inputTree, {
-  babeel: {
+  babel: {
     plugins: [ somePlugin ]
   }
 });
