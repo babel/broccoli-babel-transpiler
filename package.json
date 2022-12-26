@@ -60,8 +60,8 @@
     "mkdirp": "^0.5.1",
     "mocha": "^6.0.1",
     "ps-node": "^0.1.6",
-    "release-it": "^14.2.1",
-    "release-it-lerna-changelog": "^3.1.0"
+    "release-it": "^15.5.0",
+    "release-it-lerna-changelog": "^5.0.0"
   },
   "peerDependencies": {
     "@babel/core": "^7.17.9"
