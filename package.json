@@ -58,7 +58,7 @@
     "fixturify-project": "^1.9.0",
     "lerna-changelog": "^0.8.2",
     "mkdirp": "^0.5.1",
-    "mocha": "^6.0.1",
+    "mocha": "^10.2.0",
     "ps-node": "^0.1.6",
     "release-it": "^14.2.1",
     "release-it-lerna-changelog": "^3.1.0"
