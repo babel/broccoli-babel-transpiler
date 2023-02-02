@@ -56,7 +56,7 @@
     "broccoli-test-helpers": "0.0.9",
     "chai": "^4.2.0",
     "fixturify-project": "^1.9.0",
-    "lerna-changelog": "^0.8.2",
+    "lerna-changelog": "^2.2.0",
     "mkdirp": "^0.5.1",
     "mocha": "^6.0.1",
     "ps-node": "^0.1.6",
