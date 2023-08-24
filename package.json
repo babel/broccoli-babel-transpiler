@@ -41,7 +41,7 @@
     "hash-for-dep": "^1.4.7",
     "heimdalljs": "^0.2.1",
     "heimdalljs-logger": "^0.1.9",
-    "json-stable-stringify": "^1.0.1",
+    "safe-stable-stringify": "^2.2.0",
     "rsvp": "^4.8.4",
     "workerpool": "^6.0.2"
   },
