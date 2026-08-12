@@ -33,7 +33,9 @@
     "test:debug": "mocha debug tests/test.js",
     "test:slow": "mocha tests/test-slow.js",
     "test:slow:debug": "mocha debug tests/test-slow.js",
-    "test:all": "mocha tests/test.js tests/test-slow.js"
+    "test:all": "mocha tests/test.js tests/test-slow.js",
+    "use-babel-8": "npm install --no-save --no-package-lock @babel/core@^8.0.0 @babel/plugin-transform-block-scoping@^8.0.0 @babel/plugin-transform-classes@^8.0.0 @babel/plugin-transform-modules-amd@^8.0.0 @babel/plugin-transform-strict-mode@^8.0.0",
+    "test:babel-8": "npm run use-babel-8 && npm test"
   },
   "dependencies": {
     "broccoli-persistent-filter": "^3.0.0",
@@ -63,7 +65,7 @@
     "release-it": "^16.1.5"
   },
   "peerDependencies": {
-    "@babel/core": "^7.17.9"
+    "@babel/core": "^7.17.9 || ^8.0.0"
   },
   "engines": {
     "node": "16.* || >= 18"

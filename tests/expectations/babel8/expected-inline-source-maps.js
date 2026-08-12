@@ -1,0 +1,4 @@
+"use strict";
+
+var x = 0;
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6W10sInNvdXJjZXMiOlsiZml4dHVyZXMuanMiXSwic291cmNlc0NvbnRlbnQiOlsiY29uc3QgeCA9IDA7XG4iXSwibWFwcGluZ3MiOiI7O0FBQUEsSUFBTSxDQUFDLEdBQUcsQ0FBQyIsImlnbm9yZUxpc3QiOltdfQ==

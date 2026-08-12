@@ -60,6 +60,39 @@ bare minimum to ambitious development.
  * [es6-website](https://github.com/givanse/broccoli-babel-examples/tree/master/es6-website) - Build a simple website.
  * [es6-modules](https://github.com/givanse/broccoli-babel-examples/tree/master/es6-modules) - Handle modules and unit tests.
 
+## Babel 7 and Babel 8
+
+`@babel/core` is a peer dependency; `^7.17.9` and `^8.0.0` both work. Babel 8
+itself requires Node `^22.18.0 || >=24.11.0`.
+
+Babel 8 removed the root-level `moduleId`, `moduleIds`, `getModuleId` and
+`moduleRoot` options. If you pass any of them through, move them onto your
+module transform plugin:
+
+```js
+// Babel 7
+let scriptTree = esTranspiler(inputTree, {
+  babel: {
+    moduleIds: true,
+    getModuleId,
+    plugins: ['@babel/plugin-transform-modules-amd']
+  }
+});
+
+// Babel 8
+let scriptTree = esTranspiler(inputTree, {
+  babel: {
+    plugins: [
+      ['@babel/plugin-transform-modules-amd', { moduleIds: true, getModuleId }]
+    ]
+  }
+});
+```
+
+The `moduleId: true` shorthand — which derives the module id from the file's
+relative path — expands to Babel's root-level `moduleId`, so it works on Babel 7
+only. On Babel 8, pass `getModuleId` to the module transform plugin instead.
+
 ## About source map
 
 Currently this plugin only supports inline source map. If you need

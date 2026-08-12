@@ -33,6 +33,27 @@ jobs:
     - name: test
       run: npm test
 
+  babel-8-test:
+    name: "Babel 8 - Node ${{ matrix.node }}"
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        # @babel/core@8 requires Node ^22.18.0 || >=24.11.0
+        node: ['22', '24']
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node }}
+    - name: install dependencies
+      run: npm ci
+    - name: swap in Babel 8
+      run: npm run use-babel-8
+    - name: test
+      run: npm test
+
   floating-test:
     name: Floating dependencies
     runs-on: ubuntu-latest

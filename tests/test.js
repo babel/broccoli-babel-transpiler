@@ -16,6 +16,30 @@ const terminateWorkerPool = require('./utils/terminate-workers');
 const inputPath = path.join(__dirname, 'fixtures');
 const expectations = path.join(__dirname, 'expectations');
 
+const babelCoreMajor = parseInt(require('@babel/core/package.json').version, 10);
+
+// Babel 8 changes some codegen details (source map key order, how exports are
+// assigned, interop helper parameter names). Where the output differs, the
+// Babel 8 version of the expectation lives in `expectations/babel8/`.
+function readExpectation(name) {
+  const versioned = path.join(expectations, `babel${babelCoreMajor}`, name);
+
+  return fs.readFileSync(fs.existsSync(versioned) ? versioned : path.join(expectations, name), 'utf8');
+}
+
+// Babel 8 removed the root-level `moduleId`, `moduleIds`, `getModuleId` and
+// `moduleRoot` options. They are now read from the module transform plugin, so
+// these two helpers put them wherever the installed Babel expects them.
+function amdPluginWith(moduleIdOptions) {
+  return babelCoreMajor >= 8
+    ? ['@babel/transform-modules-amd', moduleIdOptions]
+    : '@babel/transform-modules-amd';
+}
+
+function rootModuleIdOptions(moduleIdOptions) {
+  return babelCoreMajor >= 8 ? undefined : moduleIdOptions;
+}
+
 let ParallelApi = require('../lib/parallel-api');
 
 moduleResolve.baseDir = () => `${__dirname}/..`;
@@ -303,7 +327,7 @@ describe('transpile ES6 to ES5', function() {
       let outputPath = results.directory;
 
       let output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
-      let input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
+      let input = readExpectation('expected.js');
 
       expect(output).to.eql(input);
     });
@@ -324,7 +348,7 @@ describe('transpile ES6 to ES5', function() {
       let outputPath = results.directory;
 
       let output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
-      let input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
+      let input = readExpectation('expected.js');
 
       expect(output).to.eql(input);
     });
@@ -353,7 +377,7 @@ describe('transpile ES6 to ES5', function() {
       let outputPath = results.directory;
 
       let output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
-      let input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
+      let input = readExpectation('expected.js');
 
       expect(output).to.eql(input);
     });
@@ -381,7 +405,7 @@ describe('transpile ES6 to ES5', function() {
       let outputPath = results.directory;
 
       let output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
-      let input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
+      let input = readExpectation('expected.js');
 
       expect(output).to.eql(input);
     });
@@ -406,7 +430,7 @@ describe('transpile ES6 to ES5', function() {
       let outputPath = results.directory;
 
       let output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
-      let input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
+      let input = readExpectation('expected.js');
 
       expect(output).to.eql(input);
     });
@@ -425,7 +449,7 @@ describe('transpile ES6 to ES5', function() {
       let outputPath = results.directory;
 
       let output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
-      let input = fs.readFileSync(path.join(expectations, 'expected-inline-source-maps.js'), 'utf8');
+      let input = readExpectation('expected-inline-source-maps.js');
 
       expect(output).to.eql(input);
     });
@@ -446,7 +470,7 @@ describe('transpile ES6 to ES5', function() {
       let outputPath = results.directory;
 
       let output = fs.readFileSync(path.join(outputPath, 'fixtures-imports.js'), 'utf8');
-      let input = fs.readFileSync(path.join(expectations, 'imports.js'), 'utf8');
+      let input = readExpectation('imports.js');
 
       expect(output).to.eql(input);
     });
@@ -467,47 +491,53 @@ describe('transpile ES6 to ES5', function() {
       let outputPath = results.directory;
 
       let output = fs.readFileSync(path.join(outputPath, 'fixtures-imports.js'), 'utf8');
-      let input = fs.readFileSync(path.join(expectations, 'imports.js'), 'utf8');
+      let input = readExpectation('imports.js');
 
       expect(output).to.eql(input);
     });
   });
 
   it('module IDs (in main process)', function () {
+    let moduleIdOptions = {
+      moduleIds: true,
+      getModuleId() { return 'testModule'; },
+    };
+
     return babel('files', {
-      babel: {
+      babel: Object.assign({
         plugins: [
           '@babel/transform-strict-mode',
-          '@babel/transform-modules-amd'
+          amdPluginWith(moduleIdOptions)
         ],
-        moduleIds: true,
-        getModuleId() { return 'testModule'; },
-      }
+      }, rootModuleIdOptions(moduleIdOptions))
     }).then(results => {
       let outputPath = results.directory;
 
       let output = fs.readFileSync(path.join(outputPath, 'fixtures-imports.js'), 'utf8');
-      let input = fs.readFileSync(path.join(expectations, 'imports-getModuleId.js'), 'utf8');
+      let input = readExpectation('imports-getModuleId.js');
 
       expect(output).to.eql(input);
     });
   });
 
   it('module IDs - parallel API', function () {
+    let moduleIdOptions = {
+      moduleIds: true,
+      getModuleId: getModuleIdParallel,
+    };
+
     return babel('files', {
-      babel: {
+      babel: Object.assign({
         plugins: [
           '@babel/transform-strict-mode',
-          '@babel/transform-modules-amd'
+          amdPluginWith(moduleIdOptions)
         ],
-        moduleIds: true,
-        getModuleId: getModuleIdParallel,
-      }
+      }, rootModuleIdOptions(moduleIdOptions))
     }).then(results => {
       let outputPath = results.directory;
 
       let output = fs.readFileSync(path.join(outputPath, 'fixtures-imports.js'), 'utf8');
-      let input = fs.readFileSync(path.join(expectations, 'imports-getModuleId.js'), 'utf8');
+      let input = readExpectation('imports-getModuleId.js');
 
       expect(output).to.eql(input);
     });
@@ -521,7 +551,7 @@ describe('transpile ES6 to ES5', function() {
     }).then(results => {
       let outputPath = results.directory;
       let output = fs.readFileSync(path.join(outputPath, 'fixtures-comments.js'), 'utf8');
-      let input = fs.readFileSync(path.join(expectations, 'comments.js'), 'utf8');
+      let input = readExpectation('comments.js');
 
       expect(output).to.eql(input);
     });
@@ -535,7 +565,7 @@ describe('transpile ES6 to ES5', function() {
     }).then(results => {
       let outputPath = results.directory;
       let output = fs.readFileSync(path.join(outputPath, 'fixtures-comments.js'), 'utf8');
-      let input = fs.readFileSync(path.join(expectations, 'comments.js'), 'utf8');
+      let input = readExpectation('comments.js');
 
       expect(output).to.eql(input);
     });
@@ -573,7 +603,7 @@ describe('filters files to transform', function() {
       let outputPath = results.directory;
 
       let output = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
-      let input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
+      let input = readExpectation('expected.js');
 
       expect(output).to.eql(input);
       // Verify that .es6 file was not transformed
@@ -596,7 +626,7 @@ describe('filters files to transform', function() {
       let outputPath = results.directory;
 
       let output = fs.readFileSync(path.join(outputPath, 'fixtures-es6.js'), 'utf8');
-      let input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
+      let input = readExpectation('expected.js');
 
       expect(output).to.eql(input);
       // Verify that .es6 file was not transformed
@@ -620,7 +650,7 @@ describe('filters files to transform', function() {
 
       let es6ExtOutput = fs.readFileSync(path.join(outputPath, 'fixtures-es6.js'), 'utf8');
       let jsExtOutput = fs.readFileSync(path.join(outputPath, 'fixtures.js'), 'utf8');
-      let input = fs.readFileSync(path.join(expectations, 'expected.js'), 'utf8');
+      let input = readExpectation('expected.js');
 
       expect(es6ExtOutput).to.eql(input);
       expect(jsExtOutput).to.eql(input);
@@ -630,29 +660,35 @@ describe('filters files to transform', function() {
   });
 
   it('named module', function() {
+    let moduleIdOptions = { moduleId: "foo" };
+
     return babel('files', {
-      babel: {
+      babel: Object.assign({
         inputSourceMap: false,
         sourceMap: false,
-        moduleId: "foo",
         plugins: [
-          '@babel/transform-modules-amd',
+          amdPluginWith(moduleIdOptions),
           '@babel/transform-block-scoping'
         ]
-      }
+      }, rootModuleIdOptions(moduleIdOptions))
     }).then(results => {
       let outputPath = results.directory;
 
       let output = fs.readFileSync(path.join(outputPath, 'named-module-fixture.js'), 'utf8');
-      let input = fs.readFileSync(path.join(expectations, 'named-module.js'), 'utf8');
+      let input = readExpectation('named-module.js');
 
       expect(output).to.eql(input);
     });
   });
 
 
+  // `moduleId: true` is expanded into Babel's root-level `moduleId` option,
+  // which Babel 8 removed. We can't move it onto the module transform plugin
+  // for the user, since we don't know which of their plugins is the module
+  // transform, so the shorthand is Babel 7 only. On Babel 8, pass `moduleId`
+  // (or `moduleIds` + `getModuleId`) to the module transform plugin directly.
   it('moduleId === true', function() {
-    return babel('files', {
+    let build = babel('files', {
       babel: {
         inputSourceMap: false,
         sourceMap: false,
@@ -662,11 +698,20 @@ describe('filters files to transform', function() {
           '@babel/transform-block-scoping'
         ]
       }
-    }).then(results => {
+    });
+
+    if (babelCoreMajor >= 8) {
+      return build.then(
+        () => { throw new Error('expected Babel 8 to reject the root-level moduleId option'); },
+        error => expect(error.message).to.match(/Unknown option: \.moduleId/)
+      );
+    }
+
+    return build.then(results => {
       let outputPath = results.directory;
 
       let output = fs.readFileSync(path.join(outputPath, 'true-module-fixture.js'), 'utf8');
-      let input = fs.readFileSync(path.join(expectations, 'true-module.js'), 'utf8');
+      let input = readExpectation('true-module.js');
 
       expect(output).to.eql(input);
     });
@@ -705,7 +750,7 @@ describe('filters files to transform', function() {
     }).then(results => {
       let outputPath = results.directory;
       let output = fs.readFileSync(path.join(outputPath, 'fixtures-classes.js'), 'utf8');
-      let input = fs.readFileSync(path.join(expectations, 'classes.js'), 'utf8');
+      let input = readExpectation('classes.js');
 
       expect(output).to.eql(input);
     });
