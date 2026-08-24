@@ -1,0 +1,22 @@
+{
+  "solution": {
+    "broccoli-babel-transpiler": {
+      "impact": "minor",
+      "oldVersion": "8.0.2",
+      "newVersion": "8.1.0",
+      "tagName": "latest",
+      "constraints": [
+        {
+          "impact": "minor",
+          "reason": "Appears in changelog section :rocket: Enhancement"
+        },
+        {
+          "impact": "patch",
+          "reason": "Appears in changelog section :house: Internal"
+        }
+      ],
+      "pkgJSONPath": "./package.json"
+    }
+  },
+  "description": "## Release (2026-08-24)\n\n* broccoli-babel-transpiler 8.1.0 (minor)\n\n#### :rocket: Enhancement\n* `broccoli-babel-transpiler`\n  * [#242](https://github.com/ember-cli/broccoli-babel-transpiler/pull/242) Support Babel 8 alongside Babel 7 ([@wagenet](https://github.com/wagenet))\n\n#### :house: Internal\n* `broccoli-babel-transpiler`\n  * [#243](https://github.com/ember-cli/broccoli-babel-transpiler/pull/243) start using release-plan ([@mansona](https://github.com/mansona))\n\n#### Committers: 2\n- Chris Manson ([@mansona](https://github.com/mansona))\n- Peter Wagenet ([@wagenet](https://github.com/wagenet))\n"
+}
