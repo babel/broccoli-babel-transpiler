@@ -12,13 +12,13 @@
     "javascript",
     "js"
   ],
-  "homepage": "https://github.com/babel/broccoli-babel-transpiler",
+  "homepage": "https://github.com/ember-cli/broccoli-babel-transpiler",
   "bugs": {
-    "url": "https://github.com/babel/broccoli-babel-transpiler/issues"
+    "url": "https://github.com/ember-cli/broccoli-babel-transpiler/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/babel/broccoli-babel-transpiler.git"
+    "url": "https://github.com/ember-cli/broccoli-babel-transpiler.git"
   },
   "license": "MIT",
   "author": "nightire <nightire@very-geek.com> (http://very-geek.com/)",
