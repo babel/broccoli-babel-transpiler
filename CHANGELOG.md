@@ -1,5 +1,21 @@
 # Changelog
 
+## Release (2026-08-24)
+
+* broccoli-babel-transpiler 8.1.0 (minor)
+
+#### :rocket: Enhancement
+* `broccoli-babel-transpiler`
+  * [#242](https://github.com/ember-cli/broccoli-babel-transpiler/pull/242) Support Babel 8 alongside Babel 7 ([@wagenet](https://github.com/wagenet))
+
+#### :house: Internal
+* `broccoli-babel-transpiler`
+  * [#243](https://github.com/ember-cli/broccoli-babel-transpiler/pull/243) start using release-plan ([@mansona](https://github.com/mansona))
+
+#### Committers: 2
+- Chris Manson ([@mansona](https://github.com/mansona))
+- Peter Wagenet ([@wagenet](https://github.com/wagenet))
+
 
 
 
